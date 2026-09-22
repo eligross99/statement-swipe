@@ -1,0 +1,30 @@
+/* Design tokens: the ONLY place hex colors are defined. Values from docs/handoff.md §9. */
+:root {
+  /* Ink deck (backgrounds) */
+  --ink: #101119;
+  --ink-soft: #191b26;
+  --ink-lift: #20222f;
+  --hairline: #2a2c39;
+
+  /* Paper cards */
+  --paper: #fbfaf6;
+  --paper-edge: #eae7dc;
+  --text-ink: #16171d;
+  --text-mute: #7a7c88;
+
+  /* Action colors: functional, not decorative. Keep them consistent everywhere. */
+  --approve: #12a150;
+  --investigate: #e0872b;
+  --pile: #6d5ce7;
+  --flag: #e5484d;
+  --wait: #3b82f6;
+
+  /* Type */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Layout */
+  --app-max-width: 420px;
+  --tap-min: 44px;
+  --radius-card: 22px;
+}
