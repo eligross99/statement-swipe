@@ -1,0 +1,100 @@
+# Feature ideas & where they fit
+
+Eli's feature ideas (Sept 2026), sorted by when to build them and why. On 2026-09-22 Eli **accepted
+every "Proposed" change below**, approved the web-search link, and chose per-statement folders. Treat
+"Proposed" items as decided. Read the relevant section before starting its phase.
+
+## Roadmap order
+
+| Phase | What | Why here |
+| --- | --- | --- |
+| 4 | Triage & folder polish, **"Set status" menu**, consistent date display | Already planned; the status menu is the same UI |
+| 5 | PWA finish, Vercel deploy, CI, test on phone | Gets the app into real use sooner |
+| 6 | **Multiple statements:** storage, Statements screen, bottom navigation, Tasks dashboard, Settings (light) | Most new ideas depend on keeping more than one statement |
+| 7 | **On-device smarts:** familiar/new merchant tags, merchant-code decoder, web-search link, calendar reminders | Need statement history; no server needed; privacy stays intact |
+| 8 | Accounts, backend, Stripe, bank sync (was Phase 6) | Unlocks push notifications and, if chosen, AI merchant explanations |
+| 9 | Security & compliance (was Phase 7) | Unchanged |
+
+## The ideas
+
+### "Set status" menu → Phase 4
+Rename "Set next step" to "Set status"; tapping opens a menu with To do / Waiting / Done (plus a way
+to clear it). Agreed as-is.
+
+### Statements repository → Phase 6
+One screen listing every imported statement, with:
+- Tags: **New · needs review**, **In progress**, or a completed summary (flagged / to do / waiting
+  counts, or a green **✓ Clear**).
+- Tapping opens the right place: first card (new), where you left off (in progress), or the summary (done).
+- Filters: **Needs action**, **Last 6 months**, **Archived**.
+- Archive, and delete with an "Are you sure you want to delete [name]?" Delete / Cancel dialog.
+
+**Proposed changes:**
+- **One list style to start, not list + card toggle.** At phone width the two look nearly the same,
+  and two layouts double the design and testing work. Build rich list rows; add a toggle later if missed.
+- **Archive and Delete in a "⋯" menu on each row**, not a visible trash icon. That's less clutter and
+  fewer accidental taps. The confirmation dialog stays.
+- Statement dates (for "last 6 months") come from the purchase dates in the file, which is why Phase 4
+  makes date handling consistent first.
+
+**Technical note:** this replaces "one saved session" with "many saved statements". That's a
+data-model change and the planned switch from `idb-keyval` to Dexie (the handoff already names Dexie
+for statement history). An existing in-progress review gets migrated automatically.
+
+**Decided:** folders stay per statement (simpler, and the Tasks dashboard already
+gives the cross-statement view), but offer your past folder names as one-tap choices when filing.
+
+### Navigation → Phase 6
+**Proposed instead of Statements / Swipe / Settings tabs:**
+- **Bottom tabs: Statements · Tasks.** Tabs are for places you visit often.
+- **No "Swipe" tab.** Swiping belongs to one specific statement, so the tab would be empty or confusing
+  when nothing is in progress. Instead, a **"Resume: March 2026 · 8 left"** banner sits at the top of
+  Statements, and tapping any statement opens it (per the rules above).
+- **Swiping is full-screen with the tab bar hidden**, with a back arrow. That gives the cards more
+  room, and the swipe-up gesture doesn't compete with the tab bar.
+- **Settings behind a gear icon in the top-right corner**, the common pattern for rarely visited
+  screens.
+- **"+ Import"** button on the Statements screen.
+
+### Tasks dashboard → Phase 6
+Every open purchase across completed statements, grouped **Flagged · To do · Waiting · Done**, each
+linking back to its statement and folder. "Remind me after X" is a preference; until push
+notifications exist, open items past that age get an **Overdue** highlight and a count badge on the
+Tasks tab.
+
+### Settings / preferences → Phase 6 (start light)
+Start with: reminder age (e.g. 1 month), default statement filter, and "About & privacy".
+**Proposed:** no Account or Plan sections until accounts and payments exist (Phase 8). Empty
+placeholder screens make an app feel unfinished.
+
+### Reminders → Phase 7 (calendar), Phase 8 (push)
+**Constraint:** a web app can't reliably fire a notification at a future time without a server
+sending it (and on iPhone, only once the app is installed to the home screen).
+**Proposed:** Phase 7 adds a **"Remind me"** button on a folder item that creates a calendar event
+(e.g. "Venmo request Jared for dinner, 9/8") in your phone's own calendar app with an alert. No
+server needed. Real push notifications come with the backend in Phase 8.
+Note: if your calendar syncs to iCloud/Google, the reminder text goes there. That's your choice per
+reminder, but the app should say so.
+
+### Merchant lookup ("Look closer") → Phase 7 partly, Phase 8+ for AI
+**Conflict:** the privacy rule says transaction descriptions never leave the device. Sending the
+merchant name to an AI service would break that promise and needs a server (to hide the API key) and
+money per lookup. AI answers about cryptic merchant codes can also be confidently wrong.
+**Proposed:**
+1. **Phase 7: merchant-code decoder, on-device.** A built-in list of payment-processor prefixes.
+   E.g. `SQ *` = Square (small businesses), `TST*` = Toast (restaurants), `AMZN MKTP` = Amazon
+   Marketplace, `PAYPAL *`, `SP *` = Shopify store. This is accurate, instant, and works offline.
+2. **Phase 7: "Search the web" link** that opens your browser with only the merchant name, and only
+   when you tap it. Approved; the privacy rule in `CLAUDE.md` allows this one explicit, user-initiated case.
+3. **Phase 8+: optional AI explanation**, off by default, with a clear note that only the merchant name
+   is sent. Or get real merchant names and logos from bank-sync enrichment (Plaid), which solves the
+   same problem more reliably.
+
+### Familiar merchant tag → Phase 7
+Shown on swipe cards when a merchant appears in 3+ past statements. All on-device.
+**Proposed changes:**
+- Word it as **"Seen in 5 statements"**, not "Recognized vendor". Fraud can happen at a familiar
+  merchant too (e.g. Amazon), so the tag shouldn't imply "safe".
+- Also add the reverse: a **"New merchant"** tag, which is often the stronger fraud signal.
+- Match names loosely (`SHELL OIL 574123900` and `SHELL OIL 574123911` are the same merchant) by
+  ignoring store numbers.

@@ -6,6 +6,7 @@ triage folders (split with friends, reimburse, taxes) with a status and a note p
 Local-first: **the user's statement never leaves their device.**
 
 - Full product and engineering brief: `docs/handoff.md`. Read the relevant section before starting a phase.
+- Feature ideas beyond the handoff, with decisions and target phases: `docs/ideas.md`. Read it before phases 4, 6, and 7.
 - Reference prototype (the UI/interaction source of truth): `docs/prototype/StatementSwipe.jsx`.
   It is a single-file Claude-artifact prototype. Port its behavior faithfully. Do not import from it.
 
@@ -60,6 +61,8 @@ Local-first: **the user's statement never leaves their device.**
 - No transaction data (descriptions, amounts, dates, notes) is ever sent over the network: no
   logging services, no analytics payloads, no third-party APIs. Analytics, if added, are anonymous
   event names only (e.g. `review_completed`).
+- One exception: a "Search the web" link may open the user's browser with **only the merchant name**,
+  and only when the user taps it. Never amounts, dates, notes, or anything automatic.
 - **This GitHub repo is public.** Never commit real statements or personal financial data.
   `.gitignore` blocks `*.csv`/`*.ofx`/`*.qfx`/`*.pdf`. Test data must be synthetic and live in `tests/fixtures/`.
 
@@ -92,13 +95,18 @@ See `docs/handoff.md` §11 for details.
 - [x] 1. Scaffold Vite + React + TS PWA with the stack above
 - [x] 2. Port prototype; replace `window.storage` with IndexedDB
 - [x] 3. Harden CSV import (header-row detection, `TransactionSource`/`CSVSource`)
-- [ ] 4. Polish triage & folders for touch  ← **next**
+- [ ] 4. Polish triage & folders for touch, plus the "Set status" menu and consistent date display  ← **next**
 - [ ] 5. PWA finish (icons, manifest, offline) + Vercel deploy + on-phone test with a real CSV
   - Also set up CI: a GitHub Actions workflow that runs `npm run build`, `npm test`, and
     `npm run lint` on every PR, so PRs can't be merged if they fail. Eli hasn't used CI or GitHub
     Actions before: explain what it is and walk them through any GitHub settings step by step.
-- [ ] 6. Accounts/backend + Stripe, then bank sync (Teller → Plaid), then enrichment
-- [ ] 7. Security & compliance hardening (with real legal counsel)
+- [ ] 6. Multiple statements: Dexie storage (migrate the saved session), Statements screen, bottom
+  navigation, Tasks dashboard, light Settings (see `docs/ideas.md`)
+- [ ] 7. On-device smarts: familiar/new merchant tags, merchant-code decoder, web-search link,
+  calendar reminders (see `docs/ideas.md`)
+- [ ] 8. Accounts/backend + Stripe, then bank sync (Teller → Plaid), then enrichment; push
+  notifications; optional AI merchant explanation
+- [ ] 9. Security & compliance hardening (with real legal counsel)
 
 ## Gotchas
 
@@ -109,4 +117,4 @@ See `docs/handoff.md` §11 for details.
 - Bank CSVs vary: column names/order, sign conventions (purchases negative vs positive, or split
   debit/credit columns), and preamble rows above the header.
 - Cryptic merchant names (`SQ *DD BAR`) can't be decoded from CSV. Don't fake enrichment.
-- Out of scope for now: PDF statements, statement history, custom per-folder statuses, native apps.
+- Out of scope for now: PDF statements, custom per-folder statuses, native apps.
