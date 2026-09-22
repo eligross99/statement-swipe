@@ -1,0 +1,241 @@
+.deck {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px;
+}
+
+/* Progress */
+.deck-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 8px;
+}
+
+.deck-progress-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-mute);
+}
+
+.deck-progress-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.deck-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand);
+  transition: width 0.3s ease;
+}
+
+/* Card stack */
+.deck-stack {
+  position: relative;
+  flex: 1;
+  min-height: 300px;
+  margin: 12px 0 28px; /* bottom margin leaves room for the peeking cards */
+}
+
+.deck-card {
+  position: absolute;
+  inset: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  /* Peeking cards shrink toward their bottom edge so that edge shows below the top card. */
+  transform-origin: 50% 100%;
+  transition:
+    transform 0.23s ease-out,
+    transform-origin 0.23s ease-out;
+}
+
+.deck-card--top {
+  z-index: 3;
+  transform-origin: 50% 50%; /* tilt around the middle while dragging */
+  touch-action: none; /* we handle the drag ourselves; stop the page scrolling */
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.deck-card--top.is-dragging {
+  transition: none;
+  cursor: grabbing;
+  box-shadow: var(--shadow-lift);
+}
+
+.deck-card--leaving {
+  z-index: 4;
+  pointer-events: none;
+  transition: none;
+}
+
+/* Card content */
+.card-face {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 22px 18px;
+}
+
+.card-face-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-face-cat {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--brand-tint);
+  color: var(--brand-strong);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.card-face-date {
+  font-size: 13px;
+  color: var(--text-mute);
+}
+
+.card-face-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.card-face-amount {
+  margin: 0;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.card-face-desc {
+  margin: 14px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.card-face-loc {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--text-mute);
+}
+
+.card-face-hint {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+/* Directional stamps that fade in while dragging */
+.stamp {
+  position: absolute;
+  top: 22px;
+  z-index: 2;
+  padding: 4px 12px;
+  border: 3px solid currentColor;
+  border-radius: 10px;
+  background: var(--stamp-bg);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+
+.stamp--approve {
+  left: 22px;
+  color: var(--approve);
+  transform: rotate(-14deg);
+}
+
+.stamp--investigate {
+  right: 22px;
+  color: var(--investigate);
+  transform: rotate(14deg);
+}
+
+.stamp--pile {
+  left: 50%;
+  color: var(--pile);
+  transform: translateX(-50%);
+}
+
+/* Action buttons */
+.deck-actions {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 28px;
+  padding: 0 0 max(20px, env(safe-area-inset-bottom));
+}
+
+.action-btn-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-btn {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.action-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.action-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.action-btn--big {
+  width: 68px;
+  height: 68px;
+}
+
+.action-btn--investigate {
+  background: var(--investigate-tint);
+  color: var(--investigate);
+}
+
+.action-btn--pile {
+  background: var(--pile-tint);
+  color: var(--pile);
+}
+
+/* Approve is the one solid action: the healthy default. */
+.action-btn--approve {
+  background: var(--approve);
+  color: var(--on-brand);
+  box-shadow: var(--shadow-card);
+}
+
+.action-btn-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-mute);
+}

@@ -1,0 +1,78 @@
+.investigate-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.investigate-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--flag-tint);
+  color: var(--flag);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.investigate-amount {
+  margin: 0;
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.investigate-desc {
+  margin: 10px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.investigate-fields {
+  margin: 20px 0 0;
+  padding: 4px 16px;
+}
+
+.investigate-field {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  font-size: 14px;
+}
+
+.investigate-field + .investigate-field {
+  border-top: 1px solid var(--border);
+}
+
+.investigate-field dt {
+  color: var(--text-mute);
+  flex-shrink: 0;
+}
+
+.investigate-field dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.investigate-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+}
+
+.investigate-note {
+  margin: 16px 0 0;
+}
+
+.investigate-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+}

@@ -1,0 +1,73 @@
+import { Check, ChevronLeft, Flag, ShieldAlert } from 'lucide-react'
+import { useEscape } from '../hooks/useEscape'
+import { usd } from '../lib/format'
+import type { Transaction } from '../types'
+import './InvestigateView.css'
+
+interface Props {
+  txn: Transaction
+  /** Whether approve/flag are offered (only for the card currently on top of the deck). */
+  canDecide: boolean
+  onBack: () => void
+  onApprove: () => void
+  onFlag: () => void
+}
+
+/** Full statement details for one purchase. "Back" leaves the card unresolved in the deck. */
+export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag }: Props) {
+  useEscape(onBack)
+
+  return (
+    <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="investigate-title">
+      <div className="overlay-inner">
+        <div className="investigate-top">
+          <button type="button" className="back-link" onClick={onBack} autoFocus>
+            <ChevronLeft size={20} /> Back
+          </button>
+          {txn.sus && (
+            <span className="investigate-badge">
+              <ShieldAlert size={14} /> Unusual
+            </span>
+          )}
+        </div>
+
+        <p className="investigate-amount num">${usd(txn.amount)}</p>
+        <h2 id="investigate-title" className="investigate-desc">
+          {txn.desc}
+        </h2>
+
+        <dl className="panel investigate-fields">
+          <Field label="Transaction date" value={txn.date || '—'} />
+          <Field label="Category" value={txn.cat} />
+          <Field label="Location" value={txn.loc || 'Not in statement'} />
+          <Field label="Descriptor" value={txn.desc} mono />
+        </dl>
+
+        <p className="note-box investigate-note">
+          This is everything the statement line carries. Connecting your card later can fill in the real merchant,
+          logo, and exact location.
+        </p>
+
+        {canDecide && (
+          <div className="investigate-actions">
+            <button type="button" className="btn btn--primary" onClick={onApprove}>
+              <Check size={18} /> I recognize it — approve
+            </button>
+            <button type="button" className="btn btn--flag" onClick={onFlag}>
+              <Flag size={18} /> Flag as possible fraud
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function Field({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="investigate-field">
+      <dt>{label}</dt>
+      <dd className={mono ? 'investigate-mono' : undefined}>{value}</dd>
+    </div>
+  )
+}
