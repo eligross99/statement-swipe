@@ -91,9 +91,12 @@ See `docs/handoff.md` §11 for details.
 
 - [x] 1. Scaffold Vite + React + TS PWA with the stack above
 - [x] 2. Port prototype; replace `window.storage` with IndexedDB
-- [ ] 3. Harden CSV import (header-row detection, `TransactionSource`/`CSVSource`)  ← **next**
-- [ ] 4. Polish triage & folders for touch
+- [x] 3. Harden CSV import (header-row detection, `TransactionSource`/`CSVSource`)
+- [ ] 4. Polish triage & folders for touch  ← **next**
 - [ ] 5. PWA finish (icons, manifest, offline) + Vercel deploy + on-phone test with a real CSV
+  - Also set up CI: a GitHub Actions workflow that runs `npm run build`, `npm test`, and
+    `npm run lint` on every PR, so PRs can't be merged if they fail. Eli hasn't used CI or GitHub
+    Actions before: explain what it is and walk them through any GitHub settings step by step.
 - [ ] 6. Accounts/backend + Stripe, then bank sync (Teller → Plaid), then enrichment
 - [ ] 7. Security & compliance hardening (with real legal counsel)
 
