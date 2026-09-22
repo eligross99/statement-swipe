@@ -2,55 +2,148 @@
   max-width: var(--app-max-width);
   min-height: 100%;
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 20px 16px 32px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
+/* Header */
 .app-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: var(--pile);
+  gap: 10px;
 }
 
 .app-header h1 {
   margin: 0;
-  font-size: 18px;
-  color: var(--paper);
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
 }
 
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--brand);
+  color: var(--on-brand);
+}
+
+/* Progress */
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progress-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-mute);
+}
+
+.progress-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand);
+}
+
+/* Transaction card */
 .card {
-  background: var(--paper);
-  color: var(--text-ink);
-  border: 1px solid var(--paper-edge);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius-card);
-  padding: 28px 24px;
-  box-shadow: 0 18px 40px rgb(0 0 0 / 0.45);
+  box-shadow: var(--shadow-card);
+  padding: 20px 22px 26px;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--brand-tint);
+  color: var(--brand-strong);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.card-date {
+  font-size: 13px;
+  color: var(--text-mute);
+}
+
+.card-amount {
+  margin: 28px 0 6px;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .card-desc {
   margin: 0;
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.card-amount {
-  margin: 20px 0 8px;
-  font-size: 44px;
-  font-weight: 700;
-}
-
-.card-meta {
-  margin: 0;
-  color: var(--text-mute);
   font-size: 14px;
+  font-weight: 500;
+  color: var(--text-mute);
+  letter-spacing: 0.01em;
+}
+
+/* Action buttons */
+.actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.action {
+  min-height: calc(var(--tap-min) + 20px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.action--investigate {
+  background: var(--investigate-tint);
+  color: var(--investigate);
+}
+
+.action--pile {
+  background: var(--pile-tint);
+  color: var(--pile);
+}
+
+/* The primary, most common action gets the solid brand treatment. */
+.action--approve {
+  background: var(--approve);
+  color: var(--on-brand);
 }
 
 .app-note {
   margin: 0;
-  color: var(--text-mute);
-  font-size: 13px;
+  color: var(--text-faint);
+  font-size: 12px;
   text-align: center;
 }

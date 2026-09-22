@@ -65,11 +65,16 @@ Local-first: **the user's statement never leaves their device.**
 
 ## Design
 
-- Define the palette once as CSS custom properties / a tokens file (values in `docs/handoff.md` §9).
-  Never hard-code hex values in components.
-- Action colors are functional and consistent everywhere: approve green, investigate amber,
-  pile indigo, fraud red, waiting blue.
-- Paper cards on an ink deck. Amounts are the largest element and use monospaced tabular figures.
+**This supersedes the dark "ink deck" design in `docs/handoff.md` §9.** Eli chose a white-and-green
+direction: calm, clear, efficient, and signaling financial well-being.
+
+- All colors live in `src/styles/tokens.css` as CSS custom properties. Never hard-code hex values in components.
+- White cards on a near-white, faintly green background (`--bg`). One deep "money green" brand color (`--brand`).
+  Generous whitespace; soft shadows; no heavy borders.
+- Action colors are functional and consistent everywhere (each has a `-tint` for soft fills):
+  approve = brand green, investigate = amber, pile = indigo, fraud = red, waiting = blue.
+  Approve is the only solid-filled action (the "healthy default"); others use tint backgrounds.
+- Amounts are the largest element on a card and use tabular figures (`.num` class), in the system sans font.
 - Keep the signature feel: tilt on drag, fading directional stamps, 1–2 peek cards behind the top card.
 - Mobile-first (~400px). Touch targets ≥ 44px. Every gesture has a button and arrow-key fallback, plus undo.
 
