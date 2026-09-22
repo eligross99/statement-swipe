@@ -1,18 +1,9 @@
 import { ArrowRight, FileText, Sparkles, X } from 'lucide-react'
-import Papa from 'papaparse'
 import { useMemo, useState } from 'react'
-import {
-  detectColumns,
-  detectNegativePurchases,
-  headersOf,
-  nonEmptyRows,
-  toPurchases,
-  toTransactions,
-  type ColumnMap,
-  type CsvRow,
-} from '../lib/csv'
+import { parseGrid, type ColumnMap, type Grid } from '../lib/csv'
 import { plural, usd } from '../lib/format'
 import { SAMPLE_LABEL, sampleTransactions } from '../lib/sample'
+import { CSVSource, guessSettings, type CsvSettings } from '../sources/csvSource'
 import type { Transaction } from '../types'
 import './ImportScreen.css'
 
@@ -25,44 +16,38 @@ interface Props {
 
 interface Parsed {
   fileName: string
-  rows: CsvRow[]
-  headers: string[]
+  grid: Grid
 }
+
+/** How many of the file's first lines the header-row picker offers. */
+const HEADER_CHOICES = 15
 
 export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
   const [parsed, setParsed] = useState<Parsed | null>(null)
-  const [map, setMap] = useState<ColumnMap>({ desc: '', amount: '', date: '' })
-  const [negative, setNegative] = useState(false)
+  const [settings, setSettings] = useState<CsvSettings | null>(null)
   const [error, setError] = useState('')
   const [dragOver, setDragOver] = useState(false)
 
-  const purchases = useMemo(
-    () => (parsed ? toPurchases(parsed.rows, map, negative) : []),
-    [parsed, map, negative],
-  )
+  const source = useMemo(() => (parsed && settings ? new CSVSource(parsed.grid, settings) : null), [parsed, settings])
+  const purchases = useMemo(() => source?.purchases() ?? [], [source])
   const total = purchases.reduce((s, p) => s + p.amount, 0)
 
   // Parsing happens entirely in the browser; the file is never uploaded anywhere.
-  const readFile = (file: File) => {
+  const readFile = async (file: File) => {
     setError('')
-    Papa.parse<CsvRow>(file, {
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: (h) => h.trim(),
-      complete: (res) => {
-        const rows = nonEmptyRows(res.data)
-        if (!rows.length) {
-          setError('That file looked empty.')
-          return
-        }
-        const headers = headersOf(rows)
-        const cols = detectColumns(headers)
-        setParsed({ fileName: file.name, rows, headers })
-        setMap(cols)
-        setNegative(detectNegativePurchases(rows, cols.amount))
-      },
-      error: () => setError("Couldn't read that file. Make sure it's a CSV export from your bank."),
-    })
+    let grid: Grid
+    try {
+      grid = parseGrid(await file.text())
+    } catch {
+      setError("Couldn't read that file. Make sure it's a CSV export from your bank.")
+      return
+    }
+    if (!grid.length) {
+      setError('That file looked empty.')
+      return
+    }
+    setParsed({ fileName: file.name, grid })
+    setSettings(guessSettings(grid))
   }
 
   if (!parsed) {
@@ -127,6 +112,10 @@ export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
     )
   }
 
+  if (!settings || !source) return null
+  const { map, negativePurchases: negative, headerRow } = settings
+  const { headers, rows } = source.table
+  const setMap = (next: ColumnMap) => setSettings({ ...settings, map: next })
   const ready = !!(map.desc && map.amount) && purchases.length > 0
 
   return (
@@ -137,24 +126,56 @@ export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
         <button
           type="button"
           className="icon-btn icon-btn--flat"
-          onClick={() => setParsed(null)}
+          onClick={() => {
+            setParsed(null)
+            setSettings(null)
+          }}
           aria-label="Choose a different file"
         >
           <X size={18} />
         </button>
       </div>
-      <p className="muted import-count">{parsed.rows.length} rows found. Confirm the columns below.</p>
+      <p className="muted import-count">
+        {plural(rows.length, 'row')} found
+        {headerRow > 0 && `, after skipping ${plural(headerRow, 'intro line')}`}. Confirm the columns below.
+      </p>
 
       <div className="panel import-map">
-        <MapRow label="Description" value={map.desc} headers={parsed.headers} onChange={(desc) => setMap({ ...map, desc })} />
-        <MapRow label="Amount" value={map.amount} headers={parsed.headers} onChange={(amount) => setMap({ ...map, amount })} />
-        <MapRow label="Date" optional value={map.date} headers={parsed.headers} onChange={(date) => setMap({ ...map, date })} />
+        <div className="map-row">
+          <label htmlFor="map-header" className="map-label">
+            Column names
+          </label>
+          <select
+            id="map-header"
+            className="map-select"
+            value={headerRow}
+            // A different header row means different columns, so re-guess everything.
+            onChange={(e) => setSettings(guessSettings(parsed.grid, Number(e.target.value)))}
+          >
+            <option value={-1}>None (no header row)</option>
+            {parsed.grid.slice(0, HEADER_CHOICES).map((row, i) => (
+              <option key={i} value={i}>
+                Line {i + 1}: {row.filter(Boolean).join(', ')}
+              </option>
+            ))}
+          </select>
+        </div>
+        <MapRow label="Description" value={map.desc} headers={headers} onChange={(desc) => setMap({ ...map, desc })} />
+        <MapRow label="Amount" value={map.amount} headers={headers} onChange={(amount) => setMap({ ...map, amount })} />
+        <MapRow label="Date" optional value={map.date} headers={headers} onChange={(date) => setMap({ ...map, date })} />
+        <MapRow
+          label="Category"
+          optional
+          value={map.category}
+          headers={headers}
+          onChange={(category) => setMap({ ...map, category })}
+        />
         <button
           type="button"
           role="switch"
           aria-checked={negative}
           className="toggle-row"
-          onClick={() => setNegative(!negative)}
+          onClick={() => setSettings({ ...settings, negativePurchases: !negative })}
         >
           <span>Purchases appear as negative numbers</span>
           <span className={`toggle${negative ? ' is-on' : ''}`} aria-hidden>
@@ -187,8 +208,8 @@ export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
         type="button"
         className="btn btn--primary import-start"
         disabled={!ready}
-        onClick={() => {
-          const txns = toTransactions(purchases)
+        onClick={async () => {
+          const txns = await source.load()
           onStart(txns, parsed.fileName.replace(/\.[^.]+$/, ''))
         }}
       >
@@ -211,10 +232,10 @@ function MapRow(props: {
     <div className="map-row">
       <label htmlFor={id} className="map-label">
         {props.label}
-        {props.optional && <span className="muted"> · optional</span>}
+        {props.optional && <span className="map-optional muted">optional</span>}
       </label>
       <select id={id} className="map-select" value={props.value} onChange={(e) => props.onChange(e.target.value)}>
-        <option value="">Choose column…</option>
+        <option value="">{props.optional ? 'None' : 'Choose column…'}</option>
         {props.headers.map((h) => (
           <option key={h} value={h}>
             {h}

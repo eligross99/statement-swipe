@@ -103,6 +103,11 @@
   font-size: 14px;
 }
 
+.map-optional {
+  display: block;
+  font-size: 12px;
+}
+
 .map-select {
   flex: 1;
   min-width: 0;

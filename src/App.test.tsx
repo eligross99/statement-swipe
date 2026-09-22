@@ -1,6 +1,8 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { get, set } from 'idb-keyval'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import App from './App'
 import type { Session } from './types'
 
@@ -27,6 +29,23 @@ describe('App', () => {
   it('starts on the import screen when nothing is saved', async () => {
     render(<App />)
     expect(await screen.findByRole('heading', { name: 'Import your statement' })).toBeInTheDocument()
+  })
+
+  it('imports a CSV with intro lines above the header and starts the review', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<App />)
+    await screen.findByRole('heading', { name: 'Import your statement' })
+    const text = readFileSync(resolve(process.cwd(), 'tests/fixtures/preamble.csv'), 'utf8')
+    const input = container.querySelector<HTMLInputElement>('input[type=file]')!
+    await user.upload(input, new File([text], 'march.csv', { type: 'text/csv' }))
+
+    expect(await screen.findByText(/3 rows found, after skipping 3 intro lines/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Column names')).toHaveValue('3')
+    expect(screen.getByLabelText(/^Category/)).toHaveValue('Category')
+
+    await user.click(screen.getByRole('button', { name: /Start review · 2 purchases/ }))
+    expect(within(await screen.findByRole('group', { name: /^Purchase:/ })).getByText('FAKE COFFEE CO #1')).toBeInTheDocument()
+    expect(screen.getByText('Dining')).toBeInTheDocument()
   })
 
   it('approving advances the deck and updates progress', async () => {
