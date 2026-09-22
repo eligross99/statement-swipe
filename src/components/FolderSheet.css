@@ -1,0 +1,134 @@
+.folder-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.folder-sheet-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.folder-sheet-sub {
+  margin: 0 0 14px;
+  font-size: 13px;
+}
+
+.folder-sheet-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 16px;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.folder-sheet-empty p {
+  max-width: 250px;
+  margin: 8px 0 0;
+  color: var(--text-mute);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.folder-list {
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.folder-list-item {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.folder-pick {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radius-control);
+  background: var(--pile-tint);
+  color: var(--pile);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.folder-pick-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folder-delete {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
+  color: var(--text-mute);
+  cursor: pointer;
+}
+
+.folder-confirm {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 52px;
+  padding: 4px 6px 4px 14px;
+  border-radius: var(--radius-control);
+  background: var(--flag-tint);
+  color: var(--flag);
+  font-size: 13px;
+}
+
+.folder-confirm-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.folder-confirm-yes,
+.folder-confirm-no {
+  display: grid;
+  place-items: center;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.folder-confirm-yes {
+  background: var(--flag);
+  color: var(--on-brand);
+}
+
+.folder-confirm-no {
+  background: var(--surface);
+  color: var(--text-mute);
+}
+
+.folder-new {
+  display: flex;
+  gap: 8px;
+}

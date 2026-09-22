@@ -8,6 +8,10 @@
   --surface-sunken: #eef3f0; /* inputs, tracks, subtle fills */
   --border: #e1e8e4;
   --shadow-card: 0 1px 2px rgb(16 42 28 / 0.06), 0 12px 32px rgb(16 42 28 / 0.08);
+  --shadow-lift: 0 2px 4px rgb(16 42 28 / 0.08), 0 24px 48px rgb(16 42 28 / 0.14); /* card being dragged */
+  --shadow-sheet: 0 -8px 32px rgb(16 42 28 / 0.12);
+  --scrim: rgb(15 31 23 / 0.32); /* dims the app behind sheets */
+  --stamp-bg: rgb(255 255 255 / 0.85);
 
   /* Text */
   --text: #0f1f17; /* near-black with a green undertone */

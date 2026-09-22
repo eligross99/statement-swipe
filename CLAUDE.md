@@ -90,8 +90,8 @@ direction: calm, clear, efficient, and signaling financial well-being.
 See `docs/handoff.md` §11 for details.
 
 - [x] 1. Scaffold Vite + React + TS PWA with the stack above
-- [ ] 2. Port prototype; replace `window.storage` with IndexedDB  ← **next**
-- [ ] 3. Harden CSV import (header-row detection, `TransactionSource`/`CSVSource`)
+- [x] 2. Port prototype; replace `window.storage` with IndexedDB
+- [ ] 3. Harden CSV import (header-row detection, `TransactionSource`/`CSVSource`)  ← **next**
 - [ ] 4. Polish triage & folders for touch
 - [ ] 5. PWA finish (icons, manifest, offline) + Vercel deploy + on-phone test with a real CSV
 - [ ] 6. Accounts/backend + Stripe, then bank sync (Teller → Plaid), then enrichment

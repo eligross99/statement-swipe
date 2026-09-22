@@ -1,149 +1,264 @@
+/* App shell and shared building blocks used across screens. */
+
 .app {
   max-width: var(--app-max-width);
-  min-height: 100%;
+  height: 100%;
+  height: 100dvh; /* dynamic viewport height: ignores the phone's collapsing browser bar */
   margin: 0 auto;
-  padding: 20px 16px 32px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  overflow: hidden;
 }
 
-/* Header */
-.app-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.app-header h1 {
+.app-loading {
+  flex: 1;
+  display: grid;
+  place-items: center;
   margin: 0;
-  font-size: 17px;
-  font-weight: 650;
+  color: var(--text-mute);
+  font-size: 14px;
+}
+
+/* A scrollable screen body (import, summary, folder detail). */
+.screen {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 16px max(32px, env(safe-area-inset-bottom));
+}
+
+.screen-title {
+  margin: 8px 0 6px;
+  font-size: 22px;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 
-.brand-mark {
+.muted {
+  color: var(--text-mute);
+}
+
+.section-label {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+
+/* Round 44px icon button (header, close). */
+.icon-btn {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: var(--tap-min);
+  height: var(--tap-min);
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+}
+
+.icon-btn:disabled {
+  color: var(--text-faint);
+  box-shadow: none;
+  background: var(--surface-sunken);
+  cursor: default;
+}
+
+.icon-btn--flat {
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-mute);
+}
+
+.icon-btn--active {
   background: var(--brand);
   color: var(--on-brand);
 }
 
-/* Progress */
-.progress {
+/* Text buttons */
+.btn {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
+  width: 100%;
+  min-height: 50px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.progress-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: var(--text-mute);
-}
-
-.progress-track {
-  height: 6px;
-  border-radius: 999px;
+.btn:disabled {
   background: var(--surface-sunken);
-  overflow: hidden;
+  color: var(--text-faint);
+  border-color: transparent;
+  cursor: default;
 }
 
-.progress-fill {
-  height: 100%;
-  border-radius: inherit;
+.btn--primary {
   background: var(--brand);
+  color: var(--on-brand);
 }
 
-/* Transaction card */
-.card {
+.btn--secondary {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.btn--flag {
+  background: var(--flag-tint);
+  color: var(--flag);
+}
+
+.btn--pile {
+  background: var(--pile-tint);
+  color: var(--pile);
+}
+
+.btn--auto {
+  width: auto;
+}
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: var(--tap-min);
+  padding: 0 8px 0 0;
+  border: none;
+  background: none;
+  color: var(--text-mute);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* White rounded surface */
+.panel {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-card);
+  border-radius: 16px;
   box-shadow: var(--shadow-card);
-  padding: 20px 22px 26px;
 }
 
-.card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.chip {
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--brand-tint);
-  color: var(--brand-strong);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.card-date {
+.note-box {
+  padding: 12px 14px;
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
+  color: var(--text-mute);
   font-size: 13px;
-  color: var(--text-mute);
+  line-height: 1.45;
 }
 
-.card-amount {
-  margin: 28px 0 6px;
-  font-size: 48px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.card-desc {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-mute);
-  letter-spacing: 0.01em;
-}
-
-/* Action buttons */
-.actions {
+/* Stat tiles */
+.stat-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
 
-.action {
-  min-height: calc(var(--tap-min) + 20px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-control);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
+.stat {
+  padding: 12px;
+  text-align: center;
 }
 
-.action--investigate {
-  background: var(--investigate-tint);
+.stat-n {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.stat-label {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-mute);
+}
+
+.tone-approve {
+  color: var(--approve);
+}
+.tone-investigate {
   color: var(--investigate);
 }
-
-.action--pile {
-  background: var(--pile-tint);
+.tone-pile {
   color: var(--pile);
 }
-
-/* The primary, most common action gets the solid brand treatment. */
-.action--approve {
-  background: var(--approve);
-  color: var(--on-brand);
+.tone-flag {
+  color: var(--flag);
 }
 
-.app-note {
-  margin: 0;
-  color: var(--text-faint);
-  font-size: 12px;
-  text-align: center;
+/* Full-screen overlay (investigation view) */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: var(--bg);
+  overflow-y: auto;
+}
+
+.overlay-inner {
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  padding: 12px 16px max(32px, env(safe-area-inset-bottom));
+}
+
+/* Bottom sheet (folder picker) */
+.sheet-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: var(--scrim);
+}
+
+.sheet {
+  width: 100%;
+  max-width: var(--app-max-width);
+  max-height: 85dvh;
+  overflow-y: auto;
+  padding: 18px 16px max(24px, env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
+  box-shadow: var(--shadow-sheet);
+}
+
+/* Form controls */
+.text-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* 16px+ stops iOS zooming in when the field is focused */
+}
+
+.text-input:focus {
+  outline: 2px solid var(--brand);
+  outline-offset: -1px;
+  background: var(--surface);
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
 }

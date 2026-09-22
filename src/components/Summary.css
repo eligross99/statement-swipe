@@ -1,0 +1,115 @@
+.summary-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 8px 0 20px;
+  text-align: center;
+}
+
+.summary-hero .screen-title {
+  margin-top: 10px;
+}
+
+.summary-recon {
+  margin: 0;
+  font-size: 13px;
+}
+
+.summary-section {
+  margin-top: 24px;
+}
+
+.summary-flag-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  color: var(--flag);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.summary-flag-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.summary-flag-row + .summary-flag-row {
+  border-top: 1px solid var(--border);
+}
+
+.summary-flag-desc {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.summary-folders {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.folder-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 12px 12px 14px;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.folder-card-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: var(--radius-control);
+  background: var(--pile-tint);
+  color: var(--pile);
+}
+
+.folder-card-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.folder-card-name {
+  font-size: 15px;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folder-card-meta {
+  margin-top: 1px;
+  font-size: 13px;
+  color: var(--text-mute);
+}
+
+.folder-card-total {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.summary-actions {
+  margin-top: 28px;
+}
