@@ -1,0 +1,29 @@
+@import './styles/tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  /* Stop the page bouncing/scrolling while cards are dragged on phones. */
+  overscroll-behavior: none;
+}
+
+/* Money figures: equal-width digits so columns of amounts line up and are easy to compare. */
+.num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}

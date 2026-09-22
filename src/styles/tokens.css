@@ -1,0 +1,44 @@
+/* Design tokens: the ONLY place hex colors are defined.
+   Direction: bright, calm, trustworthy. White surfaces, one deep "money green" brand color,
+   generous whitespace, and numbers that are easy to scan. */
+:root {
+  /* Surfaces */
+  --bg: #f4f7f5; /* app background: near-white with a hint of green */
+  --surface: #ffffff; /* cards, sheets */
+  --surface-sunken: #eef3f0; /* inputs, tracks, subtle fills */
+  --border: #e1e8e4;
+  --shadow-card: 0 1px 2px rgb(16 42 28 / 0.06), 0 12px 32px rgb(16 42 28 / 0.08);
+
+  /* Text */
+  --text: #0f1f17; /* near-black with a green undertone */
+  --text-mute: #5f6f66;
+  --text-faint: #8a978f;
+
+  /* Brand */
+  --brand: #0a7d4f; /* money green */
+  --brand-strong: #066040; /* pressed / emphasis */
+  --brand-tint: #e5f4ec; /* soft green fills, chips */
+  --on-brand: #ffffff;
+
+  /* Action colors: functional, not decorative. Same meaning everywhere. */
+  --approve: #0a7d4f; /* recognized: same as brand, so approving is the "healthy default" */
+  --approve-tint: #e5f4ec;
+  --investigate: #b86a0e; /* look closer */
+  --investigate-tint: #fbf0e1;
+  --pile: #4b52c8; /* file into a folder */
+  --pile-tint: #ecedfb;
+  --flag: #c9343a; /* possible fraud */
+  --flag-tint: #fbe9ea;
+  --wait: #2563c9; /* waiting on someone */
+  --wait-tint: #e7effb;
+
+  /* Type */
+  --font-sans:
+    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+
+  /* Layout */
+  --app-max-width: 420px;
+  --tap-min: 44px;
+  --radius-card: 20px;
+  --radius-control: 12px;
+}

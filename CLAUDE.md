@@ -30,11 +30,12 @@ Local-first: **the user's statement never leaves their device.**
 
 ## Commands
 
-<!-- Fill in after scaffolding (Phase 1). -->
 - `npm run dev`: local dev server
 - `npm run build`: typecheck + production build
-- `npm test`: unit tests
-- `npm run lint`: lint
+- `npm test`: unit tests (Vitest, once) · `npm run test:watch`: re-run on save
+- `npm run typecheck`: TypeScript only
+- `npm run preview`: serve the production build (the only mode where the PWA/service worker is active)
+- `npm run lint`: lint (oxlint; `docs/` is excluded)
 
 ## Architecture rules
 
@@ -64,11 +65,16 @@ Local-first: **the user's statement never leaves their device.**
 
 ## Design
 
-- Define the palette once as CSS custom properties / a tokens file (values in `docs/handoff.md` §9).
-  Never hard-code hex values in components.
-- Action colors are functional and consistent everywhere: approve green, investigate amber,
-  pile indigo, fraud red, waiting blue.
-- Paper cards on an ink deck. Amounts are the largest element and use monospaced tabular figures.
+**This supersedes the dark "ink deck" design in `docs/handoff.md` §9.** Eli chose a white-and-green
+direction: calm, clear, efficient, and signaling financial well-being.
+
+- All colors live in `src/styles/tokens.css` as CSS custom properties. Never hard-code hex values in components.
+- White cards on a near-white, faintly green background (`--bg`). One deep "money green" brand color (`--brand`).
+  Generous whitespace; soft shadows; no heavy borders.
+- Action colors are functional and consistent everywhere (each has a `-tint` for soft fills):
+  approve = brand green, investigate = amber, pile = indigo, fraud = red, waiting = blue.
+  Approve is the only solid-filled action (the "healthy default"); others use tint backgrounds.
+- Amounts are the largest element on a card and use tabular figures (`.num` class), in the system sans font.
 - Keep the signature feel: tilt on drag, fading directional stamps, 1–2 peek cards behind the top card.
 - Mobile-first (~400px). Touch targets ≥ 44px. Every gesture has a button and arrow-key fallback, plus undo.
 
@@ -83,8 +89,8 @@ Local-first: **the user's statement never leaves their device.**
 
 See `docs/handoff.md` §11 for details.
 
-- [ ] 1. Scaffold Vite + React + TS PWA with the stack above  ← **next**
-- [ ] 2. Port prototype; replace `window.storage` with IndexedDB
+- [x] 1. Scaffold Vite + React + TS PWA with the stack above
+- [ ] 2. Port prototype; replace `window.storage` with IndexedDB  ← **next**
 - [ ] 3. Harden CSV import (header-row detection, `TransactionSource`/`CSVSource`)
 - [ ] 4. Polish triage & folders for touch
 - [ ] 5. PWA finish (icons, manifest, offline) + Vercel deploy + on-phone test with a real CSV
@@ -93,6 +99,10 @@ See `docs/handoff.md` §11 for details.
 
 ## Gotchas
 
+- The Claude desktop app's built-in browser can't register service workers. Verify offline/install
+  behavior in real Chrome or on the phone, not the preview pane.
+- The prototype has setState-inside-useEffect patterns (flagged by oxlint when it scanned `docs/`).
+  Don't copy them; derive values during render or set state from the triggering event.
 - Bank CSVs vary: column names/order, sign conventions (purchases negative vs positive, or split
   debit/credit columns), and preamble rows above the header.
 - Cryptic merchant names (`SQ *DD BAR`) can't be decoded from CSV. Don't fake enrichment.
