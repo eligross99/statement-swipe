@@ -3,7 +3,7 @@
   justify-content: space-between;
   gap: 12px;
   margin: 0 0 14px;
-  font-size: 14px;
+  font-size: var(--text-sm);
   overflow-wrap: anywhere;
 }
 
@@ -44,13 +44,13 @@
 }
 
 .status-option-label {
-  font-size: 16px;
+  font-size: var(--text-md);
   font-weight: 600;
 }
 
 .status-option-hint {
   margin-top: 1px;
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--text-mute);
 }
 

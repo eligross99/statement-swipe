@@ -1,6 +1,6 @@
 .folder-sheet-sub {
   margin: 0 0 14px;
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 .folder-sheet-empty {
@@ -16,7 +16,7 @@
   max-width: 250px;
   margin: 8px 0 0;
   color: var(--text-mute);
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.45;
 }
 
@@ -48,7 +48,7 @@
   background: var(--pile-tint);
   color: var(--pile);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--text-md);
   font-weight: 600;
   cursor: pointer;
 }
@@ -87,7 +87,7 @@
   border-radius: var(--radius-control);
   background: var(--flag-tint);
   color: var(--flag);
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 .folder-confirm-btns {

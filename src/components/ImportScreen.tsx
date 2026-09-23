@@ -1,18 +1,33 @@
-import { FileText, Sparkles, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { ChevronLeft, FileText, Sparkles, X } from 'lucide-react'
+import { useMemo, useRef, useState } from 'react'
+import { useAnimate } from '../hooks/useAnimate'
 import { parseGrid, type ColumnMap, type Grid } from '../lib/csv'
 import { formatDate } from '../lib/dates'
 import { plural, usd } from '../lib/format'
+import { token } from '../lib/motion'
 import { SAMPLE_LABEL, sampleTransactions } from '../lib/sample'
 import { CSVSource, guessSettings, type CsvSettings } from '../sources/csvSource'
 import type { Transaction } from '../types'
+import { Sheet } from './Sheet'
 import './ImportScreen.css'
 
+/** The review already on this device, which a new statement would replace. */
+export interface CurrentReview {
+  label: string
+  reviewed: number
+  total: number
+}
+
 interface Props {
-  /** Label of an in-progress review the user can go back to, if any. */
-  resumeLabel: string | null
+  /** The saved review the user can go back to, if any. */
+  current: CurrentReview | null
   onResume: () => void
   onStart: (txns: Transaction[], label: string) => void
+}
+
+interface PendingStart {
+  txns: Transaction[]
+  label: string
 }
 
 interface Parsed {
@@ -23,11 +38,59 @@ interface Parsed {
 /** How many of the file's first lines the header-row picker offers. */
 const HEADER_CHOICES = 15
 
-export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
+export function ImportScreen({ current, onResume, onStart }: Props) {
   const [parsed, setParsed] = useState<Parsed | null>(null)
   const [settings, setSettings] = useState<CsvSettings | null>(null)
   const [error, setError] = useState('')
   const [dragOver, setDragOver] = useState(false)
+  // A new statement waiting for the user to confirm it may replace their review.
+  const [pending, setPending] = useState<PendingStart | null>(null)
+  // True after removing a chosen file, so the file picker slides back in from the left.
+  const [cameBack, setCameBack] = useState(false)
+  const mapping = useRef<HTMLDivElement>(null)
+  const animate = useAnimate()
+
+  /** Starts right away, unless that would replace a review the user has made decisions in. */
+  const start = (txns: Transaction[], label: string) => {
+    if (current && current.reviewed > 0) setPending({ txns, label })
+    else onStart(txns, label)
+  }
+
+  /** Briefly highlights a field the user just changed, so the change is easy to see. */
+  const flash = (el: HTMLElement) => {
+    const rest = getComputedStyle(el)
+    const from = { backgroundColor: token('--brand-tint'), borderColor: token('--brand') }
+    void animate(el, [from, { backgroundColor: rest.backgroundColor, borderColor: rest.borderColor }], {
+      duration: 700,
+    })
+  }
+
+  const confirmSheet = pending && current && (
+    <Sheet id="replace-title" title="Replace your review?" onDismiss={() => setPending(null)}>
+      {(close) => (
+        <>
+          <p className="import-confirm-text">
+            {current.reviewed < current.total
+              ? `You’ve reviewed ${current.reviewed} of ${plural(current.total, 'purchase')} in “${current.label}”. `
+              : `Your review of “${current.label}” is finished. `}
+            Starting a new statement clears it, including its folders and notes.
+          </p>
+          <div className="btn-row">
+            <button type="button" className="btn btn--secondary" onClick={() => close()} autoFocus>
+              Keep my review
+            </button>
+            <button
+              type="button"
+              className="btn btn--flag"
+              onClick={() => close(() => onStart(pending.txns, pending.label))}
+            >
+              Replace it
+            </button>
+          </div>
+        </>
+      )}
+    </Sheet>
+  )
 
   const source = useMemo(() => (parsed && settings ? new CSVSource(parsed.grid, settings) : null), [parsed, settings])
   const purchases = useMemo(() => source?.purchases() ?? [], [source])
@@ -53,7 +116,25 @@ export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
 
   if (!parsed) {
     return (
-      <div className="screen">
+      <div className={`screen${cameBack ? ' enter-pop' : ''}`} key="choose">
+        {current && (
+          <div className="panel import-current">
+            <p>
+              Your review of <strong>“{current.label}”</strong> is saved
+              {current.reviewed < current.total && (
+                <>
+                  {' '}
+                  (<span className="num">{current.reviewed}</span> of {plural(current.total, 'purchase')} reviewed)
+                </>
+              )}
+              .
+            </p>
+            <button type="button" className="btn btn--secondary" onClick={onResume}>
+              <ChevronLeft size={18} /> Back to my review
+            </button>
+          </div>
+        )}
+
         <h2 className="screen-title">Import your statement</h2>
         <p className="muted import-lede">
           Download a CSV from your bank or card site, then add it here. It never leaves this device.
@@ -99,16 +180,11 @@ export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
         <button
           type="button"
           className="btn btn--secondary import-sample"
-          onClick={() => onStart(sampleTransactions(), SAMPLE_LABEL)}
+          onClick={() => start(sampleTransactions(), SAMPLE_LABEL)}
         >
           <Sparkles size={16} /> Try the sample statement
         </button>
-
-        {resumeLabel && (
-          <button type="button" className="btn btn--pile import-sample" onClick={onResume}>
-            Resume “{resumeLabel}”
-          </button>
-        )}
+        {confirmSheet}
       </div>
     )
   }
@@ -120,17 +196,24 @@ export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
   const ready = !!(map.desc && map.amount) && purchases.length > 0
 
   return (
-    <div className="screen">
+    <div className="screen enter-push" key="map" ref={mapping}>
       <div className="import-file">
         <FileText size={16} className="tone-pile" />
         <span className="import-file-name">{parsed.fileName}</span>
         <button
           type="button"
           className="icon-btn icon-btn--flat"
-          onClick={() => {
-            setParsed(null)
-            setSettings(null)
-          }}
+          // Fade the column setup away, then go back to choosing a file.
+          onClick={() =>
+            void animate(mapping.current, [{ opacity: 1 }, { opacity: 0 }], { duration: 200, hold: true }, [
+              { opacity: 1 },
+              { opacity: 0 },
+            ]).then(() => {
+              setParsed(null)
+              setSettings(null)
+              setCameBack(true)
+            })
+          }
           aria-label="Choose a different file"
         >
           <X size={18} />
@@ -151,7 +234,10 @@ export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
             className="map-select"
             value={headerRow}
             // A different header row means different columns, so re-guess everything.
-            onChange={(e) => setSettings(guessSettings(parsed.grid, Number(e.target.value)))}
+            onChange={(e) => {
+              setSettings(guessSettings(parsed.grid, Number(e.target.value)))
+              flash(e.currentTarget)
+            }}
           >
             <option value={-1}>None (no header row)</option>
             {parsed.grid.slice(0, HEADER_CHOICES).map((row, i) => (
@@ -161,15 +247,35 @@ export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
             ))}
           </select>
         </div>
-        <MapRow label="Description" value={map.desc} headers={headers} onChange={(desc) => setMap({ ...map, desc })} />
-        <MapRow label="Amount" value={map.amount} headers={headers} onChange={(amount) => setMap({ ...map, amount })} />
-        <MapRow label="Date" optional value={map.date} headers={headers} onChange={(date) => setMap({ ...map, date })} />
+        <MapRow
+          label="Description"
+          value={map.desc}
+          headers={headers}
+          onChange={(desc) => setMap({ ...map, desc })}
+          onChanged={flash}
+        />
+        <MapRow
+          label="Amount"
+          value={map.amount}
+          headers={headers}
+          onChange={(amount) => setMap({ ...map, amount })}
+          onChanged={flash}
+        />
+        <MapRow
+          label="Date"
+          optional
+          value={map.date}
+          headers={headers}
+          onChange={(date) => setMap({ ...map, date })}
+          onChanged={flash}
+        />
         <MapRow
           label="Category"
           optional
           value={map.category}
           headers={headers}
           onChange={(category) => setMap({ ...map, category })}
+          onChanged={flash}
         />
         <button
           type="button"
@@ -186,8 +292,9 @@ export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
       </div>
 
       <h3 className="section-label import-preview-label">Preview</h3>
+      {/* Keyed by the settings, so the preview fades in fresh whenever a choice above changes it. */}
       {purchases.length ? (
-        <div className="panel preview-list">
+        <div className="panel preview-list enter-fade" key={JSON.stringify(settings)}>
           {purchases.slice(0, 5).map((p, i) => (
             <div key={i} className="preview-row">
               <div className="preview-main">
@@ -211,12 +318,13 @@ export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
         disabled={!ready}
         onClick={async () => {
           const txns = await source.load()
-          onStart(txns, parsed.fileName.replace(/\.[^.]+$/, ''))
+          start(txns, parsed.fileName.replace(/\.[^.]+$/, ''))
         }}
       >
         Review {plural(purchases.length, 'purchase')}, <span className="num">${usd(total)}</span>
       </button>
       <p className="muted import-foot">Card payments and credits are skipped automatically.</p>
+      {confirmSheet}
     </div>
   )
 }
@@ -227,6 +335,7 @@ function MapRow(props: {
   headers: string[]
   optional?: boolean
   onChange: (v: string) => void
+  onChanged: (el: HTMLSelectElement) => void
 }) {
   const id = `map-${props.label.toLowerCase()}`
   return (
@@ -235,7 +344,15 @@ function MapRow(props: {
         {props.label}
         {props.optional && <span className="map-optional muted">optional</span>}
       </label>
-      <select id={id} className="map-select" value={props.value} onChange={(e) => props.onChange(e.target.value)}>
+      <select
+        id={id}
+        className="map-select"
+        value={props.value}
+        onChange={(e) => {
+          props.onChange(e.target.value)
+          props.onChanged(e.currentTarget)
+        }}
+      >
         <option value="">{props.optional ? 'None' : 'Choose column…'}</option>
         {props.headers.map((h) => (
           <option key={h} value={h}>

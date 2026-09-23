@@ -1,5 +1,6 @@
-import { ChevronDown, ChevronLeft, Folder, FolderOpen, Pencil } from 'lucide-react'
+import { ChevronDown, Folder, FolderOpen, Pencil } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useAnimate } from '../hooks/useAnimate'
 import { formatDate } from '../lib/dates'
 import { plural, usd } from '../lib/format'
 import { ACTION_LABELS, openItems, pileItems, stillToActOn, sumAmounts } from '../lib/review'
@@ -10,15 +11,17 @@ import './FolderDetail.css'
 interface Props {
   pile: Pile | null
   txns: Transaction[]
-  onBack: () => void
   onSetAction: (txnId: string, action: Action) => void
   onSetNote: (txnId: string, note: string) => void
 }
 
-/** One folder's purchases, each with a status and a note. */
-export function FolderDetail({ pile, txns, onBack, onSetAction, onSetNote }: Props) {
+/** One folder's purchases, each with a status and a note. The header's back button returns
+ *  to all folders. */
+export function FolderDetail({ pile, txns, onSetAction, onSetNote }: Props) {
   const [noteOpenId, setNoteOpenId] = useState<string | null>(null)
   const [statusForId, setStatusForId] = useState<string | null>(null)
+  const rows = useRef(new Map<string, HTMLLIElement>())
+  const animate = useAnimate()
   if (!pile) return null
 
   const items = pileItems(txns, pile.id)
@@ -28,10 +31,6 @@ export function FolderDetail({ pile, txns, onBack, onSetAction, onSetNote }: Pro
 
   return (
     <div className="screen">
-      <button type="button" className="back-link" onClick={onBack}>
-        <ChevronLeft size={20} /> All folders
-      </button>
-
       <div className="fd-head">
         <span className="folder-card-icon fd-icon">
           <Folder size={22} />
@@ -74,7 +73,14 @@ export function FolderDetail({ pile, txns, onBack, onSetAction, onSetNote }: Pro
             {items.map((t) => {
               const noteOpen = noteOpenId === t.id
               return (
-                <li key={t.id} className="panel fd-item">
+                <li
+                  key={t.id}
+                  className="panel fd-item"
+                  ref={(el) => {
+                    if (el) rows.current.set(t.id, el)
+                    else rows.current.delete(t.id)
+                  }}
+                >
                   <div className="fd-item-top">
                     <div className="fd-item-main">
                       <span className="fd-item-desc">{t.desc}</span>
@@ -141,6 +147,12 @@ export function FolderDetail({ pile, txns, onBack, onSetAction, onSetNote }: Pro
           onPick={(action) => {
             onSetAction(statusFor.id, action)
             setStatusForId(null)
+            // A gentle pulse on the row, so it's clear which purchase changed.
+            void animate(rows.current.get(statusFor.id) ?? null, [
+              { transform: 'scale(1)' },
+              { transform: 'scale(1.025)' },
+              { transform: 'scale(1)' },
+            ])
           }}
         />
       )}

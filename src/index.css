@@ -13,13 +13,25 @@ body,
   margin: 0;
 }
 
+/* On iPhones, base the text size on the phone's own text-size setting (Dynamic Type), so every
+   rem-based size grows or shrinks with it. Touch screens only: on a Mac this would be 13px. */
+@supports (font: -apple-system-body) {
+  @media (hover: none) and (pointer: coarse) {
+    html {
+      font: -apple-system-body;
+    }
+  }
+}
+
 body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
+  font-size: var(--text-md);
   -webkit-font-smoothing: antialiased;
-  /* Stop the page bouncing/scrolling while cards are dragged on phones. */
-  overscroll-behavior: none;
+  /* Keep iPhone's gentle bounce at the edges of a page, but don't let it chain into Android's
+     pull-to-refresh. The swipe card itself opts out of page movement with touch-action. */
+  overscroll-behavior-y: contain;
 }
 
 /* Money figures: equal-width digits so columns of amounts line up and are easy to compare. */
@@ -39,22 +51,73 @@ a {
 
 button:not(:disabled) {
   transition:
-    transform 0.08s ease,
-    filter 0.08s ease;
+    transform 0.2s var(--ease-out),
+    filter 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
+/* The press shows instantly; the release eases back (above), so even a quick tap is visible. */
 button:not(:disabled):active {
   transform: scale(0.97);
-  filter: brightness(0.96);
+  filter: brightness(0.92);
+  transition-duration: 0s;
 }
 
-/* People who ask their device for less motion get instant changes instead of animations. */
+/* Screen entrances (see `screenEnter` in src/lib/motion.ts). Screens never swap instantly:
+   forward slides in from the right, back from the left, finishing rises up. */
+.enter-fade {
+  animation: enter-fade var(--dur-enter) var(--ease-out) backwards;
+}
+.enter-push {
+  animation: enter-push var(--dur-enter) var(--ease-out) backwards;
+}
+.enter-pop {
+  animation: enter-pop var(--dur-enter) var(--ease-out) backwards;
+}
+.enter-rise {
+  animation: enter-rise 380ms var(--ease-out) backwards;
+}
+
+@keyframes enter-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes enter-push {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+}
+@keyframes enter-pop {
+  from {
+    opacity: 0;
+    transform: translateX(-32px);
+  }
+}
+@keyframes enter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+}
+
+/* People who ask their device for less motion get quick fades instead of movement. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+
+  .enter-fade,
+  .enter-push,
+  .enter-pop,
+  .enter-rise,
+  .motion-fade {
+    animation: enter-fade 150ms ease-out backwards !important;
   }
 }
 

@@ -82,13 +82,13 @@ describe('App', () => {
 
   it('files a purchase into a new folder, then into the same folder', async () => {
     const user = await startSample()
-    await user.click(screen.getByRole('button', { name: 'File it' }))
+    await user.click(screen.getByRole('button', { name: 'File' }))
     expect(screen.getByText(/No folders yet/)).toBeInTheDocument()
     await user.type(screen.getByRole('textbox', { name: 'New folder name' }), 'Ski trip{Enter}')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'File it' }))
+    await user.click(screen.getByRole('button', { name: 'File' }))
     await user.click(screen.getByRole('button', { name: /^Ski trip/ }))
     expect(screen.getByText('2 of 16 reviewed')).toBeInTheDocument()
   })
@@ -104,7 +104,7 @@ describe('App', () => {
 
   it('reaches the summary after the last card and opens a folder for triage', async () => {
     const user = await startSample()
-    await user.click(screen.getByRole('button', { name: 'File it' }))
+    await user.click(screen.getByRole('button', { name: 'File' }))
     await user.type(screen.getByRole('textbox', { name: 'New folder name' }), 'Ski trip{Enter}')
     for (let i = 0; i < 15; i++) await user.click(screen.getByRole('button', { name: 'Approve' }))
 
@@ -133,6 +133,50 @@ describe('App', () => {
     // Tapping the saved note reopens the editor, with the stray spaces trimmed.
     await user.click(screen.getByRole('button', { name: 'Edit note: Venmo Sam' }))
     expect(screen.getByRole('textbox', { name: /Note for/ })).toHaveValue('Venmo Sam')
+  })
+
+  it('asks before a new statement replaces a review in progress, and can go back to it', async () => {
+    const user = await startSample()
+    await user.click(screen.getByRole('button', { name: 'Approve' }))
+    await user.click(screen.getByRole('button', { name: 'New statement' }))
+    expect(screen.getByText(/is saved/)).toBeInTheDocument()
+
+    // Keeping the review closes the question and changes nothing.
+    await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
+    const confirm = screen.getByRole('dialog', { name: 'Replace your review?' })
+    expect(within(confirm).getByText(/1 of 16 purchases/)).toBeInTheDocument()
+    await user.click(within(confirm).getByRole('button', { name: 'Keep my review' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    // The header's back button returns to the review where it was left.
+    await user.click(screen.getByRole('button', { name: 'Back to your review' }))
+    expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
+
+    // Replacing it starts fresh.
+    await user.click(screen.getByRole('button', { name: 'New statement' }))
+    await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
+    await user.click(screen.getByRole('button', { name: 'Replace it' }))
+    expect(screen.getByText('0 of 16 reviewed')).toBeInTheDocument()
+  })
+
+  it('starts a new statement without asking when nothing has been reviewed yet', async () => {
+    const user = await startSample()
+    await user.click(screen.getByRole('button', { name: 'New statement' }))
+    await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByText('0 of 16 reviewed')).toBeInTheDocument()
+  })
+
+  it('uses the top-left button to go back from a folder to all folders', async () => {
+    const user = await startSample()
+    await user.click(screen.getByRole('button', { name: 'File' }))
+    await user.type(screen.getByRole('textbox', { name: 'New folder name' }), 'Ski trip{Enter}')
+    for (let i = 0; i < 15; i++) await user.click(screen.getByRole('button', { name: 'Approve' }))
+    await user.click(screen.getByRole('button', { name: /Ski trip/ }))
+    expect(screen.queryByRole('button', { name: 'Undo last action' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Back to all folders' }))
+    expect(screen.getByRole('heading', { name: 'Review complete' })).toBeInTheDocument()
   })
 
   it('shows the same readable date on the card and in the investigation view', async () => {

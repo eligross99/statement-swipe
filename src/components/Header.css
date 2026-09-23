@@ -1,21 +1,45 @@
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
+  min-height: calc(var(--tap-min) + 28px);
   padding: max(16px, env(safe-area-inset-top)) 16px 12px;
 }
 
-.header-title {
+.header-name {
+  flex: 1;
   min-width: 0;
-  text-align: center;
+  margin: 0;
+  /* Capped so very large text settings can't push the buttons off the header. */
+  font-size: min(var(--text-md), 22px);
+  font-weight: 650;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  /* Long statement names wrap to a second line before they're cut short. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
-.header-name {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 650;
+/* A labeled pill, so it's clear this starts a new statement (and doesn't erase anything:
+   the import screen has a way back, and replacing a review asks first). */
+.header-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  min-height: var(--tap-min);
+  padding: 0 12px;
+  border: none;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--brand-strong);
+  box-shadow: var(--shadow-card);
+  font: inherit;
+  font-size: min(var(--text-xs), 18px);
+  font-weight: 600;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  cursor: pointer;
 }

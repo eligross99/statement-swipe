@@ -1,4 +1,6 @@
 import { Check, ChevronLeft, Flag, ShieldAlert } from 'lucide-react'
+import { useRef } from 'react'
+import { useAnimate } from '../hooks/useAnimate'
 import { useEscape } from '../hooks/useEscape'
 import { formatDate } from '../lib/dates'
 import { usd } from '../lib/format'
@@ -14,15 +16,28 @@ interface Props {
   onFlag: () => void
 }
 
-/** Full statement details for one purchase. "Back" leaves the card unresolved in the deck. */
+/** Full statement details for one purchase. "Back" leaves the card unresolved in the deck.
+ *  Every way out slides the view away first, then reports back. */
 export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag }: Props) {
-  useEscape(onBack)
+  const animate = useAnimate()
+  const ref = useRef<HTMLDivElement>(null)
+  const leaving = useRef(false)
+
+  const leave = (then: () => void) => {
+    if (leaving.current) return
+    leaving.current = true
+    void animate(ref.current, [{ transform: 'translateX(0)' }, { transform: 'translateX(100%)' }], { hold: true }, [
+      { opacity: 1 },
+      { opacity: 0 },
+    ]).then(then)
+  }
+  useEscape(() => leave(onBack))
 
   return (
-    <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="investigate-title">
+    <div ref={ref} className="overlay motion-fade" role="dialog" aria-modal="true" aria-labelledby="investigate-title">
       <div className="overlay-inner">
         <div className="investigate-top">
-          <button type="button" className="back-link" onClick={onBack} autoFocus>
+          <button type="button" className="back-link" onClick={() => leave(onBack)} autoFocus>
             <ChevronLeft size={20} /> Back
           </button>
           {txn.sus && (
@@ -52,10 +67,10 @@ export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag }: P
         {canDecide && (
           <div className="investigate-actions">
             <p className="investigate-question">Do you recognize this purchase?</p>
-            <button type="button" className="btn btn--primary" onClick={onApprove}>
+            <button type="button" className="btn btn--primary" onClick={() => leave(onApprove)}>
               <Check size={18} /> Yes, approve it
             </button>
-            <button type="button" className="btn btn--flag" onClick={onFlag}>
+            <button type="button" className="btn btn--flag" onClick={() => leave(onFlag)}>
               <Flag size={18} /> No, flag as possible fraud
             </button>
           </div>
