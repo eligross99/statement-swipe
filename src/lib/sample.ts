@@ -3,7 +3,7 @@
 import type { Transaction } from '../types'
 import { makeId } from './format'
 
-export const SAMPLE_LABEL = 'March 2026 · Sample'
+export const SAMPLE_LABEL = 'March 2026 sample'
 
 const ROWS: { desc: string; amount: number; date: string; cat: string; sus?: boolean; loc?: string }[] = [
   { desc: "TRADER JOE'S #512 BOSTON MA", amount: 87.43, date: '2026-03-03', cat: 'Groceries' },

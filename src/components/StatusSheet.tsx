@@ -41,7 +41,8 @@ export function StatusSheet({ txn, onPick, onClose }: Props) {
           </button>
         </div>
         <p className="muted status-sheet-sub">
-          {txn.desc} · <span className="num">${usd(txn.amount)}</span>
+          <span>{txn.desc}</span>
+          <span className="num">${usd(txn.amount)}</span>
         </p>
 
         <div className="status-options">

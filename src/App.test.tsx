@@ -43,7 +43,7 @@ describe('App', () => {
     expect(screen.getByLabelText('Column names')).toHaveValue('3')
     expect(screen.getByLabelText(/^Category/)).toHaveValue('Category')
 
-    await user.click(screen.getByRole('button', { name: /Start review · 2 purchases/ }))
+    await user.click(screen.getByRole('button', { name: /Review 2 purchases/ }))
     expect(within(await screen.findByRole('group', { name: /^Purchase:/ })).getByText('FAKE COFFEE CO #1')).toBeInTheDocument()
     expect(screen.getByText('Dining')).toBeInTheDocument()
   })
@@ -53,13 +53,13 @@ describe('App', () => {
     expect(within(topCard()).getByText("TRADER JOE'S #512 BOSTON MA")).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Approve' }))
     expect(within(topCard()).getByText('SQ *DD BAR LLC 8004563')).toBeInTheDocument()
-    expect(screen.getByText('1 of 16')).toBeInTheDocument()
+    expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
   })
 
   it('arrow keys act on the top card', async () => {
     const user = await startSample()
     await user.keyboard('{ArrowRight}')
-    expect(screen.getByText('1 of 16')).toBeInTheDocument()
+    expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
     await user.keyboard('{ArrowLeft}')
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
@@ -73,11 +73,11 @@ describe('App', () => {
     await user.click(within(dialog).getByRole('button', { name: /Back/ }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(within(topCard()).getByText("TRADER JOE'S #512 BOSTON MA")).toBeInTheDocument()
-    expect(screen.getByText('0 of 16')).toBeInTheDocument()
+    expect(screen.getByText('0 of 16 reviewed')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Look closer' }))
-    await user.click(screen.getByRole('button', { name: /Flag as possible fraud/ }))
-    expect(screen.getByText('1 of 16')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /flag as possible fraud/ }))
+    expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
   })
 
   it('files a purchase into a new folder, then into the same folder', async () => {
@@ -86,11 +86,11 @@ describe('App', () => {
     expect(screen.getByText(/No folders yet/)).toBeInTheDocument()
     await user.type(screen.getByRole('textbox', { name: 'New folder name' }), 'Ski trip{Enter}')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.getByText('1 of 16')).toBeInTheDocument()
+    expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'File it' }))
     await user.click(screen.getByRole('button', { name: /^Ski trip/ }))
-    expect(screen.getByText('2 of 16')).toBeInTheDocument()
+    expect(screen.getByText('2 of 16 reviewed')).toBeInTheDocument()
   })
 
   it('undo brings back the previous card', async () => {
@@ -98,7 +98,7 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Approve' }))
     await user.click(screen.getByRole('button', { name: 'Undo last action' }))
     expect(within(topCard()).getByText("TRADER JOE'S #512 BOSTON MA")).toBeInTheDocument()
-    expect(screen.getByText('0 of 16')).toBeInTheDocument()
+    expect(screen.getByText('0 of 16 reviewed')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Undo last action' })).toBeDisabled()
   })
 
@@ -167,6 +167,6 @@ describe('App', () => {
     render(<App />)
     expect(await screen.findByText('SECOND SHOP')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Saved March' })).toBeInTheDocument()
-    expect(screen.getByText('1 of 2')).toBeInTheDocument()
+    expect(screen.getByText('1 of 2 reviewed')).toBeInTheDocument()
   })
 })

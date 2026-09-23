@@ -80,6 +80,11 @@ direction: calm, clear, efficient, and signaling financial well-being.
 - Amounts are the largest element on a card and use tabular figures (`.num` class), in the system sans font.
 - Keep the signature feel: tilt on drag, fading directional stamps, 1–2 peek cards behind the top card.
 - Mobile-first (~400px). Touch targets ≥ 44px. Every gesture has a button and arrow-key fallback, plus undo.
+- Words and labels (from the `frontend-design` skill in `.claude/skills/`): sentence case, no all-caps
+  labels (the swipe stamps are the one exception), no "A · B · C" meta strings, no "→" on buttons.
+  One name per action everywhere: **Approve**, **Look closer**, **File**, **Flag as possible fraud**.
+  Buttons say what happens; empty and error states tell the user what to do next.
+- Destructive actions (start over, delete a folder with purchases) always ask first.
 
 ## Workflow
 

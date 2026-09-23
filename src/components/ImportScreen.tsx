@@ -1,4 +1,4 @@
-import { ArrowRight, FileText, Sparkles, X } from 'lucide-react'
+import { FileText, Sparkles, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { parseGrid, type ColumnMap, type Grid } from '../lib/csv'
 import { formatDate } from '../lib/dates'
@@ -77,7 +77,7 @@ export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
             <FileText size={24} />
           </span>
           <span className="dropzone-title">Choose a CSV file</span>
-          <span className="dropzone-sub">or drop it here</span>
+          <span className="dropzone-sub">or drag it here</span>
           <input
             type="file"
             accept=".csv,text/csv"
@@ -106,7 +106,7 @@ export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
 
         {resumeLabel && (
           <button type="button" className="btn btn--pile import-sample" onClick={onResume}>
-            Back to “{resumeLabel}” <ArrowRight size={16} />
+            Resume “{resumeLabel}”
           </button>
         )}
       </div>
@@ -214,7 +214,7 @@ export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
           onStart(txns, parsed.fileName.replace(/\.[^.]+$/, ''))
         }}
       >
-        Start review · {plural(purchases.length, 'purchase')} · <span className="num">${usd(total)}</span> <ArrowRight size={18} />
+        Review {plural(purchases.length, 'purchase')}, <span className="num">${usd(total)}</span>
       </button>
       <p className="muted import-foot">Card payments and credits are skipped automatically.</p>
     </div>

@@ -47,6 +47,13 @@
   color: var(--text-mute);
 }
 
+/* Phones can't drag files in, so don't offer it there. */
+@media (hover: none) {
+  .dropzone-sub {
+    display: none;
+  }
+}
+
 .import-sample {
   margin-top: 12px;
 }

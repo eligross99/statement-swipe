@@ -41,21 +41,22 @@ export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag }: P
           <Field label="Transaction date" value={formatDate(txn.date, 'long')} />
           <Field label="Category" value={txn.cat} />
           <Field label="Location" value={txn.loc || 'Not in statement'} />
-          <Field label="Descriptor" value={txn.desc} mono />
+          <Field label="Statement text" value={txn.desc} mono />
         </dl>
 
         <p className="note-box investigate-note">
-          This is everything the statement line carries. Connecting your card later can fill in the real merchant,
-          logo, and exact location.
+          This is everything your statement says about this purchase. Cryptic names often belong to a
+          payment service, like SQ for Square, with the shop’s name after it.
         </p>
 
         {canDecide && (
           <div className="investigate-actions">
+            <p className="investigate-question">Do you recognize this purchase?</p>
             <button type="button" className="btn btn--primary" onClick={onApprove}>
-              <Check size={18} /> I recognize it — approve
+              <Check size={18} /> Yes, approve it
             </button>
             <button type="button" className="btn btn--flag" onClick={onFlag}>
-              <Flag size={18} /> Flag as possible fraud
+              <Flag size={18} /> No, flag as possible fraud
             </button>
           </div>
         )}
