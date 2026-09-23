@@ -239,6 +239,19 @@
   box-shadow: var(--shadow-sheet);
 }
 
+/* Sheet title row: heading on the left, close button on the right. */
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sheet-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+}
+
 /* Form controls */
 .text-input {
   width: 100%;

@@ -1,5 +1,6 @@
 import { Check, Layers, Search } from 'lucide-react'
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { formatDate } from '../lib/dates'
 import { usd } from '../lib/format'
 import { reviewedCount, sumAmounts } from '../lib/review'
 import type { Transaction } from '../types'
@@ -170,7 +171,7 @@ function CardFace({ txn }: { txn: Transaction }) {
     <div className="card-face">
       <div className="card-face-top">
         <span className="card-face-cat">{txn.cat}</span>
-        <span className="card-face-date num">{txn.date}</span>
+        <span className="card-face-date num">{formatDate(txn.date)}</span>
       </div>
       <div className="card-face-body">
         <p className="card-face-amount num">${usd(txn.amount)}</p>

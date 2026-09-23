@@ -1,6 +1,6 @@
 import { ChevronRight, CircleCheck, Folder, ShieldAlert } from 'lucide-react'
 import { plural, usd } from '../lib/format'
-import { pileItems, sumAmounts } from '../lib/review'
+import { openItems, pileItems, sumAmounts } from '../lib/review'
 import type { Pile, Transaction } from '../types'
 import './Summary.css'
 
@@ -57,7 +57,7 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart, onNew }
           <h3 className="section-label">Your folders</h3>
           <div className="summary-folders">
             {groups.map(({ p, items }) => {
-              const open = items.filter((t) => t.action !== 'done').length
+              const open = openItems(items).length
               return (
                 <button key={p.id} type="button" className="panel folder-card" onClick={() => onOpenPile(p.id)}>
                   <span className="folder-card-icon">
@@ -67,7 +67,11 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart, onNew }
                     <span className="folder-card-name">{p.name}</span>
                     <span className="folder-card-meta">
                       {plural(items.length, 'item')}
-                      {open > 0 && <span className="tone-investigate"> · {open} to act on</span>}
+                      {open > 0 ? (
+                        <span className="tone-investigate"> · {open} to act on</span>
+                      ) : (
+                        <span className="tone-approve"> · All done</span>
+                      )}
                     </span>
                   </span>
                   <span className="folder-card-total num">${usd(sumAmounts(items))}</span>

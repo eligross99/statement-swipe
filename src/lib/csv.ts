@@ -3,6 +3,7 @@
 
 import Papa from 'papaparse'
 import type { Transaction } from '../types'
+import { normalizeDate } from './dates'
 import { makeId } from './format'
 
 /** The file as a grid of trimmed cells, blank lines removed. */
@@ -255,7 +256,7 @@ export function toPurchases(rows: CsvRow[], map: ColumnMap, negativePurchases: b
     if (!desc || Number.isNaN(n)) continue
     if (negativePurchases ? n >= 0 : n <= 0) continue
     if (PAYMENT_RX.test(desc)) continue
-    out.push({ desc, amount: Math.abs(n), date: cell(r, map.date), cat: cell(r, map.category) })
+    out.push({ desc, amount: Math.abs(n), date: normalizeDate(cell(r, map.date)), cat: cell(r, map.category) })
   }
   return out
 }

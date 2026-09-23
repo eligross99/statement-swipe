@@ -2,7 +2,6 @@ import type { Transaction } from '../types'
 import {
   currentTxn,
   initialReviewState,
-  nextAction,
   pileItems,
   reviewReducer,
   stillToActOn,
@@ -136,8 +135,13 @@ describe('folder triage', () => {
     expect(stillToActOn(items())).toBe(40)
   })
 
-  it('status cycles none → to do → waiting → done → none', () => {
-    expect([null, 'todo', 'waiting', 'done'].map((a) => nextAction(a as never))).toEqual(['todo', 'waiting', 'done', null])
+  it('a status can be cleared, which counts it as still to act on again', () => {
+    let s = run({ type: 'createPileAndFile', pile: SKI })
+    s = reviewReducer(s, { type: 'setAction', txnId: 'a', action: 'done' })
+    expect(stillToActOn(pileItems(s.session.txns, 'ski'))).toBe(0)
+    s = reviewReducer(s, { type: 'setAction', txnId: 'a', action: null })
+    expect(s.session.txns[0].action).toBeNull()
+    expect(stillToActOn(pileItems(s.session.txns, 'ski'))).toBe(10)
   })
 })
 
