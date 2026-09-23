@@ -6,7 +6,7 @@ triage folders (split with friends, reimburse, taxes) with a status and a note p
 Local-first: **the user's statement never leaves their device.**
 
 - Full product and engineering brief: `docs/handoff.md`. Read the relevant section before starting a phase.
-- Feature ideas beyond the handoff, with decisions and target phases: `docs/ideas.md`. Read it before phases 4, 6, and 7.
+- Feature ideas beyond the handoff, with decisions and target phases: `docs/ideas.md`. Read it before phases 6 through 9.
 - Reference prototype (the UI/interaction source of truth): `docs/prototype/StatementSwipe.jsx`.
   It is a single-file Claude-artifact prototype. Port its behavior faithfully. Do not import from it.
 
@@ -102,11 +102,13 @@ See `docs/handoff.md` §11 for details.
     Actions before: explain what it is and walk them through any GitHub settings step by step.
 - [ ] 6. Multiple statements: Dexie storage (migrate the saved session), Statements screen, bottom
   navigation, Tasks dashboard, light Settings (see `docs/ideas.md`)
-- [ ] 7. On-device smarts: familiar/new merchant tags, merchant-code decoder, web-search link,
+- [ ] 7. Onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
+  Settings; the standalone "Try the sample statement" button goes away (see `docs/ideas.md`)
+- [ ] 8. On-device smarts: familiar/new merchant tags, merchant-code decoder, web-search link,
   calendar reminders (see `docs/ideas.md`)
-- [ ] 8. Accounts/backend + Stripe, then bank sync (Teller → Plaid), then enrichment; push
+- [ ] 9. Accounts/backend + Stripe, then bank sync (Teller → Plaid), then enrichment; push
   notifications; optional AI merchant explanation
-- [ ] 9. Security & compliance hardening (with real legal counsel)
+- [ ] 10. Security & compliance hardening (with real legal counsel)
 
 ## Gotchas
 
