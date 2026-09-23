@@ -223,3 +223,9 @@ until Phase 9. Until then the PWA lets us ship fixes in minutes without Apple's 
   fee), Apple's review on every update, and a Mac with Xcode for iPhone builds.
 - Keep the PWA running alongside it: same code, and it stays the quickest way to try the app.
 
+### Vercel plugin for Claude Code → start of Phase 9
+Vercel's official Claude Code plugin (`npx plugins add vercel/vercel-plugin`, needs Bun) adds skills
+for server functions, databases, auth, env vars, and deployments. Eli suggested it on 2026-09-23;
+we deferred it because a static Vite app uses almost none of it. **Install it at the start of
+Phase 9**, when we add the backend, Stripe, and the bank-connection relay.
+

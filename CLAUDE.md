@@ -120,7 +120,7 @@ See `docs/handoff.md` §11 for details.
   calendar reminders (see `docs/ideas.md`)
 - [ ] 9. App Store version with Capacitor (**ask Eli again before starting**), then accounts/backend + Stripe, then opt-in bank connection (Teller → Plaid) through a relay-only
   server that never stores transactions, then enrichment; push notifications; optional AI merchant
-  explanation (see `docs/ideas.md`)
+  explanation (see `docs/ideas.md`). Install the Vercel Claude Code plugin at the start of this phase.
 - [ ] 10. Security & compliance hardening (with real legal counsel)
 
 ## Gotchas
