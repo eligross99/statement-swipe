@@ -28,6 +28,26 @@ body {
   letter-spacing: -0.02em;
 }
 
+/* Every tap gets an instant, visible response. We replace the browser's gray tap flash with a
+   slight press-in so buttons feel physical. Specific components (like the swipe buttons) can
+   override this with their own pressed style. */
+button,
+label,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled) {
+  transition:
+    transform 0.08s ease,
+    filter 0.08s ease;
+}
+
+button:not(:disabled):active {
+  transform: scale(0.97);
+  filter: brightness(0.96);
+}
+
 /* People who ask their device for less motion get instant changes instead of animations. */
 @media (prefers-reduced-motion: reduce) {
   *,

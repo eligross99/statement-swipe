@@ -192,7 +192,7 @@
   flex-direction: column;
   align-items: center;
   padding: 28px 20px;
-  color: var(--text-faint);
+  color: var(--text-mute);
   text-align: center;
 }
 

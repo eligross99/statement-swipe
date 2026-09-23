@@ -16,7 +16,7 @@
   /* Text */
   --text: #0f1f17; /* near-black with a green undertone */
   --text-mute: #5f6f66;
-  --text-faint: #8a978f;
+  --text-faint: #8a978f; /* disabled controls only: too light for text people need to read */
 
   /* Brand */
   --brand: #0a7d4f; /* money green */
@@ -27,11 +27,11 @@
   /* Action colors: functional, not decorative. Same meaning everywhere. */
   --approve: #0a7d4f; /* recognized: same as brand, so approving is the "healthy default" */
   --approve-tint: #e5f4ec;
-  --investigate: #b86a0e; /* look closer */
+  --investigate: #9e5a08; /* look closer (dark enough for 4.5:1 text contrast on its tint) */
   --investigate-tint: #fbf0e1;
   --pile: #4b52c8; /* file into a folder */
   --pile-tint: #ecedfb;
-  --flag: #c9343a; /* possible fraud */
+  --flag: #c0303a; /* possible fraud */
   --flag-tint: #fbe9ea;
   --wait: #2563c9; /* waiting on someone */
   --wait-tint: #e7effb;
