@@ -35,8 +35,8 @@ export function FolderSheet({ piles, txns, onClose, onFile, onCreate, onDelete }
         aria-labelledby="folder-sheet-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="folder-sheet-head">
-          <h2 id="folder-sheet-title" className="folder-sheet-title">
+        <div className="sheet-head">
+          <h2 id="folder-sheet-title" className="sheet-title">
             File this purchase
           </h2>
           <button type="button" className="icon-btn icon-btn--flat" onClick={onClose} aria-label="Close">

@@ -112,12 +112,34 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: /Ski trip/ }))
     expect(screen.getByRole('heading', { name: 'Ski trip' })).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /Next step: not set/ }))
-    expect(screen.getByRole('button', { name: /Next step: To do/ })).toBeInTheDocument()
+    expect(screen.getByText('Still to act on')).toBeInTheDocument()
+
+    // The status menu: pick "Done", which settles the folder.
+    await user.click(screen.getByRole('button', { name: /Status: not set/ }))
+    const menu = screen.getByRole('dialog', { name: 'Set status' })
+    await user.click(within(menu).getByRole('button', { name: /^Done/ }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Status: Done/ })).toBeInTheDocument()
+    expect(screen.getByText('All settled')).toBeInTheDocument()
+
+    // Clearing the status puts it back to "not set".
+    await user.click(screen.getByRole('button', { name: /Status: Done/ }))
+    await user.click(screen.getByRole('button', { name: 'Clear status' }))
+    expect(screen.getByRole('button', { name: /Status: not set/ })).toBeInTheDocument()
+
     await user.click(screen.getByRole('button', { name: 'Add note' }))
-    await user.type(screen.getByRole('textbox', { name: /Note for/ }), 'Venmo Sam')
-    await user.click(screen.getByRole('button', { name: 'Done' }))
-    expect(screen.getByText('Venmo Sam')).toBeInTheDocument()
+    await user.type(screen.getByRole('textbox', { name: /Note for/ }), 'Venmo Sam  ')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+    // Tapping the saved note reopens the editor, with the stray spaces trimmed.
+    await user.click(screen.getByRole('button', { name: 'Edit note: Venmo Sam' }))
+    expect(screen.getByRole('textbox', { name: /Note for/ })).toHaveValue('Venmo Sam')
+  })
+
+  it('shows the same readable date on the card and in the investigation view', async () => {
+    const user = await startSample()
+    expect(within(topCard()).getByText('Mar 3')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Look closer' }))
+    expect(screen.getByText('Tue, Mar 3, 2026')).toBeInTheDocument()
   })
 
   it('saves the session to IndexedDB after a change', async () => {

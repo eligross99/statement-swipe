@@ -1,0 +1,89 @@
+.status-sheet-sub {
+  margin: 0 0 14px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.status-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* One row per status. The tint and dot colors follow the status, matching the pill. */
+.status-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px 16px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.status-option-dot {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.status-option-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.status-option-label {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.status-option-hint {
+  margin-top: 1px;
+  font-size: 13px;
+  color: var(--text-mute);
+}
+
+.status-option--todo .status-option-dot {
+  background: var(--investigate);
+}
+.status-option--waiting .status-option-dot {
+  background: var(--wait);
+}
+.status-option--done .status-option-dot {
+  background: var(--approve);
+}
+
+.status-option--todo.is-selected {
+  background: var(--investigate-tint);
+  border-color: var(--investigate);
+}
+.status-option--waiting.is-selected {
+  background: var(--wait-tint);
+  border-color: var(--wait);
+}
+.status-option--done.is-selected {
+  background: var(--approve-tint);
+  border-color: var(--approve);
+}
+
+.status-option--todo .status-option-check {
+  color: var(--investigate);
+}
+.status-option--waiting .status-option-check {
+  color: var(--wait);
+}
+.status-option--done .status-option-check {
+  color: var(--approve);
+}
+
+.status-clear {
+  margin-top: 12px;
+}

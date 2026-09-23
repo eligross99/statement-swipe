@@ -197,12 +197,17 @@ export function pileItems(txns: Transaction[], pileId: string): Transaction[] {
 
 /** Folder total that still needs follow-up: everything not marked Done. */
 export function stillToActOn(items: Transaction[]): number {
-  return sumAmounts(items.filter((t) => t.action !== 'done'))
+  return sumAmounts(openItems(items))
 }
 
-const ACTION_CYCLE: Action[] = [null, 'todo', 'waiting', 'done']
+/** Folder items that still need follow-up (not marked Done). */
+export function openItems(items: Transaction[]): Transaction[] {
+  return items.filter((t) => t.action !== 'done')
+}
 
-/** Tapping the status pill steps through: none → To do → Waiting → Done → none. */
-export function nextAction(a: Action): Action {
-  return ACTION_CYCLE[(ACTION_CYCLE.indexOf(a) + 1) % ACTION_CYCLE.length]
+/** The triage statuses, in the order the "Set status" menu lists them. */
+export const ACTION_LABELS: Record<Exclude<Action, null>, string> = {
+  todo: 'To do',
+  waiting: 'Waiting',
+  done: 'Done',
 }
