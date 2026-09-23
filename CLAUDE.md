@@ -112,13 +112,13 @@ See `docs/handoff.md` §11 for details.
     Actions before: explain what it is and walk them through any GitHub settings step by step.
 - [ ] 6. Multiple statements: Dexie storage (migrate the saved session), Statements screen, bottom
   navigation, Tasks dashboard, light Settings; easier import: remembered bank setups, OFX/QFX files,
-  Android "Share to" (see `docs/ideas.md`)
-- [ ] 7. Onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
+  Android "Share to"; text that scales with the phone's text-size setting (see `docs/ideas.md`)
+- [ ] 7. Dark mode (follows the phone, override in Settings) and Android haptics first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
   Settings; the standalone "Try the sample statement" button goes away; per-bank download guides
   (see `docs/ideas.md`)
 - [ ] 8. On-device smarts: familiar/new merchant tags, merchant-code decoder, web-search link,
   calendar reminders (see `docs/ideas.md`)
-- [ ] 9. Accounts/backend + Stripe, then opt-in bank connection (Teller → Plaid) through a relay-only
+- [ ] 9. App Store version with Capacitor (**ask Eli again before starting**), then accounts/backend + Stripe, then opt-in bank connection (Teller → Plaid) through a relay-only
   server that never stores transactions, then enrichment; push notifications; optional AI merchant
   explanation (see `docs/ideas.md`)
 - [ ] 10. Security & compliance hardening (with real legal counsel)
@@ -135,4 +135,5 @@ See `docs/handoff.md` §11 for details.
 - Bank CSVs vary: column names/order, sign conventions (purchases negative vs positive, or split
   debit/credit columns), and preamble rows above the header.
 - Cryptic merchant names (`SQ *DD BAR`) can't be decoded from CSV. Don't fake enrichment.
-- Out of scope for now: PDF statements, custom per-folder statuses, native apps.
+- Out of scope for now: PDF statements, custom per-folder statuses. Native apps wait for the
+  App Store step at the start of Phase 9 (via Capacitor, not a rewrite; ask Eli first).

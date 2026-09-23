@@ -8,16 +8,21 @@ On 2026-09-23 Eli added the **onboarding tour** idea and **accepted all five pro
 then approved the **easier statement import** plan (easier files first, bank connection later).
 Treat both as decided.
 
+On 2026-09-23 Eli also asked to schedule the **mobile polish** items from the Phase 5 design review
+(text scaling, dark mode, haptics). See that section below. Eli also decided the app should
+**eventually become an App Store app** (via Capacitor) at the start of Phase 9, but **ask Eli again
+before starting that work**. See "Web app or App Store app?" below.
+
 ## Roadmap order
 
 | Phase | What | Why here |
 | --- | --- | --- |
 | 4 | Triage & folder polish, **"Set status" menu**, consistent date display | Already planned; the status menu is the same UI |
 | 5 | PWA finish, Vercel deploy, CI, test on phone | Gets the app into real use sooner |
-| 6 | **Multiple statements:** storage, Statements screen, bottom navigation, Tasks dashboard, Settings (light); **easier import:** remembered bank setups, OFX/QFX files, Android "Share to" | Most new ideas depend on keeping more than one statement |
-| 7 | **Onboarding tour** (replaces the always-visible sample statement), with **per-bank download guides** | Needs the Phase 6 screens to exist so the tour can show them |
+| 6 | **Multiple statements:** storage, Statements screen, bottom navigation, Tasks dashboard, Settings (light); **easier import:** remembered bank setups, OFX/QFX files, Android "Share to"; **text that scales** with the phone's text-size setting | Most new ideas depend on keeping more than one statement; new screens get scalable text from the start |
+| 7 | **Dark mode** and **haptics** first, then the **onboarding tour** (replaces the always-visible sample statement), with **per-bank download guides** | Needs the Phase 6 screens to exist; dark mode before the tour so the tour is designed once, in both themes |
 | 8 | **On-device smarts:** familiar/new merchant tags, merchant-code decoder, web-search link, calendar reminders | Need statement history; no server needed; privacy stays intact |
-| 9 | Accounts, backend, Stripe, **opt-in bank connection** (Teller → Plaid, relay-only server) (was Phase 6, then 8) | Unlocks push notifications and, if chosen, AI merchant explanations |
+| 9 | **App Store version** (Capacitor; ask Eli first), then accounts, backend, Stripe, **opt-in bank connection** (Teller → Plaid, relay-only server) (was Phase 6, then 8) | Unlocks push notifications and, if chosen, AI merchant explanations; App Store first because Apple's subscription rules shape the payment plan |
 | 10 | Security & compliance (was Phase 7, then 9) | Unchanged |
 
 ## The ideas
@@ -177,3 +182,44 @@ Shown on swipe cards when a merchant appears in 3+ past statements. All on-devic
 - Also add the reverse: a **"New merchant"** tag, which is often the stronger fraud signal.
 - Match names loosely (`SHELL OIL 574123900` and `SHELL OIL 574123911` are the same merchant) by
   ignoring store numbers.
+
+### Mobile polish → Phases 6–7
+From the Phase 5 mobile design review (the `mobile-design` skill in `.claude/skills/`).
+- **Text that follows the phone's text-size setting → Phase 6.** Today font sizes are fixed pixels,
+  so turning up text size in the phone's settings doesn't enlarge the app's text. Switch sizes to
+  `rem` (sizes relative to the base text size) and, on iPhone, set the base with
+  `font: -apple-system-body` so it follows Dynamic Type (Apple's text-size setting). Test at the
+  largest sizes: cards, amounts, and sheets must wrap or scroll rather than cut text off.
+  Do it in Phase 6 because that phase adds most of the new screens.
+- **Dark mode → start of Phase 7.** Follow the phone's light/dark setting by default, with an
+  override in Settings (System · Light · Dark). All colors already live in `src/styles/tokens.css`,
+  so this is mostly a second set of token values plus contrast checks (4.5:1 for text). Keep the
+  calm, green identity: a deep green-black background, not pure black. Before the tour, so the
+  tour is designed once in both themes.
+- **Haptics (a small vibration when a swipe lands) → Phase 7.** Works on Android through the
+  browser's vibration feature. iPhone browsers don't allow it for websites, so on iPhone it only
+  comes with an App Store version (see "Web app or App Store app?" below).
+
+### Web app or App Store app? → start of Phase 9 (ask Eli first)
+> **Reminder: ask Eli again before starting this.** Confirm they still want it, and walk through
+> the costs and steps, before creating developer accounts or setting up Capacitor.
+
+**Today** the app is a PWA (progressive web app): a website that installs to the home screen, opens
+full-screen, and works offline. Swiping and everything else in the core experience work the same as
+in a native app.
+
+**What a PWA can't do well, mostly on iPhone:** installing is hidden in Safari's Share menu (the
+biggest drawback), there's no App Store listing (less built-in trust for a finance app), no haptics,
+no Face ID lock, and notifications only work once installed.
+
+**Decision (2026-09-23):** Eli expects to publish an App Store version eventually, and agreed to wait
+until Phase 9. Until then the PWA lets us ship fixes in minutes without Apple's review.
+- **How:** wrap this same React app with **Capacitor**, which turns a web app into real iPhone and
+  Android apps and adds native features (haptics, Face ID) through plugins. Almost all code is
+  reused. Not React Native, which would mean rebuilding the interface.
+- **Why at the start of Phase 9:** Apple has rules about how subscriptions are sold inside App Store
+  apps, so the Stripe/payment design should know whether we're in the App Store.
+- **Costs to review with Eli then:** Apple Developer Program (about $99/year), Google Play (one-time
+  fee), Apple's review on every update, and a Mac with Xcode for iPhone builds.
+- Keep the PWA running alongside it: same code, and it stays the quickest way to try the app.
+
