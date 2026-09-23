@@ -82,6 +82,9 @@ direction: calm, clear, efficient, and signaling financial well-being.
   Approve is the only solid-filled action (the "healthy default"); others use tint backgrounds.
 - Amounts are the largest element on a card and use tabular figures (`.num` class), in the system sans font.
 - Keep the signature feel: tilt on drag, fading directional stamps, 1–2 peek cards behind the top card.
+- Motion: react instantly (a dragged card follows the finger 1:1), then let the result be seen:
+  eased transitions of roughly 250–400ms. Screens never swap instantly, and every tap shows feedback.
+  Respect Reduce Motion.
 - Mobile-first (~400px). Touch targets ≥ 44px. Every gesture has a button and arrow-key fallback, plus undo.
 - Words and labels (from the `frontend-design` skill in `.claude/skills/`): sentence case, no all-caps
   labels (the swipe stamps are the one exception), no "A · B · C" meta strings, no "→" on buttons.
@@ -106,13 +109,16 @@ See `docs/handoff.md` §11 for details.
 - [x] 2. Port prototype; replace `window.storage` with IndexedDB
 - [x] 3. Harden CSV import (header-row detection, `TransactionSource`/`CSVSource`)
 - [x] 4. Polish triage & folders for touch, plus the "Set status" menu and consistent date display
-- [ ] 5. PWA finish (icons, manifest, offline) + Vercel deploy + on-phone test with a real CSV  ← **next**
-  - Also set up CI: a GitHub Actions workflow that runs `npm run build`, `npm test`, and
-    `npm run lint` on every PR, so PRs can't be merged if they fail. Eli hasn't used CI or GitHub
-    Actions before: explain what it is and walk them through any GitHub settings step by step.
+- [x] 5. PWA finish (icons, manifest, offline) + Vercel deploy (statement-swipe.vercel.app) + CI and
+  branch protection on `main` + installed and tested on Eli's iPhone. The real-CSV part was blocked:
+  Eli's bank app only offers PDFs on the phone (see PDF import in Phase 6).
+- [ ] 5.5. Feel and motion, from Eli's phone test: smoother swipes and screen transitions, pressed
+  states, overscroll bounce, larger text that follows the phone's text size, clearer header buttons,
+  confirm before replacing a review (see `docs/ideas.md`)  ← **next**
 - [ ] 6. Multiple statements: Dexie storage (migrate the saved session), Statements screen, bottom
-  navigation, Tasks dashboard, light Settings; easier import: remembered bank setups, OFX/QFX files,
-  Android "Share to"; text that scales with the phone's text-size setting (see `docs/ideas.md`)
+  navigation, Tasks dashboard, light Settings, rename statements + smart default names; easier import:
+  **on-device PDF statements (priority)**, remembered bank setups, OFX/QFX files, Android "Share to"
+  (see `docs/ideas.md`)
 - [ ] 7. Dark mode (follows the phone, override in Settings) and Android haptics first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
   Settings; the standalone "Try the sample statement" button goes away; per-bank download guides
   (see `docs/ideas.md`)
@@ -135,5 +141,6 @@ See `docs/handoff.md` §11 for details.
 - Bank CSVs vary: column names/order, sign conventions (purchases negative vs positive, or split
   debit/credit columns), and preamble rows above the header.
 - Cryptic merchant names (`SQ *DD BAR`) can't be decoded from CSV. Don't fake enrichment.
-- Out of scope for now: PDF statements, custom per-folder statuses. Native apps wait for the
+- PDF statements are now in scope (Phase 6, on-device), reversing `docs/handoff.md` §12.
+- Out of scope for now: custom per-folder statuses. Native apps wait for the
   App Store step at the start of Phase 9 (via Capacitor, not a rewrite; ask Eli first).

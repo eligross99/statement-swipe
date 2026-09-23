@@ -25,7 +25,7 @@
 ## Icons
 
 Source SVGs are `public/icon.svg` (rounded, for browsers) and `public/icon-maskable.svg`
-(full-bleed, for home screens, which crop to their own shape). After editing either, run
+(full-bleed, for Android home screens, which crop to their own shape) and `public/icon-apple.svg` (full-bleed with larger art, for iPhone, which only rounds the corners). After editing any of them, run
 `sh scripts/make-icons.sh` (macOS) to regenerate the PNGs, and commit them.
 
 ## Phone test checklist

@@ -13,13 +13,19 @@ On 2026-09-23 Eli also asked to schedule the **mobile polish** items from the Ph
 **eventually become an App Store app** (via Capacitor) at the start of Phase 9, but **ask Eli again
 before starting that work**. See "Web app or App Store app?" below.
 
+On 2026-09-23, after the Phase 5 phone test, Eli approved: a **Phase 5.5 "feel and motion"** batch
+from their feedback, **on-device PDF import** as a priority in Phase 6 (their bank's app only offers
+PDF downloads, so a CSV means a computer detour), and **renaming statements plus smart default
+names** in Phase 6. Text scaling moved from Phase 6 into Phase 5.5.
+
 ## Roadmap order
 
 | Phase | What | Why here |
 | --- | --- | --- |
 | 4 | Triage & folder polish, **"Set status" menu**, consistent date display | Already planned; the status menu is the same UI |
 | 5 | PWA finish, Vercel deploy, CI, test on phone | Gets the app into real use sooner |
-| 6 | **Multiple statements:** storage, Statements screen, bottom navigation, Tasks dashboard, Settings (light); **easier import:** remembered bank setups, OFX/QFX files, Android "Share to"; **text that scales** with the phone's text-size setting | Most new ideas depend on keeping more than one statement; new screens get scalable text from the start |
+| 5.5 | **Feel and motion:** smoother swipes and screen transitions, pressed states, overscroll bounce, larger and scalable text, clearer header buttons | Eli's phone-test feedback; the app works but feels abrupt |
+| 6 | **Multiple statements:** storage, Statements screen, bottom navigation, Tasks dashboard, Settings (light), **rename statements + smart default names**; **easier import:** **PDF statements (priority)**, remembered bank setups, OFX/QFX files, Android "Share to" | Most new ideas depend on keeping more than one statement; PDF is the only thing many phone users can download |
 | 7 | **Dark mode** and **haptics** first, then the **onboarding tour** (replaces the always-visible sample statement), with **per-bank download guides** | Needs the Phase 6 screens to exist; dark mode before the tour so the tour is designed once, in both themes |
 | 8 | **On-device smarts:** familiar/new merchant tags, merchant-code decoder, web-search link, calendar reminders | Need statement history; no server needed; privacy stays intact |
 | 9 | **App Store version** (Capacitor; ask Eli first), then accounts, backend, Stripe, **opt-in bank connection** (Teller → Plaid, relay-only server) (was Phase 6, then 8) | Unlocks push notifications and, if chosen, AI merchant explanations; App Store first because Apple's subscription rules shape the payment plan |
@@ -183,14 +189,9 @@ Shown on swipe cards when a merchant appears in 3+ past statements. All on-devic
 - Match names loosely (`SHELL OIL 574123900` and `SHELL OIL 574123911` are the same merchant) by
   ignoring store numbers.
 
-### Mobile polish → Phases 6–7
+### Mobile polish → Phases 5.5–7
 From the Phase 5 mobile design review (the `mobile-design` skill in `.claude/skills/`).
-- **Text that follows the phone's text-size setting → Phase 6.** Today font sizes are fixed pixels,
-  so turning up text size in the phone's settings doesn't enlarge the app's text. Switch sizes to
-  `rem` (sizes relative to the base text size) and, on iPhone, set the base with
-  `font: -apple-system-body` so it follows Dynamic Type (Apple's text-size setting). Test at the
-  largest sizes: cards, amounts, and sheets must wrap or scroll rather than cut text off.
-  Do it in Phase 6 because that phase adds most of the new screens.
+- **Text that follows the phone's text-size setting → moved to Phase 5.5** (see that section).
 - **Dark mode → start of Phase 7.** Follow the phone's light/dark setting by default, with an
   override in Settings (System · Light · Dark). All colors already live in `src/styles/tokens.css`,
   so this is mostly a second set of token values plus contrast checks (4.5:1 for text). Keep the
@@ -228,4 +229,66 @@ Vercel's official Claude Code plugin (`npx plugins add vercel/vercel-plugin`, ne
 for server functions, databases, auth, env vars, and deployments. Eli suggested it on 2026-09-23;
 we deferred it because a static Vite app uses almost none of it. **Install it at the start of
 Phase 9**, when we add the backend, Stripe, and the bank-connection relay.
+
+### Feel and motion → Phase 5.5
+From Eli's first phone test (2026-09-23). The app works, but it feels abrupt: things change
+instantly, so it's hard to see what just happened. Principles:
+- **React instantly, then let the result be seen.** No delay before a response. The dragged card
+  follows the finger 1:1. After the finger lifts, motion is slower and eased (roughly 250–400ms,
+  decelerating) so the user sees where things went. Not so slow that it drags.
+- **Every change of screen is a transition** (slide, rise, or fade), never an instant swap.
+- **Every tap gets visible feedback**, even where it isn't strictly needed.
+- **Reduce Motion** (phone setting) swaps movement for quick fades. Already respected globally in `index.css`.
+
+Items:
+1. **Swipe fly-out:** slower and smoother after release (now 260ms ease-in; aim ~350ms ease-out).
+2. **Look closer opens and closes with a slide** (like pushing a page in an iPhone app), not an instant swap.
+3. **Answering in Look closer:** slide back to the deck, a brief pause showing the same card, then it
+   flies right (approve) or left (flag). About half a second total, so the user can confirm what happened.
+4. **Undo:** the card flies back in from the side it left, so it's clear which purchase returned.
+5. **Action buttons:** stronger pressed state (especially Look closer and File, whose light tints barely
+   change), and tapping one sends the card off in the matching direction, like a swipe.
+6. **Last card → summary:** the summary rises in instead of appearing instantly.
+7. **Overscroll bounce:** `overscroll-behavior: none` on `body` (added to stop page movement while
+   dragging cards) also removed iOS's "held back" bounce on still pages. Restore the bounce on pages;
+   keep it off only on the card (`touch-action: none` already covers the card).
+8. **Header, top right:** the Upload icon was unclear, and Eli thought tapping it lost their progress
+   (it didn't: the import screen has a Resume button, but it's easy to miss). Use a clearer icon and
+   name ("New statement"), give the import screen an obvious way back to the review, and **confirm
+   before a new file replaces an unfinished review**.
+9. **Folder screen:** the header's top-left button is a disabled undo there, which confused Eli. On the
+   folder screen it becomes the "back to all folders" button (always visible at the top), and the
+   in-page "All folders" link goes away.
+10. **Text size:** secondary gray text is too small even with default iPhone settings. Raise the small
+    sizes (12–13px → about 14–15px). While touching every size, switch to `rem` and set the base with
+    `font: -apple-system-body` on iPhone so text follows the phone's text-size setting (Dynamic Type).
+    Test at the largest sizes: nothing may be cut off.
+11. **CSV screen:** removing the chosen file fades it out; changing a column briefly highlights the
+    field, and the preview updates visibly.
+12. **Look for more:** e.g. the progress bar animates as it fills; changing a status pulses the row.
+    Keep it subtle.
+
+### PDF statements → Phase 6 (priority)
+**Why:** Eli's bank app only offers PDF statements on the phone. Getting a CSV means downloading on a
+computer and sending it to the phone, which is too many steps for anyone who isn't a friendly tester.
+This reverses the old "PDF is out of scope" decision (`docs/handoff.md` §12).
+- **On-device, like CSV:** read the PDF inside the app with Mozilla's PDF reader (`pdfjs-dist`, a new
+  dependency Eli approved), loaded only when someone picks a PDF. Nothing is uploaded.
+- **Phone flow:** bank app → share or save the PDF to Files → "Choose a file" in our app.
+- **How:** statements are computer-generated PDFs with real text (not scanned images). Extract the text
+  lines and pick out purchase rows (date, description, amount), skipping payments and credits. Show
+  the existing preview so the user confirms before reviewing. Scanned/image PDFs: a clear message
+  saying they can't be read, with what to do instead.
+- **Honest risk:** every bank's layout differs, so some will parse imperfectly at first. Build against
+  synthetic PDFs in `tests/fixtures/` (update `.gitignore`, which currently blocks all `*.pdf`) and test
+  Eli's real statement **locally only, never committed** (the repo is public).
+- **Not instead of** bank connection (Phase 9) or download guides (Phase 7); it's the quickest fix
+  that keeps the privacy promise.
+
+### Rename statements and smart default names → Phase 6
+- **Rename** from each statement's "⋯" menu on the Statements screen, and by tapping the title at the
+  top of a review. Any name, e.g. "July 2026 Bank of America Credit Card Statement".
+- **Smart default names** instead of the file name: from the purchase dates, plus the bank name once
+  bank setups are remembered, e.g. "July 2026 Bank of America". Likely enough for most people.
+- **Later (nice-to-have):** a custom naming pattern in Settings, so users never rename by hand.
 
