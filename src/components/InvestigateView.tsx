@@ -1,5 +1,6 @@
 import { Check, ChevronLeft, Flag, ShieldAlert } from 'lucide-react'
 import { useEscape } from '../hooks/useEscape'
+import { formatDate } from '../lib/dates'
 import { usd } from '../lib/format'
 import type { Transaction } from '../types'
 import './InvestigateView.css'
@@ -37,7 +38,7 @@ export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag }: P
         </h2>
 
         <dl className="panel investigate-fields">
-          <Field label="Transaction date" value={txn.date || '—'} />
+          <Field label="Transaction date" value={formatDate(txn.date, 'long')} />
           <Field label="Category" value={txn.cat} />
           <Field label="Location" value={txn.loc || 'Not in statement'} />
           <Field label="Descriptor" value={txn.desc} mono />

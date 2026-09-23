@@ -116,15 +116,15 @@ describe('a bank export where purchases are negative', () => {
   it('keeps purchases only: skips payments, refunds, and rows without a description', () => {
     const purchases = toPurchases(rows, map, true)
     expect(purchases).toEqual([
-      { desc: 'FAKE COFFEE CO #1', amount: 4.75, date: '03/02/2026', cat: 'Food & Drink' },
-      { desc: 'EXAMPLE GROCERY 22', amount: 1204.1, date: '03/04/2026', cat: 'Groceries' },
-      { desc: 'SAMPLE TRANSIT', amount: 2.5, date: '03/09/2026', cat: 'Travel' },
+      { desc: 'FAKE COFFEE CO #1', amount: 4.75, date: '2026-03-02', cat: 'Food & Drink' },
+      { desc: 'EXAMPLE GROCERY 22', amount: 1204.1, date: '2026-03-04', cat: 'Groceries' },
+      { desc: 'SAMPLE TRANSIT', amount: 2.5, date: '2026-03-09', cat: 'Travel' },
     ])
   })
 
   it('with the sign toggle flipped, only the refund counts', () => {
     expect(toPurchases(rows, map, false)).toEqual([
-      { desc: 'TEST BOOKSHOP', amount: 12, date: '03/07/2026', cat: 'Shopping' },
+      { desc: 'TEST BOOKSHOP', amount: 12, date: '2026-03-07', cat: 'Shopping' },
     ])
   })
 })

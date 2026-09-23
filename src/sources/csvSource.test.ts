@@ -16,16 +16,16 @@ async function loaded(name: string) {
 describe('CSVSource', () => {
   it('reads an export with preamble lines above the header', async () => {
     expect(await loaded('preamble.csv')).toEqual([
-      { desc: 'FAKE COFFEE CO #1', amount: 4.75, date: '03/02/2026', cat: 'Dining' },
-      { desc: 'SAMPLE HARDWARE', amount: 1020, date: '03/08/2026', cat: 'Home' },
+      { desc: 'FAKE COFFEE CO #1', amount: 4.75, date: '2026-03-02', cat: 'Dining' },
+      { desc: 'SAMPLE HARDWARE', amount: 1020, date: '2026-03-08', cat: 'Home' },
     ])
   })
 
   it('reads an export with no header row, guessing columns from the values', async () => {
     expect(await loaded('no-header.csv')).toEqual([
-      { desc: 'FAKE COFFEE CO #1', amount: 4.75, date: '03/02/2026', cat: '—' },
-      { desc: 'EXAMPLE GROCERY 22', amount: 38.2, date: '03/04/2026', cat: '—' },
-      { desc: 'SAMPLE TRANSIT', amount: 2.5, date: '03/09/2026', cat: '—' },
+      { desc: 'FAKE COFFEE CO #1', amount: 4.75, date: '2026-03-02', cat: '—' },
+      { desc: 'EXAMPLE GROCERY 22', amount: 38.2, date: '2026-03-04', cat: '—' },
+      { desc: 'SAMPLE TRANSIT', amount: 2.5, date: '2026-03-09', cat: '—' },
     ])
   })
 

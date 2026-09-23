@@ -15,6 +15,8 @@ export interface Transaction {
   desc: string
   /** Absolute value; sign conventions are normalized away at import. */
   amount: number
+  /** ISO "YYYY-MM-DD" when the source date is readable, else the original text or "".
+   *  Display it only through `formatDate` (src/lib/dates.ts). */
   date: string
   /** Category if the source provides one, else "—". */
   cat: string

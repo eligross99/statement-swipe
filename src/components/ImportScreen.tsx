@@ -1,6 +1,7 @@
 import { ArrowRight, FileText, Sparkles, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { parseGrid, type ColumnMap, type Grid } from '../lib/csv'
+import { formatDate } from '../lib/dates'
 import { plural, usd } from '../lib/format'
 import { SAMPLE_LABEL, sampleTransactions } from '../lib/sample'
 import { CSVSource, guessSettings, type CsvSettings } from '../sources/csvSource'
@@ -191,7 +192,7 @@ export function ImportScreen({ resumeLabel, onResume, onStart }: Props) {
             <div key={i} className="preview-row">
               <div className="preview-main">
                 <span className="preview-desc">{p.desc}</span>
-                {p.date && <span className="preview-date">{p.date}</span>}
+                {p.date && <span className="preview-date">{formatDate(p.date)}</span>}
               </div>
               <span className="preview-amount num">${usd(p.amount)}</span>
             </div>
