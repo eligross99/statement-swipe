@@ -44,7 +44,26 @@ export async function loadSession(): Promise<Session | null> {
   }
 }
 
+let persistRequested = false
+
+/**
+ * Asks the browser to treat our saved data as important. Without this, browsers may clear a
+ * site's storage when the device is low on space, and Safari clears it after about a week of
+ * not visiting. Installed (home-screen) apps are usually granted this automatically.
+ */
+export async function requestPersistentStorage(): Promise<boolean> {
+  if (persistRequested) return false
+  persistRequested = true
+  try {
+    if (!navigator.storage?.persist) return false
+    return (await navigator.storage.persisted()) || (await navigator.storage.persist())
+  } catch {
+    return false
+  }
+}
+
 export async function saveSession(session: Session): Promise<void> {
+  void requestPersistentStorage()
   try {
     await set(STORE_KEY, session)
   } catch {

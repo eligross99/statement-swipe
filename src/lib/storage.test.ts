@@ -68,3 +68,26 @@ describe('saveSession', () => {
     await expect(saveSession(session)).resolves.toBeUndefined()
   })
 })
+
+describe('requestPersistentStorage', () => {
+  it('asks the browser to keep our data, only once per page load', async () => {
+    vi.resetModules()
+    const { requestPersistentStorage } = await import('./storage')
+    const persist = vi.fn().mockResolvedValue(true)
+    const persisted = vi.fn().mockResolvedValue(false)
+    vi.stubGlobal('navigator', { storage: { persist, persisted } })
+
+    expect(await requestPersistentStorage()).toBe(true)
+    expect(await requestPersistentStorage()).toBe(false)
+    expect(persist).toHaveBeenCalledTimes(1)
+    vi.unstubAllGlobals()
+  })
+
+  it('does nothing where the browser has no storage manager', async () => {
+    vi.resetModules()
+    const { requestPersistentStorage } = await import('./storage')
+    vi.stubGlobal('navigator', {})
+    expect(await requestPersistentStorage()).toBe(false)
+    vi.unstubAllGlobals()
+  })
+})
