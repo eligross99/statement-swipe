@@ -40,11 +40,8 @@
 
 .section-label {
   margin: 0 0 10px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-mute);
+  font-size: 15px;
+  font-weight: 650;
 }
 
 /* Round 44px icon button (header, close). */
@@ -163,30 +160,6 @@
   color: var(--text-mute);
   font-size: 13px;
   line-height: 1.45;
-}
-
-/* Stat tiles */
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.stat {
-  padding: 12px;
-  text-align: center;
-}
-
-.stat-n {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-}
-
-.stat-label {
-  margin: 2px 0 0;
-  font-size: 12px;
-  color: var(--text-mute);
 }
 
 .tone-approve {

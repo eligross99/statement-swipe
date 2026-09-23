@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronLeft, CircleCheck, Folder, FolderOpen, Pencil } from 'lucide-react'
+import { ChevronDown, ChevronLeft, Folder, FolderOpen, Pencil } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { formatDate } from '../lib/dates'
 import { plural, usd } from '../lib/format'
@@ -39,7 +39,7 @@ export function FolderDetail({ pile, txns, onBack, onSetAction, onSetNote }: Pro
         <div className="fd-head-text">
           <h2 className="fd-title">{pile.name}</h2>
           <p className="muted fd-sub">
-            {plural(items.length, 'item')} · <span className="num">${usd(sumAmounts(items))}</span> total
+            {plural(items.length, 'purchase')}, <span className="num">${usd(sumAmounts(items))}</span>
           </p>
         </div>
       </div>
@@ -52,28 +52,23 @@ export function FolderDetail({ pile, txns, onBack, onSetAction, onSetNote }: Pro
         </div>
       ) : (
         <>
-          <div className="fd-stats">
-            <div className="panel fd-stat">
-              <p className={`fd-stat-n num ${settled ? 'tone-approve' : 'tone-investigate'}`}>
+          {/* How much is left: the open amount, and a bar that fills as purchases are marked Done. */}
+          <div className="panel fd-progress">
+            <div className="fd-progress-top">
+              <p className={`fd-progress-amount num ${settled ? 'tone-approve' : 'tone-investigate'}`}>
                 ${usd(stillToActOn(items))}
               </p>
-              <p className="stat-label">{settled ? 'All settled' : 'Still to act on'}</p>
-            </div>
-            <div className="panel fd-stat">
-              <p className="fd-stat-n num tone-approve">
-                {done}/{items.length}
+              <p className="muted fd-progress-done num">
+                {done} of {items.length} done
               </p>
-              <p className="stat-label">Done</p>
+            </div>
+            <p className="fd-progress-label">{settled ? 'All settled' : 'Still to act on'}</p>
+            <div className="fd-progress-track" aria-hidden>
+              <div className="fd-progress-fill" style={{ width: `${(done / items.length) * 100}%` }} />
             </div>
           </div>
 
-          {settled ? (
-            <p className="fd-hint fd-settled">
-              <CircleCheck size={16} /> Everything in this folder is done.
-            </p>
-          ) : (
-            <p className="muted fd-hint">Tap a status to track what’s left. Add a note for the details.</p>
-          )}
+          {!settled && <p className="muted fd-hint">Set a status to track what’s left. Add a note for the details.</p>}
 
           <ul className="fd-list">
             {items.map((t) => {
@@ -84,8 +79,8 @@ export function FolderDetail({ pile, txns, onBack, onSetAction, onSetNote }: Pro
                     <div className="fd-item-main">
                       <span className="fd-item-desc">{t.desc}</span>
                       <span className="fd-item-meta">
-                        {formatDate(t.date)}
-                        {t.cat && t.cat !== '—' ? ` · ${t.cat}` : ''}
+                        <span>{formatDate(t.date)}</span>
+                        {t.cat && t.cat !== '—' && <span className="fd-item-cat">{t.cat}</span>}
                       </span>
                     </div>
                     <span className="fd-item-amount num">${usd(t.amount)}</span>

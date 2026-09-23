@@ -1,18 +1,74 @@
-.summary-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 8px 0 20px;
-  text-align: center;
-}
-
-.summary-hero .screen-title {
-  margin-top: 10px;
-}
-
 .summary-recon {
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+
+/* Breakdown: a bar of the statement's dollars split by decision, then one row per decision. */
+.ledger {
+  padding: 16px;
+}
+
+.ledger-bar {
+  display: flex;
+  gap: 3px;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface-sunken);
+}
+
+.ledger-seg {
+  flex-basis: 0;
+  min-width: 6px; /* a tiny share should still be visible */
+}
+
+.ledger-seg--approve {
+  background: var(--approve);
+}
+.ledger-seg--pile {
+  background: var(--pile);
+}
+.ledger-seg--flag {
+  background: var(--flag);
+}
+
+.ledger-rows {
+  margin: 12px 0 0;
+}
+
+.ledger-row {
+  display: grid;
+  grid-template-columns: 1fr auto 96px;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 15px;
+}
+
+.ledger-row dt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ledger-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  min-width: 0;
+}
+
+.ledger-row dd {
   margin: 0;
-  font-size: 13px;
+  text-align: right;
+}
+
+.ledger-count {
+  color: var(--text-mute);
+}
+
+.ledger-amount {
+  font-weight: 650;
 }
 
 .summary-section {
@@ -23,10 +79,15 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 0 0 10px;
+  margin: 0 0 4px;
   color: var(--flag);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 650;
+}
+
+.summary-flag-help {
+  margin: 0 0 10px;
+  font-size: 13px;
 }
 
 .summary-flag-row {
@@ -112,4 +173,15 @@
 
 .summary-actions {
   margin-top: 28px;
+}
+
+.summary-confirm {
+  margin-top: 28px;
+  padding: 16px;
+}
+
+.summary-confirm p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.45;
 }

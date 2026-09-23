@@ -26,24 +26,52 @@
   font-size: 13px;
 }
 
-.fd-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+.fd-progress {
+  margin-bottom: 14px;
+  padding: 16px;
 }
 
-.fd-stat {
-  padding: 12px 14px;
+.fd-progress-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.fd-stat-n {
+.fd-progress-amount {
   margin: 0;
-  font-size: 20px;
+  font-size: 28px;
   font-weight: 700;
+  line-height: 1.1;
+}
+
+.fd-progress-done {
+  margin: 0;
+  font-size: 14px;
+}
+
+.fd-progress-label {
+  margin: 2px 0 12px;
+  font-size: 14px;
+  color: var(--text-mute);
+}
+
+.fd-progress-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.fd-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--approve);
+  transition: width 0.3s ease;
 }
 
 .fd-hint {
-  margin: 16px 0 10px;
+  margin: 0 0 10px;
   font-size: 13px;
 }
 
@@ -81,9 +109,22 @@
 }
 
 .fd-item-meta {
-  margin-top: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 4px;
   font-size: 13px;
   color: var(--text-mute);
+}
+
+.fd-item-cat {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--brand-tint);
+  color: var(--brand-strong);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .fd-item-amount {
@@ -165,14 +206,6 @@
   margin-top: 10px;
   color: var(--text);
   font-size: 16px;
-  font-weight: 600;
-}
-
-.fd-settled {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--approve);
   font-weight: 600;
 }
 

@@ -16,7 +16,6 @@ export function Header({ title, canUndo, onUndo, importActive, onImport }: Props
         <RotateCcw size={18} />
       </button>
       <div className="header-title">
-        <span className="header-eyebrow">Statement</span>
         <h1 className="header-name">{title}</h1>
       </div>
       <button

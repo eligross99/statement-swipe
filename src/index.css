@@ -28,6 +28,16 @@ body {
   letter-spacing: -0.02em;
 }
 
+/* People who ask their device for less motion get instant changes instead of animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
 /* Hidden visually but still available to screen readers and keyboard focus. */
 .visually-hidden {
   position: absolute;

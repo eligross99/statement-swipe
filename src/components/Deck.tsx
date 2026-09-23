@@ -109,9 +109,9 @@ export function Deck({ txns, index, paused, leaving, onLeaveDone, onApprove, onI
       <section className="deck-progress" aria-label="Review progress">
         <div className="deck-progress-row num">
           <span>
-            {reviewed} of {txns.length}
+            {reviewed} of {txns.length} reviewed
           </span>
-          <span>${usd(sumAmounts(txns))}</span>
+          <span>${usd(sumAmounts(txns))} total</span>
         </div>
         <div className="deck-progress-track">
           <div className="deck-progress-fill" style={{ width: `${txns.length ? (reviewed / txns.length) * 100 : 0}%` }} />
@@ -132,9 +132,9 @@ export function Deck({ txns, index, paused, leaving, onLeaveDone, onApprove, onI
               role="group"
               aria-label={`Purchase: ${t.desc}, $${usd(t.amount)}`}
             >
-              <Stamp opacity={approveOp} kind="approve" label="RECOGNIZED" />
+              <Stamp opacity={approveOp} kind="approve" label="APPROVE" />
               <Stamp opacity={lookOp} kind="investigate" label="LOOK CLOSER" />
-              <Stamp opacity={fileOp} kind="pile" label="PILE" />
+              <Stamp opacity={fileOp} kind="pile" label="FILE" />
               <CardFace txn={t} />
             </div>
           ) : (
@@ -178,7 +178,7 @@ function CardFace({ txn }: { txn: Transaction }) {
         <p className="card-face-desc">{txn.desc}</p>
         {txn.loc && <p className="card-face-loc">{txn.loc}</p>}
       </div>
-      <p className="card-face-hint">Swipe right to approve · up to file · left to look closer</p>
+      <p className="card-face-hint">Swipe right to approve, up to file, left to look closer</p>
     </div>
   )
 }
