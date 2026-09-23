@@ -37,6 +37,9 @@ Local-first: **the user's statement never leaves their device.**
 - `npm run typecheck`: TypeScript only
 - `npm run preview`: serve the production build (the only mode where the PWA/service worker is active)
 - `npm run lint`: lint (oxlint; `docs/` is excluded)
+- `sh scripts/make-icons.sh`: regenerate the PNG app icons from the SVGs in `public/` (macOS)
+
+Deploys, CI, security headers, and the phone test checklist: `docs/deploy.md`.
 
 ## Architecture rules
 
@@ -85,6 +88,8 @@ direction: calm, clear, efficient, and signaling financial well-being.
   One name per action everywhere: **Approve**, **Look closer**, **File**, **Flag as possible fraud**.
   Buttons say what happens; empty and error states tell the user what to do next.
 - Destructive actions (start over, delete a folder with purchases) always ask first.
+- The app's colors also appear in `vite.config.ts` (manifest `theme_color`/`background_color`),
+  `index.html` (`theme-color`), and the icon SVGs, which can't read CSS variables. Keep them in sync with `--bg`/`--brand`.
 
 ## Workflow
 
@@ -122,6 +127,9 @@ See `docs/handoff.md` §11 for details.
 
 - The Claude desktop app's built-in browser can't register service workers. Verify offline/install
   behavior in real Chrome or on the phone, not the preview pane.
+- The Content-Security-Policy in `vercel.json` blocks all requests to other servers. It only applies
+  on Vercel (not `npm run dev`/`preview`), so check a PR preview link after adding anything that loads
+  from outside the app.
 - The prototype has setState-inside-useEffect patterns (flagged by oxlint when it scanned `docs/`).
   Don't copy them; derive values during render or set state from the triggering event.
 - Bank CSVs vary: column names/order, sign conventions (purchases negative vs positive, or split
