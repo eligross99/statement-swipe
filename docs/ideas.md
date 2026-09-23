@@ -4,8 +4,8 @@ Eli's feature ideas (Sept 2026), sorted by when to build them and why. On 2026-0
 every "Proposed" change below**, approved the web-search link, and chose per-statement folders. Treat
 "Proposed" items as decided. Read the relevant section before starting its phase.
 
-On 2026-09-23 Eli added the **onboarding tour** idea; its "Proposed" changes are **pending Eli's
-decision** (see that section) until marked otherwise.
+On 2026-09-23 Eli added the **onboarding tour** idea and **accepted all five proposed changes** to it.
+Treat them as decided too.
 
 ## Roadmap order
 
@@ -82,7 +82,7 @@ later. "Try the sample statement" is no longer offered outside the tour.
 - Replayable later, from Settings ("Replay the tour").
 - Removing the standalone sample button: once the tour exists, it's the one place sample data lives.
 
-**Proposed changes (pending Eli's decision):**
+**Proposed changes (accepted 2026-09-23):**
 - **No account before the tour. Accounts come in Phase 9, and only when they're needed.** Asking
   new users to sign up before they've seen anything is where many drop off. It would also break the
   "your statement never leaves your device" promise if an account were required just to use the app,
