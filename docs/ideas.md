@@ -4,6 +4,9 @@ Eli's feature ideas (Sept 2026), sorted by when to build them and why. On 2026-0
 every "Proposed" change below**, approved the web-search link, and chose per-statement folders. Treat
 "Proposed" items as decided. Read the relevant section before starting its phase.
 
+On 2026-09-23 Eli added the **onboarding tour** idea; its "Proposed" changes are **pending Eli's
+decision** (see that section) until marked otherwise.
+
 ## Roadmap order
 
 | Phase | What | Why here |
@@ -11,9 +14,10 @@ every "Proposed" change below**, approved the web-search link, and chose per-sta
 | 4 | Triage & folder polish, **"Set status" menu**, consistent date display | Already planned; the status menu is the same UI |
 | 5 | PWA finish, Vercel deploy, CI, test on phone | Gets the app into real use sooner |
 | 6 | **Multiple statements:** storage, Statements screen, bottom navigation, Tasks dashboard, Settings (light) | Most new ideas depend on keeping more than one statement |
-| 7 | **On-device smarts:** familiar/new merchant tags, merchant-code decoder, web-search link, calendar reminders | Need statement history; no server needed; privacy stays intact |
-| 8 | Accounts, backend, Stripe, bank sync (was Phase 6) | Unlocks push notifications and, if chosen, AI merchant explanations |
-| 9 | Security & compliance (was Phase 7) | Unchanged |
+| 7 | **Onboarding tour** (replaces the always-visible sample statement) | Needs the Phase 6 screens to exist so the tour can show them |
+| 8 | **On-device smarts:** familiar/new merchant tags, merchant-code decoder, web-search link, calendar reminders | Need statement history; no server needed; privacy stays intact |
+| 9 | Accounts, backend, Stripe, bank sync (was Phase 6, then 8) | Unlocks push notifications and, if chosen, AI merchant explanations |
+| 10 | Security & compliance (was Phase 7, then 9) | Unchanged |
 
 ## The ideas
 
@@ -64,33 +68,64 @@ Tasks tab.
 
 ### Settings / preferences → Phase 6 (start light)
 Start with: reminder age (e.g. 1 month), default statement filter, and "About & privacy".
-**Proposed:** no Account or Plan sections until accounts and payments exist (Phase 8). Empty
+**Proposed:** no Account or Plan sections until accounts and payments exist (Phase 9). Empty
 placeholder screens make an app feel unfinished.
 
-### Reminders → Phase 7 (calendar), Phase 8 (push)
+### Onboarding tour → Phase 7 (accounts part → Phase 9)
+Eli's idea (2026-09-23): first-time users make an account, then take a quick guided tour of the key
+navigation and features, using the sample statement's dummy data. The tour can be replayed any time
+later. "Try the sample statement" is no longer offered outside the tour.
+
+**Agreed:**
+- A tour that uses the sample statement is the right way to teach the swipe gestures. People learn
+  them by doing, with fake data, before they trust the app with a real statement.
+- Replayable later, from Settings ("Replay the tour").
+- Removing the standalone sample button: once the tour exists, it's the one place sample data lives.
+
+**Proposed changes (pending Eli's decision):**
+- **No account before the tour. Accounts come in Phase 9, and only when they're needed.** Asking
+  new users to sign up before they've seen anything is where many drop off. It would also break the
+  "your statement never leaves your device" promise if an account were required just to use the app,
+  and accounts need the backend that doesn't exist until Phase 9. Instead: tour first, then use the app
+  with no account. Once accounts exist, offer to create one when it unlocks something (sync between
+  devices, backup, a paid plan).
+- **Interactive and short, not a slideshow.** About 5 steps on the sample deck, each asking the
+  user to do the real thing: swipe right (approve), swipe left (look closer), swipe up (make a folder),
+  set a status in that folder, then a quick look at the Statements and Tasks tabs. A **Skip** button
+  on every step; skipping marks the tour as seen.
+- **End with "Get your statement"**: short instructions for downloading a CSV from your card's
+  website, then the Import screen. Getting the file is the biggest real-world hurdle, so the tour
+  should end there.
+- **The tour's sample statement is a sandbox.** It never appears in the Statements list, the
+  Tasks dashboard, or "familiar merchant" counts, and it's thrown away when the tour ends.
+- **Build it after Phase 6**, because the tour has to show the Statements/Tasks navigation that
+  Phase 6 creates. Until then, keep the "Try the sample statement" button. It's how Eli (and testers)
+  will try the app on the phone in Phase 5. The sample data stays in the code for automated tests.
+
+### Reminders → Phase 8 (calendar), Phase 9 (push)
 **Constraint:** a web app can't reliably fire a notification at a future time without a server
 sending it (and on iPhone, only once the app is installed to the home screen).
-**Proposed:** Phase 7 adds a **"Remind me"** button on a folder item that creates a calendar event
+**Proposed:** Phase 8 adds a **"Remind me"** button on a folder item that creates a calendar event
 (e.g. "Venmo request Jared for dinner, 9/8") in your phone's own calendar app with an alert. No
-server needed. Real push notifications come with the backend in Phase 8.
+server needed. Real push notifications come with the backend in Phase 9.
 Note: if your calendar syncs to iCloud/Google, the reminder text goes there. That's your choice per
 reminder, but the app should say so.
 
-### Merchant lookup ("Look closer") → Phase 7 partly, Phase 8+ for AI
+### Merchant lookup ("Look closer") → Phase 8 partly, Phase 9+ for AI
 **Conflict:** the privacy rule says transaction descriptions never leave the device. Sending the
 merchant name to an AI service would break that promise and needs a server (to hide the API key) and
 money per lookup. AI answers about cryptic merchant codes can also be confidently wrong.
 **Proposed:**
-1. **Phase 7: merchant-code decoder, on-device.** A built-in list of payment-processor prefixes.
+1. **Phase 8: merchant-code decoder, on-device.** A built-in list of payment-processor prefixes.
    E.g. `SQ *` = Square (small businesses), `TST*` = Toast (restaurants), `AMZN MKTP` = Amazon
    Marketplace, `PAYPAL *`, `SP *` = Shopify store. This is accurate, instant, and works offline.
-2. **Phase 7: "Search the web" link** that opens your browser with only the merchant name, and only
+2. **Phase 8: "Search the web" link** that opens your browser with only the merchant name, and only
    when you tap it. Approved; the privacy rule in `CLAUDE.md` allows this one explicit, user-initiated case.
-3. **Phase 8+: optional AI explanation**, off by default, with a clear note that only the merchant name
+3. **Phase 9+: optional AI explanation**, off by default, with a clear note that only the merchant name
    is sent. Or get real merchant names and logos from bank-sync enrichment (Plaid), which solves the
    same problem more reliably.
 
-### Familiar merchant tag → Phase 7
+### Familiar merchant tag → Phase 8
 Shown on swipe cards when a merchant appears in 3+ past statements. All on-device.
 **Proposed changes:**
 - Word it as **"Seen in 5 statements"**, not "Recognized vendor". Fraud can happen at a familiar
