@@ -4,8 +4,9 @@ Eli's feature ideas (Sept 2026), sorted by when to build them and why. On 2026-0
 every "Proposed" change below**, approved the web-search link, and chose per-statement folders. Treat
 "Proposed" items as decided. Read the relevant section before starting its phase.
 
-On 2026-09-23 Eli added the **onboarding tour** idea and **accepted all five proposed changes** to it.
-Treat them as decided too.
+On 2026-09-23 Eli added the **onboarding tour** idea and **accepted all five proposed changes** to it,
+then approved the **easier statement import** plan (easier files first, bank connection later).
+Treat both as decided.
 
 ## Roadmap order
 
@@ -13,10 +14,10 @@ Treat them as decided too.
 | --- | --- | --- |
 | 4 | Triage & folder polish, **"Set status" menu**, consistent date display | Already planned; the status menu is the same UI |
 | 5 | PWA finish, Vercel deploy, CI, test on phone | Gets the app into real use sooner |
-| 6 | **Multiple statements:** storage, Statements screen, bottom navigation, Tasks dashboard, Settings (light) | Most new ideas depend on keeping more than one statement |
-| 7 | **Onboarding tour** (replaces the always-visible sample statement) | Needs the Phase 6 screens to exist so the tour can show them |
+| 6 | **Multiple statements:** storage, Statements screen, bottom navigation, Tasks dashboard, Settings (light); **easier import:** remembered bank setups, OFX/QFX files, Android "Share to" | Most new ideas depend on keeping more than one statement |
+| 7 | **Onboarding tour** (replaces the always-visible sample statement), with **per-bank download guides** | Needs the Phase 6 screens to exist so the tour can show them |
 | 8 | **On-device smarts:** familiar/new merchant tags, merchant-code decoder, web-search link, calendar reminders | Need statement history; no server needed; privacy stays intact |
-| 9 | Accounts, backend, Stripe, bank sync (was Phase 6, then 8) | Unlocks push notifications and, if chosen, AI merchant explanations |
+| 9 | Accounts, backend, Stripe, **opt-in bank connection** (Teller → Plaid, relay-only server) (was Phase 6, then 8) | Unlocks push notifications and, if chosen, AI merchant explanations |
 | 10 | Security & compliance (was Phase 7, then 9) | Unchanged |
 
 ## The ideas
@@ -101,6 +102,49 @@ later. "Try the sample statement" is no longer offered outside the tour.
 - **Build it after Phase 6**, because the tour has to show the Statements/Tasks navigation that
   Phase 6 creates. Until then, keep the "Try the sample statement" button. It's how Eli (and testers)
   will try the app on the phone in Phase 5. The sample data stays in the code for automated tests.
+
+### Easier statement import → Phases 6–7 (files), Phase 9 (bank connection)
+Eli's goal (2026-09-23): getting a statement into the app should be easier than "download a CSV from
+the bank's website, save it, upload it". **Approved plan:** make files painless first (no server
+needed), then add an opt-in bank connection once accounts and a backend exist.
+
+**Phase 6: easier files** (goes with statement history, since it needs saved settings)
+- **Remember each bank's setup.** After the first import, save the detected column mapping, sign
+  convention, and header row, keyed by the file's header row (e.g. "Chase card CSV"). The next import
+  from the same bank skips the mapping screen: one tap to start. Settings stay on-device.
+- **Accept OFX/QFX files** (Quicken formats many banks offer next to CSV). They're standardized, so
+  there's no column mapping. Add an `OFXSource` behind the existing `TransactionSource` seam; nothing
+  downstream changes. Keep real files out of the repo (already blocked in `.gitignore`); use synthetic
+  fixtures.
+- **"Share to Statement Swipe" on Android.** A `share_target` entry in the web-app manifest lets the
+  installed app receive a shared file straight from the Files/Downloads app. iPhone doesn't support
+  this for web apps; there the file picker already opens to recent downloads, so no workaround needed.
+
+**Phase 7: per-bank download guides**
+- Short step-by-step guides for the most common US card issuers (e.g. "Chase: Accounts → Download
+  account activity → CSV"). Shown at the end of the onboarding tour ("Get your statement") and from a
+  "How do I get my file?" link on the Import screen. Guides are static text in the app: no network.
+- Check each guide against the bank's real site before shipping, and keep them easy to update, since
+  banks move their download buttons.
+
+**Phase 9: opt-in bank connection** (needs accounts and a backend)
+- **How it works:** the user taps "Connect card" and logs in to their bank inside Teller's or Plaid's
+  own secure window (our app never sees the password). The service gives our server a token
+  (a lasting permission to fetch that card's transactions). New transactions then arrive with no files.
+- **Teller first** (simpler, US-only), **then Plaid** for wider bank coverage. Plaid's enrichment can
+  also supply real merchant names, logos, and locations, which solves cryptic descriptors like
+  `SQ *DD BAR` properly (see "Merchant lookup"). Plaid can report the card's billing-cycle dates, so a
+  review can match the real statement period.
+- **Relay-only server, to keep the privacy promise as close as possible:** the server stores only the
+  encrypted token, fetches transactions, and passes them to the device without keeping a copy. The
+  review, folders, and notes stay on-device. The promise for connected users becomes: "Your
+  transactions are stored only on your device. We don't keep them." Update `CLAUDE.md`'s privacy
+  section and the in-app privacy text when this ships.
+- **Opt-in, never required.** File import stays for anyone who doesn't want to connect a bank.
+- **Costs and approvals:** the aggregators charge per connected account (usually monthly), so this
+  belongs in the paid plan. Plaid reviews security and privacy practices before granting production
+  access, which lines up with Phase 10 (security and compliance with legal counsel).
+- Out of scope: Apple FinanceKit (native iOS apps only, few cards), screen-scraping bank websites.
 
 ### Reminders → Phase 8 (calendar), Phase 9 (push)
 **Constraint:** a web app can't reliably fire a notification at a future time without a server

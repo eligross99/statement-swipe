@@ -106,13 +106,16 @@ See `docs/handoff.md` §11 for details.
     `npm run lint` on every PR, so PRs can't be merged if they fail. Eli hasn't used CI or GitHub
     Actions before: explain what it is and walk them through any GitHub settings step by step.
 - [ ] 6. Multiple statements: Dexie storage (migrate the saved session), Statements screen, bottom
-  navigation, Tasks dashboard, light Settings (see `docs/ideas.md`)
+  navigation, Tasks dashboard, light Settings; easier import: remembered bank setups, OFX/QFX files,
+  Android "Share to" (see `docs/ideas.md`)
 - [ ] 7. Onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
-  Settings; the standalone "Try the sample statement" button goes away (see `docs/ideas.md`)
+  Settings; the standalone "Try the sample statement" button goes away; per-bank download guides
+  (see `docs/ideas.md`)
 - [ ] 8. On-device smarts: familiar/new merchant tags, merchant-code decoder, web-search link,
   calendar reminders (see `docs/ideas.md`)
-- [ ] 9. Accounts/backend + Stripe, then bank sync (Teller → Plaid), then enrichment; push
-  notifications; optional AI merchant explanation
+- [ ] 9. Accounts/backend + Stripe, then opt-in bank connection (Teller → Plaid) through a relay-only
+  server that never stores transactions, then enrichment; push notifications; optional AI merchant
+  explanation (see `docs/ideas.md`)
 - [ ] 10. Security & compliance hardening (with real legal counsel)
 
 ## Gotchas
