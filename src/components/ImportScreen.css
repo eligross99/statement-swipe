@@ -21,7 +21,8 @@
 }
 
 .dropzone.is-over,
-.dropzone:focus-within {
+.dropzone:focus-within,
+.dropzone:active {
   border-color: var(--brand);
   background: var(--brand-tint);
 }

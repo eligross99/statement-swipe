@@ -37,6 +37,9 @@ Local-first: **the user's statement never leaves their device.**
 - `npm run typecheck`: TypeScript only
 - `npm run preview`: serve the production build (the only mode where the PWA/service worker is active)
 - `npm run lint`: lint (oxlint; `docs/` is excluded)
+- `sh scripts/make-icons.sh`: regenerate the PNG app icons from the SVGs in `public/` (macOS)
+
+Deploys, CI, security headers, and the phone test checklist: `docs/deploy.md`.
 
 ## Architecture rules
 
@@ -85,6 +88,8 @@ direction: calm, clear, efficient, and signaling financial well-being.
   One name per action everywhere: **Approve**, **Look closer**, **File**, **Flag as possible fraud**.
   Buttons say what happens; empty and error states tell the user what to do next.
 - Destructive actions (start over, delete a folder with purchases) always ask first.
+- The app's colors also appear in `vite.config.ts` (manifest `theme_color`/`background_color`),
+  `index.html` (`theme-color`), and the icon SVGs, which can't read CSS variables. Keep them in sync with `--bg`/`--brand`.
 
 ## Workflow
 
@@ -107,24 +112,28 @@ See `docs/handoff.md` §11 for details.
     Actions before: explain what it is and walk them through any GitHub settings step by step.
 - [ ] 6. Multiple statements: Dexie storage (migrate the saved session), Statements screen, bottom
   navigation, Tasks dashboard, light Settings; easier import: remembered bank setups, OFX/QFX files,
-  Android "Share to" (see `docs/ideas.md`)
-- [ ] 7. Onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
+  Android "Share to"; text that scales with the phone's text-size setting (see `docs/ideas.md`)
+- [ ] 7. Dark mode (follows the phone, override in Settings) and Android haptics first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
   Settings; the standalone "Try the sample statement" button goes away; per-bank download guides
   (see `docs/ideas.md`)
 - [ ] 8. On-device smarts: familiar/new merchant tags, merchant-code decoder, web-search link,
   calendar reminders (see `docs/ideas.md`)
-- [ ] 9. Accounts/backend + Stripe, then opt-in bank connection (Teller → Plaid) through a relay-only
+- [ ] 9. App Store version with Capacitor (**ask Eli again before starting**), then accounts/backend + Stripe, then opt-in bank connection (Teller → Plaid) through a relay-only
   server that never stores transactions, then enrichment; push notifications; optional AI merchant
-  explanation (see `docs/ideas.md`)
+  explanation (see `docs/ideas.md`). Install the Vercel Claude Code plugin at the start of this phase.
 - [ ] 10. Security & compliance hardening (with real legal counsel)
 
 ## Gotchas
 
 - The Claude desktop app's built-in browser can't register service workers. Verify offline/install
   behavior in real Chrome or on the phone, not the preview pane.
+- The Content-Security-Policy in `vercel.json` blocks all requests to other servers. It only applies
+  on Vercel (not `npm run dev`/`preview`), so check a PR preview link after adding anything that loads
+  from outside the app.
 - The prototype has setState-inside-useEffect patterns (flagged by oxlint when it scanned `docs/`).
   Don't copy them; derive values during render or set state from the triggering event.
 - Bank CSVs vary: column names/order, sign conventions (purchases negative vs positive, or split
   debit/credit columns), and preamble rows above the header.
 - Cryptic merchant names (`SQ *DD BAR`) can't be decoded from CSV. Don't fake enrichment.
-- Out of scope for now: PDF statements, custom per-folder statuses, native apps.
+- Out of scope for now: PDF statements, custom per-folder statuses. Native apps wait for the
+  App Store step at the start of Phase 9 (via Capacitor, not a rewrite; ask Eli first).

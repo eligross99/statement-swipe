@@ -12,17 +12,27 @@ export default defineConfig({
       registerType: 'autoUpdate',
       // Precache the whole app shell so it works fully offline.
       workbox: { globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'] },
+      // Files in public/ that aren't referenced by the built app but should still work offline.
+      includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
+        id: '/',
         name: 'Statement Swipe',
         short_name: 'Swipe',
         description: 'Review your credit-card statement one swipe at a time.',
-        theme_color: '#ffffff',
+        theme_color: '#f4f7f5', // matches --bg in tokens.css so the status bar blends in
         background_color: '#f4f7f5',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
-        // Placeholder icon; proper PNG icon set comes in Phase 5.
-        icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+        scope: '/',
+        categories: ['finance', 'productivity'],
+        // PNGs are generated from the SVGs by scripts/make-icons.sh.
+        icons: [
+          { src: 'pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'pwa-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+        ],
       },
     }),
   ],
