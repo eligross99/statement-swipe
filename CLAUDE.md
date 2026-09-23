@@ -75,6 +75,8 @@ Deploys, CI, security headers, and the phone test checklist: `docs/deploy.md`.
 direction: calm, clear, efficient, and signaling financial well-being.
 
 - All colors live in `src/styles/tokens.css` as CSS custom properties. Never hard-code hex values in components.
+- Text sizes are the `--text-*` tokens (rem, so they follow the phone's text-size setting). Never set
+  font sizes in px; cap with `min()` only inside fixed-size areas like the swipe card.
 - White cards on a near-white, faintly green background (`--bg`). One deep "money green" brand color (`--brand`).
   Generous whitespace; soft shadows; no heavy borders.
 - Action colors are functional and consistent everywhere (each has a `-tint` for soft fills):
@@ -112,13 +114,14 @@ See `docs/handoff.md` §11 for details.
 - [x] 5. PWA finish (icons, manifest, offline) + Vercel deploy (statement-swipe.vercel.app) + CI and
   branch protection on `main` + installed and tested on Eli's iPhone. The real-CSV part was blocked:
   Eli's bank app only offers PDFs on the phone (see PDF import in Phase 6).
-- [ ] 5.5. Feel and motion, from Eli's phone test: smoother swipes and screen transitions, pressed
+- [x] 5.5. Feel and motion, from Eli's phone test: smoother swipes and screen transitions, pressed
   states, overscroll bounce, larger text that follows the phone's text size, clearer header buttons,
-  confirm before replacing a review (see `docs/ideas.md`)  ← **next**
+  confirm before replacing a review (see `docs/ideas.md`). Motion helpers: `src/lib/motion.ts`,
+  `src/hooks/useAnimate.ts`; bottom sheets share `src/components/Sheet.tsx`
 - [ ] 6. Multiple statements: Dexie storage (migrate the saved session), Statements screen, bottom
   navigation, Tasks dashboard, light Settings, rename statements + smart default names; easier import:
   **on-device PDF statements (priority)**, remembered bank setups, OFX/QFX files, Android "Share to"
-  (see `docs/ideas.md`)
+  (see `docs/ideas.md`)  ← **next**
 - [ ] 7. Dark mode (follows the phone, override in Settings) and Android haptics first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
   Settings; the standalone "Try the sample statement" button goes away; per-bank download guides
   (see `docs/ideas.md`)
