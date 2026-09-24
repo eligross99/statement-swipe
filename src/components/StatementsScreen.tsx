@@ -41,7 +41,10 @@ export function StatementsScreen(props: Props) {
   const animate = useAnimate()
 
   const shown = filterStatements(statements, filter)
-  const resume = resumeCandidate(statements)
+  // The banner only earns its place when the review isn't already the top row; otherwise it would
+  // be a second button doing the same thing.
+  const candidate = resumeCandidate(statements)
+  const resume = candidate && shown[0]?.id !== candidate.id ? candidate : null
   const target = statements.find((st) => st.id === pending?.id) ?? null
 
   /** The row folds away, then the statement is archived or deleted, so the user sees where it went. */

@@ -181,9 +181,9 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Approve' }))
     await user.click(screen.getByRole('button', { name: 'Back to statements' }))
 
-    // The review in progress is one tap away, in the banner and in the list.
-    expect(screen.getByRole('button', { name: /Pick up where you left off/ })).toHaveTextContent('15 of 16 purchases left')
+    // Alone, the review in progress is the top row, so there's no banner repeating it.
     expect(screen.getByText('In progress, 15 of 16 left')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Pick up where you left off/ })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Import a statement' }))
     await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
@@ -195,7 +195,10 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Back to statements' }))
     expect(screen.getAllByRole('button', { name: /^March 2026 sample/ })).toHaveLength(2)
     expect(screen.getByText('Needs review')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /Pick up where you left off/ }))
+    // The newer statement is on top now, so the banner offers the one in progress below it.
+    const banner = screen.getByRole('button', { name: /Pick up where you left off/ })
+    expect(banner).toHaveTextContent('15 of 16 purchases left')
+    await user.click(banner)
     expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
   })
 
