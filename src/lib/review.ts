@@ -17,7 +17,7 @@ export interface ReviewState {
 }
 
 export type ReviewEvent =
-  | { type: 'restore'; session: Session }
+  | { type: 'restore'; session: Session; history?: UndoEntry[] }
   | { type: 'start'; txns: Transaction[]; label: string }
   | { type: 'approve' }
   | { type: 'flag' }
@@ -87,7 +87,7 @@ export function reviewReducer(state: ReviewState, event: ReviewEvent): ReviewSta
       // A saved session never reopens on the import screen; send the user back to their review.
       return {
         session: { ...event.session, screen: event.session.screen === 'import' ? reviewScreen(event.session) : event.session.screen },
-        history: [],
+        history: event.history ?? [],
       }
 
     case 'start':

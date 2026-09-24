@@ -1,7 +1,7 @@
 import { Check, ChevronRight, Folder, FolderCheck, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
 import { plural, usd } from '../lib/format'
-import { folderGroups, stillToActOn, sumAmounts } from '../lib/review'
+import { folderGroups, openItems, stillToActOn, sumAmounts } from '../lib/review'
 import type { Pile, Transaction } from '../types'
 import './Summary.css'
 
@@ -24,6 +24,15 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
   // Filed purchases stay filed as a record; this says whether any of them still need doing.
   const toActOn = stillToActOn(filed)
 
+  // The bar splits Filed in two: still to act on (solid) and settled (pale), so a fully settled
+  // review reads as done while still showing how much was filed.
+  const bar: { key: string; amount: number }[] = [
+    { key: 'approve', amount: sumAmounts(txns.filter((t) => t.status === 'approved')) },
+    { key: 'pile', amount: toActOn },
+    { key: 'pile-settled', amount: sumAmounts(filed) - sumAmounts(openItems(filed)) },
+    { key: 'flag', amount: sumAmounts(flagged) },
+  ]
+
   const rows: { tone: Tone; label: string; items: Transaction[] }[] = [
     { tone: 'approve', label: 'Approved', items: txns.filter((t) => t.status === 'approved') },
     { tone: 'pile', label: 'Filed', items: filed },
@@ -40,16 +49,19 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
       {/* Where the statement's money went: one bar split by decision, then the numbers behind it. */}
       <section className="panel ledger" aria-label="Breakdown">
         <div className="ledger-bar" aria-hidden>
-          {rows.map(({ tone, items }) => {
-            const amount = sumAmounts(items)
-            return amount > 0 ? <span key={tone} className={`ledger-seg ledger-seg--${tone}`} style={{ flexGrow: amount }} /> : null
-          })}
+          {bar.map(({ key, amount }) =>
+            amount > 0 ? <span key={key} className={`ledger-seg ledger-seg--${key}`} style={{ flexGrow: amount }} /> : null,
+          )}
         </div>
         <dl className="ledger-rows">
           {rows.map(({ tone, label, items }) => (
             <div key={tone} className="ledger-row">
               <dt>
-                <span className={`ledger-dot ledger-seg--${tone}`} aria-hidden />
+                {/* When every filed purchase is settled, the dot fades to match the bar. */}
+                <span
+                  className={`ledger-dot ledger-seg--${tone === 'pile' && items.length > 0 && toActOn === 0 ? 'pile-settled' : tone}`}
+                  aria-hidden
+                />
                 {label}
               </dt>
               <dd className="ledger-count num">{items.length}</dd>

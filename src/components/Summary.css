@@ -41,6 +41,10 @@
 .ledger-seg--pile {
   background: var(--pile);
 }
+.ledger-seg--pile-settled {
+  /* Filed and settled: the folder color, faded, to read as "nothing left to do". */
+  background: color-mix(in srgb, var(--pile) 28%, var(--surface));
+}
 .ledger-seg--flag {
   background: var(--flag);
 }

@@ -242,9 +242,32 @@ describe('App', () => {
     const user = await startSample()
     await user.click(screen.getByRole('button', { name: 'Approve' }))
     await waitFor(() => expect(set).toHaveBeenCalled())
-    const saved = vi.mocked(set).mock.lastCall?.[1] as Session
+    const saved = vi.mocked(set).mock.calls.findLast(([key]) => key === 'statement-swipe-session-v1')?.[1] as Session
     expect(saved.index).toBe(1)
     expect(saved.txns[0].status).toBe('approved')
+  })
+
+  it('keeps undo working after the app is closed and reopened', async () => {
+    const saved: Session = {
+      txns: [
+        { id: 'a', desc: 'FIRST SHOP', amount: 5, date: '', cat: '—', status: 'approved', pileId: null, action: null, note: '' },
+        { id: 'b', desc: 'SECOND SHOP', amount: 7, date: '', cat: '—', status: 'unreviewed', pileId: null, action: null, note: '' },
+      ],
+      index: 1,
+      piles: [],
+      screen: 'deck',
+      label: 'Saved March',
+      openPile: null,
+    }
+    const undo = [{ txnId: 'a', index: 0, status: 'unreviewed', pileId: null }]
+    vi.mocked(get).mockImplementation(async (key) => (key === 'statement-swipe-undo-v1' ? undo : saved))
+    const user = userEvent.setup()
+    render(<App />)
+    const undoButton = await screen.findByRole('button', { name: 'Undo last action' })
+    await waitFor(() => expect(undoButton).toBeEnabled())
+    await user.click(undoButton)
+    expect(within(topCard()).getByText('FIRST SHOP')).toBeInTheDocument()
+    expect(screen.getByText('0 of 2 reviewed')).toBeInTheDocument()
   })
 
   it('restores a saved session on load', async () => {

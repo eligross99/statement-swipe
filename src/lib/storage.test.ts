@@ -1,6 +1,6 @@
 import { get, set } from 'idb-keyval'
 import type { Session } from '../types'
-import { isSession, loadSession, saveSession } from './storage'
+import { isSession, isUndoHistory, loadSession, loadUndo, saveSession } from './storage'
 
 // Stand-in for IndexedDB: tests check what we store and how we read it back.
 vi.mock('idb-keyval', () => ({ get: vi.fn(), set: vi.fn() }))
@@ -89,5 +89,30 @@ describe('requestPersistentStorage', () => {
     vi.stubGlobal('navigator', {})
     expect(await requestPersistentStorage()).toBe(false)
     vi.unstubAllGlobals()
+  })
+})
+
+describe('undo history', () => {
+  const step = { txnId: 't1', index: 0, status: 'unreviewed', pileId: null }
+
+  it('accepts steps that point at purchases in this session', () => {
+    expect(isUndoHistory([step], session)).toBe(true)
+    expect(isUndoHistory([], session)).toBe(true)
+  })
+
+  it('rejects junk and steps from another review', () => {
+    expect(isUndoHistory(null, session)).toBe(false)
+    expect(isUndoHistory([{ ...step, txnId: 'other' }], session)).toBe(false)
+    expect(isUndoHistory([{ ...step, index: 5 }], session)).toBe(false)
+    expect(isUndoHistory([{ ...step, status: 'maybe' }], session)).toBe(false)
+  })
+
+  it('loads an empty history when the saved one is unusable or storage fails', async () => {
+    vi.mocked(get).mockResolvedValueOnce([{ ...step, txnId: 'other' }])
+    await expect(loadUndo(session)).resolves.toEqual([])
+    vi.mocked(get).mockRejectedValueOnce(new Error('blocked'))
+    await expect(loadUndo(session)).resolves.toEqual([])
+    vi.mocked(get).mockResolvedValueOnce([step])
+    await expect(loadUndo(session)).resolves.toEqual([step])
   })
 })
