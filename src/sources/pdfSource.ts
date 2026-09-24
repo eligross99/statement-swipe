@@ -9,14 +9,16 @@ import { parseStatement, type PdfStatement } from '../lib/statementPdf'
 import type { Transaction, TransactionSource } from '../types'
 
 type Pdfjs = typeof import('pdfjs-dist/legacy/build/pdf.mjs')
+type PdfPage = Awaited<ReturnType<Awaited<ReturnType<Pdfjs['getDocument']>['promise']>['getPage']>>
 
 /** Why a PDF couldn't be imported, for a message that says what to do next. */
 export type PdfProblem = 'password' | 'no-text' | 'no-purchases' | 'unreadable'
 
 export class PdfImportError extends Error {
   readonly problem: PdfProblem
-  constructor(problem: PdfProblem) {
-    super(problem)
+  /** `cause` keeps the reader's own error, for debugging on this device. It's never sent anywhere. */
+  constructor(problem: PdfProblem, cause?: unknown) {
+    super(problem, { cause })
     this.problem = problem
   }
 }
@@ -45,6 +47,25 @@ function loadPdfjs(): Promise<Pdfjs> {
   return loading
 }
 
+/**
+ * One page's text fragments. Reads the page's text stream chunk by chunk rather than with pdfjs's
+ * own `getTextContent`, which loops with `for await` over a ReadableStream: Safari (every iPhone
+ * browser, as of iOS 26) can't do that, so it throws "undefined is not a function".
+ */
+async function pageFragments(page: PdfPage): Promise<TextFragment[]> {
+  const reader = page.streamTextContent().getReader()
+  const fragments: TextFragment[] = []
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) return fragments
+    for (const item of value.items) {
+      if (!('str' in item)) continue
+      const [, , c, d, x, y] = item.transform as number[]
+      fragments.push({ str: item.str, x, y, width: item.width, size: Math.hypot(c, d) })
+    }
+  }
+}
+
 /** Every page's text as lines, top to bottom. `pdfjs` is passed in by tests, which run in Node. */
 export async function extractLines(data: Uint8Array, pdfjs?: Pdfjs): Promise<Line[]> {
   const lib = pdfjs ?? (await loadPdfjs())
@@ -54,24 +75,16 @@ export async function extractLines(data: Uint8Array, pdfjs?: Pdfjs): Promise<Lin
     doc = await task.promise
   } catch (e) {
     void task.destroy()
-    throw new PdfImportError(e instanceof lib.PasswordException ? 'password' : 'unreadable')
+    throw new PdfImportError(e instanceof lib.PasswordException ? 'password' : 'unreadable', e)
   }
   try {
     const lines: Line[] = []
     for (let p = 1; p <= doc.numPages; p++) {
-      const page = await doc.getPage(p)
-      const content = await page.getTextContent()
-      const fragments: TextFragment[] = []
-      for (const item of content.items) {
-        if (!('str' in item)) continue
-        const [, , c, d, x, y] = item.transform as number[]
-        fragments.push({ str: item.str, x, y, width: item.width, size: Math.hypot(c, d) })
-      }
-      lines.push(...toLines(fragments, p))
+      lines.push(...toLines(await pageFragments(await doc.getPage(p)), p))
     }
     return lines
-  } catch {
-    throw new PdfImportError('unreadable')
+  } catch (e) {
+    throw new PdfImportError('unreadable', e)
   } finally {
     void task.destroy()
   }

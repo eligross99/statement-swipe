@@ -39,6 +39,18 @@ describe('PDFSource', () => {
     expect(txns.every((t) => t.status === 'unreviewed' && t.pileId === null && t.cat === '—')).toBe(true)
   })
 
+  it('works without async iteration of streams, which Safari lacks', async () => {
+    const proto = ReadableStream.prototype as unknown as Record<symbol, unknown>
+    const original = proto[Symbol.asyncIterator]
+    delete proto[Symbol.asyncIterator]
+    try {
+      const source = await PDFSource.fromData(fixture('sample-statement.pdf'), pdfjs)
+      expect(source.purchases()).toHaveLength(4)
+    } finally {
+      proto[Symbol.asyncIterator] = original
+    }
+  })
+
   it('explains when a PDF has no text, like a scanned statement', async () => {
     expect(await problem(fixture('scanned-statement.pdf'))).toBe('no-text')
   })

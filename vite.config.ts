@@ -1,7 +1,11 @@
 /// <reference types="vitest/config" />
 import react from '@vitejs/plugin-react'
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+
+/** The live site's security headers (vercel.json), so `npm run preview` behaves like Vercel. */
+const vercelHeaders: { key: string; value: string }[] = JSON.parse(readFileSync('vercel.json', 'utf8')).headers[0].headers
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -37,7 +41,12 @@ export default defineConfig({
       },
     }),
   ],
+  preview: {
+    headers: Object.fromEntries(vercelHeaders.map((h) => [h.key, h.value])),
+  },
   test: {
+    // e2e/ holds Playwright tests, which run in real browsers via `npm run test:e2e`.
+    exclude: ['e2e/**', 'node_modules/**'],
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],

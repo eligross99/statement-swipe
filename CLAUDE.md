@@ -26,7 +26,7 @@ Local-first: **the user's statement never leaves their device.**
 - `vite-plugin-pwa`: installable, works offline
 - `idb-keyval`: IndexedDB persistence (switch to Dexie only if we add statement history)
 - `papaparse`: CSV parsing · `pdfjs-dist`: PDF statements, loaded only when a PDF is picked · `lucide-react`: icons
-- Vitest + Testing Library for unit/component tests; Playwright for end-to-end tests later
+- Vitest + Testing Library for unit/component tests; Playwright (WebKit, iPhone-sized) for end-to-end tests in `e2e/`
 - Hosting: Vercel (auto-deploys from GitHub; set up in the PWA-finish phase)
 
 ## Commands
@@ -34,6 +34,8 @@ Local-first: **the user's statement never leaves their device.**
 - `npm run dev`: local dev server
 - `npm run build`: typecheck + production build
 - `npm test`: unit tests (Vitest, once) · `npm run test:watch`: re-run on save
+- `npm run test:e2e`: end-to-end tests of the production build in WebKit (run `npm run build` first;
+  first time on a new machine: `npx playwright install webkit`). Also runs on CI
 - `npm run typecheck`: TypeScript only
 - `npm run preview`: serve the production build (the only mode where the PWA/service worker is active)
 - `npm run lint`: lint (oxlint; `docs/` is excluded)
@@ -143,9 +145,12 @@ See `docs/handoff.md` §11 for details.
 
 - The Claude desktop app's built-in browser can't register service workers. Verify offline/install
   behavior in real Chrome or on the phone, not the preview pane.
-- The Content-Security-Policy in `vercel.json` blocks all requests to other servers. It only applies
-  on Vercel (not `npm run dev`/`preview`), so check a PR preview link after adding anything that loads
-  from outside the app.
+- The Content-Security-Policy in `vercel.json` blocks all requests to other servers. `npm run preview`
+  (and so the e2e tests) sends the same headers, read from `vercel.json`; `npm run dev` doesn't.
+- **iPhone Safari lags desktop engines**, even Playwright's WebKit. Example: iOS 26 Safari can't
+  `for await` over a `ReadableStream`, which broke pdfjs's `getTextContent` (we read the stream by hand
+  in `pdfSource.ts`). Before a phone test, try new browser-facing code in the iPhone simulator's Safari
+  (Xcode's iOS 26.5 runtime is installed): serve `npm run preview` and open it with the simulator tool.
 - The prototype has setState-inside-useEffect patterns (flagged by oxlint when it scanned `docs/`).
   Don't copy them; derive values during render or set state from the triggering event.
 - Bank CSVs vary: column names/order, sign conventions (purchases negative vs positive, or split
@@ -154,6 +159,7 @@ See `docs/handoff.md` §11 for details.
 - PDF statements are now in scope (Phase 6a, on-device), reversing `docs/handoff.md` §12. The PDF reader's
   worker is an `.mjs` file; `vite.config.ts` precaches `mjs` so PDF import works offline.
 - PDF import can't be tested in jsdom (the reader needs a worker). Reader tests run in Vitest's Node
-  environment (`// @vitest-environment node`); screen tests stub `PDFSource.fromData`.
+  environment (`// @vitest-environment node`); screen tests stub `PDFSource.fromData`; `e2e/` runs the
+  real thing in WebKit, and `e2e/private-statement.spec.ts` tries PDFs in `private/` (counts only).
 - Out of scope for now: custom per-folder statuses. Native apps wait for the
   App Store step at the start of Phase 9 (via Capacitor, not a rewrite; ask Eli first).
