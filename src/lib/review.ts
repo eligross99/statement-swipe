@@ -21,6 +21,7 @@ export type ReviewEvent =
   | { type: 'start'; txns: Transaction[]; label: string }
   | { type: 'approve' }
   | { type: 'flag' }
+  | { type: 'approveFlagged'; txnId: string }
   | { type: 'file'; pileId: string }
   | { type: 'createPileAndFile'; pile: Pile }
   | { type: 'deletePile'; pileId: string }
@@ -100,6 +101,13 @@ export function reviewReducer(state: ReviewState, event: ReviewEvent): ReviewSta
 
     case 'flag':
       return resolveCurrent(state, 'flagged', null)
+
+    case 'approveFlagged': {
+      // After looking into a flagged purchase from the summary, the user recognizes it after all.
+      const txn = s.txns.find((t) => t.id === event.txnId)
+      if (!txn || txn.status !== 'flagged') return state
+      return patchTxn(state, event.txnId, { status: 'approved' })
+    }
 
     case 'file':
       if (!s.piles.some((p) => p.id === event.pileId)) return state

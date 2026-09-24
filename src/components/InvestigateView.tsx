@@ -14,11 +14,13 @@ interface Props {
   onBack: () => void
   onApprove: () => void
   onFlag: () => void
+  /** For a purchase flagged earlier (opened from the summary): the user recognizes it after all. */
+  onRecognize: () => void
 }
 
 /** Full statement details for one purchase. "Back" leaves the card unresolved in the deck.
  *  Every way out slides the view away first, then reports back. */
-export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag }: Props) {
+export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag, onRecognize }: Props) {
   const animate = useAnimate()
   const ref = useRef<HTMLDivElement>(null)
   const leaving = useRef(false)
@@ -72,6 +74,18 @@ export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag }: P
             </button>
             <button type="button" className="btn btn--flag" onClick={() => leave(onFlag)}>
               <Flag size={18} /> No, flag as possible fraud
+            </button>
+          </div>
+        )}
+
+        {!canDecide && txn.status === 'flagged' && (
+          <div className="investigate-actions">
+            <p className="investigate-question">Recognize it now?</p>
+            <p className="muted investigate-hint">
+              If you’ve looked into it and it’s yours, move it to your approved purchases.
+            </p>
+            <button type="button" className="btn btn--primary" onClick={() => leave(onRecognize)}>
+              <Check size={18} /> I recognize it, approve it
             </button>
           </div>
         )}

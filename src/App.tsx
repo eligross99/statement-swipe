@@ -180,6 +180,10 @@ export default function App() {
           }}
           onApprove={() => void decideAfterLook({ type: 'approve' }, 'right')}
           onFlag={() => void decideAfterLook({ type: 'flag' }, 'left')}
+          onRecognize={() => {
+            setInvestigatingId(null)
+            dispatch({ type: 'approveFlagged', txnId: investigating.id })
+          }}
         />
       )}
 

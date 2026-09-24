@@ -88,3 +88,9 @@
   font-size: var(--text-md);
   font-weight: 650;
 }
+
+.investigate-hint {
+  margin: 0 0 6px;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}

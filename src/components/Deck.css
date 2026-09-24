@@ -211,19 +211,21 @@
   height: 58px;
   border: none;
   border-radius: 50%;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
   cursor: pointer;
-  /* Letting go eases back slowly, so even a quick tap is visible. */
+  /* Letting go eases back more slowly than the press, so even a quick tap is visible. */
   transition:
     transform 0.3s var(--ease-out),
-    background-color 0.35s ease,
-    box-shadow 0.35s ease;
+    background-color 0.3s var(--ease-out);
 }
 
-/* A firm press: the button sinks and its color deepens, quickly but not instantly. */
+/* The same press on all three: the circle shrinks and darkens together, easing in quickly. */
 .action-btn:active:not(:disabled) {
   transform: scale(0.88);
+  background: var(--btn-bg-pressed);
   filter: none;
-  transition-duration: 0.1s;
+  transition-duration: 0.12s;
 }
 
 .action-btn:disabled {
@@ -236,34 +238,26 @@
   height: 68px;
 }
 
+/* Each button supplies only its colors. The pressed color mixes in about a quarter more of the
+   action color (or darkens it, for the solid Approve button). */
 .action-btn--investigate {
-  background: var(--investigate-tint);
-  color: var(--investigate);
-}
-
-.action-btn--investigate:active:not(:disabled) {
-  background: color-mix(in srgb, var(--investigate) 30%, var(--investigate-tint));
+  --btn-bg: var(--investigate-tint);
+  --btn-fg: var(--investigate);
+  --btn-bg-pressed: color-mix(in srgb, var(--investigate) 26%, var(--investigate-tint));
 }
 
 .action-btn--pile {
-  background: var(--pile-tint);
-  color: var(--pile);
-}
-
-.action-btn--pile:active:not(:disabled) {
-  background: color-mix(in srgb, var(--pile) 30%, var(--pile-tint));
+  --btn-bg: var(--pile-tint);
+  --btn-fg: var(--pile);
+  --btn-bg-pressed: color-mix(in srgb, var(--pile) 26%, var(--pile-tint));
 }
 
 /* Approve is the one solid action: the healthy default. */
 .action-btn--approve {
-  background: var(--approve);
-  color: var(--on-brand);
+  --btn-bg: var(--approve);
+  --btn-fg: var(--on-brand);
+  --btn-bg-pressed: var(--brand-strong);
   box-shadow: var(--shadow-card);
-}
-
-.action-btn--approve:active:not(:disabled) {
-  background: var(--brand-strong);
-  box-shadow: none;
 }
 
 .action-btn-label {

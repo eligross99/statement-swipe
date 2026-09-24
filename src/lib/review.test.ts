@@ -73,6 +73,20 @@ describe('resolving cards', () => {
   })
 })
 
+describe('changing your mind about a flagged purchase', () => {
+  it('moves a flagged purchase to approved, from the summary', () => {
+    const s = run({ type: 'flag' }, { type: 'approve' }, { type: 'approve' }, { type: 'approveFlagged', txnId: 'a' })
+    expect(s.session.screen).toBe('summary')
+    expect(statuses(s)).toEqual(['approved', 'approved', 'approved'])
+  })
+
+  it('ignores purchases that are not flagged', () => {
+    const before = run({ type: 'approve' })
+    expect(reviewReducer(before, { type: 'approveFlagged', txnId: 'a' })).toBe(before)
+    expect(reviewReducer(before, { type: 'approveFlagged', txnId: 'b' })).toBe(before)
+  })
+})
+
 describe('undo', () => {
   it('puts the last card back as unreviewed and returns to it', () => {
     const s = run({ type: 'approve' }, { type: 'createPileAndFile', pile: SKI }, { type: 'undo' })

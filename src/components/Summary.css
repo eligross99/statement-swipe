@@ -31,6 +31,7 @@
 
 .ledger-seg {
   flex-basis: 0;
+  transition: flex-grow 0.6s var(--ease-out);
   min-width: 6px; /* a tiny share should still be visible */
 }
 

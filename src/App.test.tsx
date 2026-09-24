@@ -179,6 +179,19 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Review complete' })).toBeInTheDocument()
   })
 
+  it('lets a purchase flagged earlier be approved from the summary', async () => {
+    const user = await startSample()
+    await user.click(screen.getByRole('button', { name: 'Look closer' }))
+    await user.click(screen.getByRole('button', { name: /flag as possible fraud/ }))
+    for (let i = 0; i < 15; i++) await user.click(screen.getByRole('button', { name: 'Approve' }))
+    expect(screen.getByRole('heading', { name: /Flagged as possible fraud/ })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /TRADER JOE'S/ }))
+    await user.click(screen.getByRole('button', { name: 'I recognize it, approve it' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Flagged as possible fraud/ })).not.toBeInTheDocument()
+  })
+
   it('shows the same readable date on the card and in the investigation view', async () => {
     const user = await startSample()
     expect(within(topCard()).getByText('Mar 3')).toBeInTheDocument()
