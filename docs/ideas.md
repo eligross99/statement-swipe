@@ -25,8 +25,7 @@ test. For tuning the PDF reader, Eli chose the **masked layout** approach (see "
 
 On 2026-09-24 Eli phone-tested and approved Phase 6a (PDF import); it's merged. Its feedback also set
 the card fly-out to 700ms, centered the swipe hint, and added "Show fewer" (see Eli's design notes in
-`CLAUDE.md` and `src/lib/motion.ts`). **Next: Phase 6b in a fresh session. Start with "Starting Phase
-6b" below.**
+`CLAUDE.md` and `src/lib/motion.ts`). Phase 6b followed and is merged too.
 
 On 2026-09-24, starting Phase 6b, Eli chose: **no tab bar until Tasks exists** (Statements is the home
 screen, gear for Settings; the Statements · Tasks bar arrives in 6c), **Settings starts with About &
@@ -39,6 +38,9 @@ every breakdown bar (`ledgerSegments` in `src/lib/review.ts`): it reads like a p
 left (approved dark green, settled folder items pale green), still to do on the right (open folder items
 indigo, flagged red, then unreviewed as empty track), and **a statement with nothing left to do is one
 solid dark green**.
+
+**Phase 6b was phone-tested and approved by Eli on 2026-09-24. Next: Phase 6c in a fresh session. Start
+with "Starting Phase 6c" below.**
 
 ## Roadmap order
 
@@ -60,6 +62,27 @@ solid dark green**.
 ### "Set status" menu → Phase 4
 Rename "Set next step" to "Set status"; tapping opens a menu with To do / Waiting / Done (plus a way
 to clear it). Agreed as-is.
+
+### Starting Phase 6c: handoff notes from 6b (2026-09-24)
+**Scope:** the Tasks dashboard (see "Tasks dashboard"), the **Statements · Tasks** bottom tab bar (held
+back from 6b so a one-tab bar never shipped), a way to **resolve flagged purchases** (Eli: "I'll
+definitely want a way to track flagged purchases to remediation"; see the gap under "Tasks dashboard"),
+the **reminder age** setting, remembered bank setups, and OFX/QFX files. That's a lot: consider
+splitting (e.g. 6c = Tasks + tab bar + flagged resolution, 6d = bank setups + OFX/QFX) and ask Eli.
+
+**Open with Eli:** they have feedback on the Settings page they held back until it grows; ask for it
+before adding reminder age there.
+
+**What 6b left in place:**
+- `libraryReducer` (`src/lib/library.ts`) holds every `Statement`; `useLibrary` saves changed ones to
+  Dexie (`src/lib/storage.ts`). A cross-statement Tasks view can derive everything from `statements`.
+- Settings live in `LibraryState.settings` (saved under the `settings` key; `readSettings` drops junk,
+  defaults fill gaps). Add new settings there.
+- `progress()` / `needsAction()` (`src/lib/statements.ts`) define "needs action"; a resolved-flag state
+  must update both, plus `ledgerSegments` (`src/lib/review.ts`) so a resolved flag counts as done.
+- Adding a field to `Transaction` (e.g. a resolved flag) needs `isReviewData` in `storage.ts` to
+  accept saves without it, since statements are already saved on Eli's phone.
+- `idb-keyval` only remains for the 6b migration; it can be removed once Eli's phone has migrated.
 
 ### Starting Phase 6b: handoff notes from 6a (2026-09-24)
 **Scope** (decided): Dexie storage with automatic migration of the saved review, the Statements

@@ -140,10 +140,12 @@ See `docs/handoff.md` §11 for details.
     Bank of America PDF via the masked-layout script (totals match to the cent), phone-tested on Eli's
     iPhone. Also added: Playwright WebKit e2e tests on CI, iPhone-simulator testing, `npm run preview`
     with the live CSP, "Show all/Show fewer" in the import preview, no "—" category chip
-  - [ ] 6b. Multiple statements: Dexie storage (migrate the saved session), Statements screen, bottom
-    navigation, rename statements + smart default names, light Settings  ← **next.** Start with
-    "Starting Phase 6b" in `docs/ideas.md` (handoff notes and an open question for Eli)
-  - [ ] 6c. Tasks dashboard; remembered bank setups; OFX/QFX files
+  - [x] 6b. **Multiple statements:** Dexie storage (the old saved review migrates automatically),
+    Statements home screen (filters, ⋯ menu to rename/archive/delete, breakdown bars via
+    `ledgerSegments`), smart default names ("July 2026"), light Settings (suggest past folder names,
+    About & privacy, Erase everything), phone-tested by Eli. No tab bar yet (arrives with Tasks)
+  - [ ] 6c. Tasks dashboard + Statements · Tasks tab bar; resolving flagged purchases; remembered bank
+    setups; OFX/QFX files  ← **next.** Start with "Starting Phase 6c" in `docs/ideas.md`
 - [ ] 7. Dark mode (follows the phone, override in Settings), Android haptics and Android "Share to" first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
   Settings; the standalone "Try the sample statement" button goes away; per-bank download guides
   (see `docs/ideas.md`)
