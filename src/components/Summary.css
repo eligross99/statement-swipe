@@ -45,6 +45,10 @@
   /* Filed and settled: the folder color, faded, to read as "nothing left to do". */
   background: color-mix(in srgb, var(--pile) 28%, var(--surface));
 }
+.ledger-seg--filed-done {
+  /* Filed, and every folder settled: a pale approve green, so a finished review reads all green. */
+  background: color-mix(in srgb, var(--approve) 32%, var(--surface));
+}
 .ledger-seg--flag {
   background: var(--flag);
 }
@@ -156,6 +160,18 @@
   font-size: var(--text-sm);
   font-weight: 600;
   white-space: nowrap;
+}
+
+.summary-folders-group {
+  margin: 0 0 8px;
+  color: var(--text-mute);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* The gap that separates settled folders from the ones needing action. */
+.summary-folders-group--settled {
+  margin-top: 22px;
 }
 
 .summary-folders {

@@ -1,7 +1,7 @@
 import { Check, ChevronRight, Folder, FolderCheck, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
 import { plural, usd } from '../lib/format'
-import { folderGroups, openItems, stillToActOn, sumAmounts } from '../lib/review'
+import { folderGroups, openItems, stillToActOn, sumAmounts, type FolderGroup } from '../lib/review'
 import type { Pile, Transaction } from '../types'
 import './Summary.css'
 
@@ -21,6 +21,8 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
   const flagged = txns.filter((t) => t.status === 'flagged')
   const filed = txns.filter((t) => t.status === 'piled')
   const groups = folderGroups(txns, piles)
+  const needAction = groups.filter((g) => g.open > 0)
+  const settledGroups = groups.filter((g) => g.open === 0)
   // Filed purchases stay filed as a record; this says whether any of them still need doing.
   const toActOn = stillToActOn(filed)
 
@@ -29,7 +31,8 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
   const bar: { key: string; amount: number }[] = [
     { key: 'approve', amount: sumAmounts(txns.filter((t) => t.status === 'approved')) },
     { key: 'pile', amount: toActOn },
-    { key: 'pile-settled', amount: sumAmounts(filed) - sumAmounts(openItems(filed)) },
+    // Pale indigo while anything is left; pale green once every folder is settled ("all green").
+    { key: toActOn > 0 ? 'pile-settled' : 'filed-done', amount: sumAmounts(filed) - sumAmounts(openItems(filed)) },
     { key: 'flag', amount: sumAmounts(flagged) },
   ]
 
@@ -57,9 +60,9 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
           {rows.map(({ tone, label, items }) => (
             <div key={tone} className="ledger-row">
               <dt>
-                {/* When every filed purchase is settled, the dot fades to match the bar. */}
+                {/* When every filed purchase is settled, the dot turns pale green to match the bar. */}
                 <span
-                  className={`ledger-dot ledger-seg--${tone === 'pile' && items.length > 0 && toActOn === 0 ? 'pile-settled' : tone}`}
+                  className={`ledger-dot ledger-seg--${tone === 'pile' && items.length > 0 && toActOn === 0 ? 'filed-done' : tone}`}
                   aria-hidden
                 />
                 {label}
@@ -105,36 +108,19 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
               </span>
             )}
           </div>
-          <div className="summary-folders">
-            {groups.map(({ pile: p, items, open }) => {
-              const settled = open === 0
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  className={`panel folder-card${settled ? ' is-settled' : ''}`}
-                  onClick={() => onOpenPile(p.id)}
-                >
-                  <span className="folder-card-icon">{settled ? <FolderCheck size={20} /> : <Folder size={20} />}</span>
-                  <span className="folder-card-main">
-                    <span className="folder-card-top">
-                      <span className="folder-card-name">{p.name}</span>
-                      <span className="folder-card-total num">${usd(sumAmounts(items))}</span>
-                    </span>
-                    <span className="folder-card-meta">
-                      {plural(items.length, 'purchase')},{' '}
-                      {settled ? (
-                        <span className="tone-approve">all settled</span>
-                      ) : (
-                        <span className="tone-investigate">{open} to act on</span>
-                      )}
-                    </span>
-                  </span>
-                  <ChevronRight size={18} className="muted" />
-                </button>
-              )
-            })}
-          </div>
+          {/* Two groups when both exist: folders needing action on top, settled below. Folders move
+              between them on their own as statuses change. With only one group, the status beside
+              the heading already says which it is. */}
+          {needAction.length > 0 && settledGroups.length > 0 ? (
+            <>
+              <h4 className="summary-folders-group">Action needed</h4>
+              <FolderList groups={needAction} onOpen={onOpenPile} />
+              <h4 className="summary-folders-group summary-folders-group--settled">Settled</h4>
+              <FolderList groups={settledGroups} onOpen={onOpenPile} />
+            </>
+          ) : (
+            <FolderList groups={groups} onOpen={onOpenPile} />
+          )}
         </section>
       )}
 
@@ -156,6 +142,41 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
           Start over
         </button>
       )}
+    </div>
+  )
+}
+
+function FolderList({ groups, onOpen }: { groups: FolderGroup[]; onOpen: (pileId: string) => void }) {
+  return (
+    <div className="summary-folders">
+      {groups.map(({ pile: p, items, open }) => {
+        const settled = open === 0
+        return (
+          <button
+            key={p.id}
+            type="button"
+            className={`panel folder-card${settled ? ' is-settled' : ''}`}
+            onClick={() => onOpen(p.id)}
+          >
+            <span className="folder-card-icon">{settled ? <FolderCheck size={20} /> : <Folder size={20} />}</span>
+            <span className="folder-card-main">
+              <span className="folder-card-top">
+                <span className="folder-card-name">{p.name}</span>
+                <span className="folder-card-total num">${usd(sumAmounts(items))}</span>
+              </span>
+              <span className="folder-card-meta">
+                {plural(items.length, 'purchase')},{' '}
+                {settled ? (
+                  <span className="tone-approve">all settled</span>
+                ) : (
+                  <span className="tone-investigate">{open} to act on</span>
+                )}
+              </span>
+            </span>
+            <ChevronRight size={18} className="muted" />
+          </button>
+        )
+      })}
     </div>
   )
 }

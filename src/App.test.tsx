@@ -231,6 +231,34 @@ describe('App', () => {
     expect(screen.getByText(/No folders yet/)).toBeInTheDocument()
   })
 
+  it('splits folders into Action needed and Settled, moving them as statuses change', async () => {
+    const user = await startSample()
+    for (const name of ['Ski trip', 'Taxes']) {
+      await user.click(screen.getByRole('button', { name: 'File' }))
+      await user.type(screen.getByRole('textbox', { name: 'New folder name' }), `${name}{Enter}`)
+    }
+    for (let i = 0; i < 14; i++) await user.click(screen.getByRole('button', { name: 'Approve' }))
+    // Both need action: one list, no group labels.
+    expect(screen.queryByRole('heading', { name: 'Action needed' })).not.toBeInTheDocument()
+
+    const settle = async (folder: string) => {
+      await user.click(screen.getByRole('button', { name: new RegExp(folder) }))
+      await user.click(screen.getByRole('button', { name: /Status: not set/ }))
+      await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: /^Done/ }))
+      await user.click(screen.getByRole('button', { name: 'Back to all folders' }))
+    }
+    await settle('Ski trip')
+    const needed = screen.getByRole('heading', { name: 'Action needed' })
+    const settled = screen.getByRole('heading', { name: 'Settled' })
+    expect(needed.nextElementSibling).toHaveTextContent('Taxes')
+    expect(settled.nextElementSibling).toHaveTextContent('Ski trip')
+
+    // Everything settled: back to one list, with "All settled" beside the heading.
+    await settle('Taxes')
+    expect(screen.queryByRole('heading', { name: 'Settled' })).not.toBeInTheDocument()
+    expect(screen.getByText('All settled')).toBeInTheDocument()
+  })
+
   it('shows the same readable date on the card and in the investigation view', async () => {
     const user = await startSample()
     expect(within(topCard()).getByText('Mar 3')).toBeInTheDocument()
