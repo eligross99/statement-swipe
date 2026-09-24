@@ -9,7 +9,7 @@ import './FolderSheet.css'
 interface Props {
   piles: Pile[]
   txns: Transaction[]
-  /** Folder names from past statements, offered as one-tap choices. */
+  /** Folder names used in past statements, offered as one-tap choices (empty when turned off in Settings). */
   suggestions: string[]
   /** Closed without filing. */
   onClose: () => void
@@ -71,7 +71,7 @@ export function FolderSheet({ piles, txns, suggestions, onClose, onFile, onCreat
 
             {suggestions.length > 0 && (
               <>
-                <p className="folder-past-label">From past statements</p>
+                <p className="folder-past-label">Names you’ve used before</p>
                 <div className="folder-past">
                   {suggestions.map((s) => (
                     <button

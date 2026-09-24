@@ -16,7 +16,7 @@ vi.mock('./lib/storage', async (original) => ({
 }))
 
 beforeEach(() => {
-  vi.mocked(loadLibrary).mockReset().mockResolvedValue({ statements: [], ui: null })
+  vi.mocked(loadLibrary).mockReset().mockResolvedValue({ statements: [], ui: null, settings: null })
   vi.mocked(saveLibrary).mockReset().mockResolvedValue(undefined)
 })
 
@@ -213,7 +213,7 @@ describe('App', () => {
   })
 
   it('renames, archives, and deletes from a statement’s ⋯ menu, asking before deleting', async () => {
-    vi.mocked(loadLibrary).mockResolvedValue({ statements: [savedStatement()], ui: null })
+    vi.mocked(loadLibrary).mockResolvedValue({ statements: [savedStatement()], ui: null, settings: null })
     const user = userEvent.setup()
     render(<App />)
 
@@ -243,13 +243,13 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Delete' }))
     await user.click(screen.getByRole('button', { name: 'Delete statement' }))
     expect(screen.getByRole('heading', { name: 'No statements yet' })).toBeInTheDocument()
-    await waitFor(() => expect(saveLibrary).toHaveBeenLastCalledWith([], ['st_saved'], expect.anything()))
+    await waitFor(() => expect(saveLibrary).toHaveBeenLastCalledWith([], ['st_saved'], expect.anything(), expect.anything()))
   })
 
   it('remembers the chosen filter and says when nothing needs action', async () => {
     const done = savedStatement({ session: { ...savedStatement().session, index: 2, screen: 'summary' } })
     done.session.txns = done.session.txns.map((t) => ({ ...t, status: 'approved' }))
-    vi.mocked(loadLibrary).mockResolvedValue({ statements: [done], ui: null })
+    vi.mocked(loadLibrary).mockResolvedValue({ statements: [done], ui: null, settings: null })
     const user = userEvent.setup()
     render(<App />)
 
@@ -257,12 +257,12 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Needs action' }))
     expect(screen.getByRole('heading', { name: 'Nothing needs action' })).toBeInTheDocument()
     await waitFor(() =>
-      expect(saveLibrary).toHaveBeenLastCalledWith([], [], expect.objectContaining({ filter: 'action' })),
+      expect(saveLibrary).toHaveBeenLastCalledWith([], [], expect.objectContaining({ filter: 'action' }), expect.anything()),
     )
   })
 
   it('erases everything from Settings, after asking, then shows the empty Statements screen', async () => {
-    vi.mocked(loadLibrary).mockResolvedValue({ statements: [savedStatement()], ui: null })
+    vi.mocked(loadLibrary).mockResolvedValue({ statements: [savedStatement()], ui: null, settings: null })
     const user = userEvent.setup()
     render(<App />)
     await user.click(await screen.findByRole('button', { name: 'Settings' }))
@@ -273,27 +273,52 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Erase everything' }))
     // Back to an empty Statements screen.
     expect(await screen.findByRole('heading', { name: 'No statements yet' })).toBeInTheDocument()
-    await waitFor(() => expect(saveLibrary).toHaveBeenLastCalledWith([], ['st_saved'], expect.anything()))
+    await waitFor(() => expect(saveLibrary).toHaveBeenLastCalledWith([], ['st_saved'], expect.anything(), expect.anything()))
   })
 
   it('offers folder names from past statements when filing', async () => {
     const past = savedStatement({ id: 'st_past', name: 'February' })
     past.session.piles = [{ id: 'f_old', name: 'Taxes' }]
     past.session.txns = past.session.txns.map((t, i) => (i === 0 ? { ...t, status: 'piled', pileId: 'f_old' } : t))
-    vi.mocked(loadLibrary).mockResolvedValue({ statements: [past], ui: null })
+    vi.mocked(loadLibrary).mockResolvedValue({ statements: [past], ui: null, settings: null })
     const user = userEvent.setup()
     render(<App />)
     await user.click(await screen.findByRole('button', { name: 'Import a statement' }))
     await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
 
     await user.click(screen.getByRole('button', { name: 'File' }))
-    expect(screen.getByText('From past statements')).toBeInTheDocument()
+    expect(screen.getByText('Names you’ve used before')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Taxes' }))
     expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
     // Now it's one of this statement's folders.
     await user.click(screen.getByRole('button', { name: 'File' }))
     expect(screen.getByRole('button', { name: /^Taxes/ })).toBeInTheDocument()
-    expect(screen.queryByText('From past statements')).not.toBeInTheDocument()
+    expect(screen.queryByText('Names you’ve used before')).not.toBeInTheDocument()
+  })
+
+  it('stops suggesting past folder names when that’s turned off in Settings, and remembers it', async () => {
+    const past = savedStatement({ id: 'st_past', name: 'February' })
+    past.session.piles = [{ id: 'f_old', name: 'Taxes' }]
+    past.session.txns = past.session.txns.map((t, i) => (i === 0 ? { ...t, status: 'piled', pileId: 'f_old' } : t))
+    vi.mocked(loadLibrary).mockResolvedValue({ statements: [past], ui: null, settings: null })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(await screen.findByRole('button', { name: 'Settings' }))
+    const toggle = screen.getByRole('switch', { name: 'Suggest past folder names' })
+    expect(toggle).toBeChecked()
+    await user.click(toggle)
+    expect(toggle).not.toBeChecked()
+    await waitFor(() =>
+      expect(saveLibrary).toHaveBeenLastCalledWith([], [], expect.anything(), { suggestFolders: false }),
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Back to statements' }))
+    await user.click(screen.getByRole('button', { name: 'Import a statement' }))
+    await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
+    await user.click(screen.getByRole('button', { name: 'File' }))
+    expect(screen.queryByText('Names you’ve used before')).not.toBeInTheDocument()
+    expect(screen.getByText(/No folders yet/)).toBeInTheDocument()
   })
 
   it('uses the top-left button to go back from a folder to all folders', async () => {
@@ -403,6 +428,7 @@ describe('App', () => {
         [expect.objectContaining({ session: expect.objectContaining({ index: 1 }) })],
         [],
         expect.objectContaining({ view: 'review' }),
+        { suggestFolders: true },
       ),
     )
     const [put] = vi.mocked(saveLibrary).mock.lastCall!
@@ -413,6 +439,7 @@ describe('App', () => {
     vi.mocked(loadLibrary).mockResolvedValue({
       statements: [savedStatement()],
       ui: { openId: 'st_saved', view: 'review', filter: 'all' },
+      settings: null,
     })
     const user = userEvent.setup()
     render(<App />)

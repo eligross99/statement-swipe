@@ -5,7 +5,7 @@
 import { Dexie, type Table } from 'dexie'
 import { del, get } from 'idb-keyval'
 import type { Session, Statement, UndoEntry } from '../types'
-import type { SavedUi, View } from './library'
+import type { SavedUi, Settings, View } from './library'
 import { reviewScreen } from './review'
 import { SAMPLE_LABEL } from './sample'
 import { defaultName, statementPeriod, type StatementFilter } from './statements'
@@ -86,6 +86,12 @@ function isSavedUi(v: unknown): v is SavedUi {
   )
 }
 
+/** Saved settings, keeping only fields we recognize with the right type (missing ones use defaults). */
+export function readSettings(v: unknown): Partial<Settings> | null {
+  if (!isObject(v)) return null
+  return typeof v.suggestFolders === 'boolean' ? { suggestFolders: v.suggestFolders } : {}
+}
+
 // ---------- moving the single review saved before Phase 6b ----------
 
 /** Before Phase 6b the app kept one review, under these keys in idb-keyval's database. */
@@ -136,6 +142,7 @@ let instance: StatementsDb | null = null
 const db = () => (instance ??= new StatementsDb())
 
 const UI_KEY = 'ui'
+const SETTINGS_KEY = 'settings'
 
 /** Moves a review saved before Phase 6b into the statements table, once, then removes the old copy. */
 async function migrate(): Promise<void> {
@@ -157,27 +164,34 @@ async function migrate(): Promise<void> {
 export interface SavedLibrary {
   statements: Statement[]
   ui: SavedUi | null
+  settings: Partial<Settings> | null
 }
 
 /** Every saved statement and where the user was. Empty if IndexedDB can't be used. */
 export async function loadLibrary(): Promise<SavedLibrary> {
   try {
     await migrate().catch(() => undefined) // a failed move leaves the old copy to try again next time
-    const [rows, ui] = await Promise.all([db().statements.toArray(), db().prefs.get(UI_KEY)])
-    return { statements: rows.filter(isStatement), ui: isSavedUi(ui) ? ui : null }
+    const [rows, ui, settings] = await Promise.all([
+      db().statements.toArray(),
+      db().prefs.get(UI_KEY),
+      db().prefs.get(SETTINGS_KEY),
+    ])
+    return { statements: rows.filter(isStatement), ui: isSavedUi(ui) ? ui : null, settings: readSettings(settings) }
   } catch {
-    return { statements: [], ui: null } // IndexedDB unavailable (e.g. some private-browsing modes): start fresh
+    return { statements: [], ui: null, settings: null } // IndexedDB unavailable (e.g. some private-browsing modes): start fresh
   }
 }
 
-/** Saves changed statements, removes deleted ones, and remembers where the user is, all at once. */
-export async function saveLibrary(put: Statement[], remove: string[], ui: SavedUi): Promise<void> {
+/** Saves changed statements, removes deleted ones, and remembers where the user is and their
+ *  settings, all at once. */
+export async function saveLibrary(put: Statement[], remove: string[], ui: SavedUi, settings: Settings): Promise<void> {
   if (put.length) void requestPersistentStorage()
   try {
     await db().transaction('rw', db().statements, db().prefs, async () => {
       if (put.length) await db().statements.bulkPut(put)
       if (remove.length) await db().statements.bulkDelete(remove)
       await db().prefs.put(ui, UI_KEY)
+      await db().prefs.put(settings, SETTINGS_KEY)
     })
   } catch {
     // Saving is best-effort; the app keeps working in memory.

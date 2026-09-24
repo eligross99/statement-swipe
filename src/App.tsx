@@ -31,7 +31,7 @@ const NO_SESSION: Session = { txns: [], index: 0, piles: [], screen: 'deck', ope
 
 export default function App() {
   const library = useLibrary()
-  const { statements, view, filter, ready, dispatch: send } = library
+  const { statements, view, filter, settings, ready, dispatch: send } = library
   const statement = openStatement(library)
   const session = statement?.session ?? NO_SESSION
   const history = statement?.history ?? []
@@ -168,7 +168,12 @@ export default function App() {
           {place === 'import' && <ImportScreen onStart={addStatement} />}
 
           {place === 'settings' && (
-            <SettingsScreen statementCount={statements.length} onEraseAll={() => send({ type: 'eraseAll' })} />
+            <SettingsScreen
+              statementCount={statements.length}
+              settings={settings}
+              onChange={(change) => send({ type: 'setSettings', settings: change })}
+              onEraseAll={() => send({ type: 'eraseAll' })}
+            />
           )}
 
           {place === 'deck' && (
@@ -236,7 +241,7 @@ export default function App() {
         <FolderSheet
           piles={session.piles}
           txns={session.txns}
-          suggestions={statement ? pastFolderNames(statements, statement) : []}
+          suggestions={statement && settings.suggestFolders ? pastFolderNames(statements, statement) : []}
           onClose={() => {
             setSheetOpen(false)
             setLean(null)

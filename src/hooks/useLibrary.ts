@@ -26,10 +26,10 @@ export function useLibrary() {
   useEffect(() => {
     let cancelled = false
     void (async () => {
-      const { statements, ui } = await loadLibrary()
+      const { statements, ui, settings } = await loadLibrary()
       if (cancelled) return
       saved.current = new Map(statements.map((st) => [st.id, st]))
-      dispatch({ type: 'loaded', statements, ui })
+      dispatch({ type: 'loaded', statements, ui, settings })
       setReady(true)
     })()
     return () => {
@@ -42,7 +42,7 @@ export function useLibrary() {
     const put = s.statements.filter((st) => saved.current.get(st.id) !== st)
     const remove = [...saved.current.keys()].filter((id) => !current.has(id))
     saved.current = current
-    void saveLibrary(put, remove, { openId: s.openId, view: s.view, filter: s.filter })
+    void saveLibrary(put, remove, { openId: s.openId, view: s.view, filter: s.filter }, s.settings)
   }
 
   // Debounced save whenever anything changes.

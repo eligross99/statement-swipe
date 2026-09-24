@@ -9,12 +9,21 @@ import type { StatementFilter } from './statements'
 /** The app's top-level places. "review" is one statement's deck, summary, or folder. */
 export type View = 'statements' | 'import' | 'settings' | 'review'
 
+/** The user's preferences, changed on the Settings screen. */
+export interface Settings {
+  /** When filing, offer folder names used in past statements (folders themselves are never shared). */
+  suggestFolders: boolean
+}
+
+export const defaultSettings: Settings = { suggestFolders: true }
+
 export interface LibraryState {
   statements: Statement[]
   openId: string | null
   view: View
   /** The Statements screen's filter, remembered between visits. */
   filter: StatementFilter
+  settings: Settings
 }
 
 /** What's saved beside the statements, so the app reopens where the user left it. */
@@ -26,7 +35,7 @@ export interface SavedUi {
 
 /** Something the user (or loading) did. */
 export type LibraryAction =
-  | { type: 'loaded'; statements: Statement[]; ui: SavedUi | null }
+  | { type: 'loaded'; statements: Statement[]; ui: SavedUi | null; settings: Partial<Settings> | null }
   | { type: 'add'; id: string; txns: Transaction[]; name: string; period: string | null }
   | { type: 'open'; id: string }
   | { type: 'go'; view: Exclude<View, 'review'> }
@@ -35,12 +44,19 @@ export type LibraryAction =
   | { type: 'delete'; id: string }
   | { type: 'eraseAll' }
   | { type: 'setFilter'; filter: StatementFilter }
+  | { type: 'setSettings'; settings: Partial<Settings> }
   | { type: 'review'; event: ReviewEvent }
 
 /** An action plus when it happened (added by `useLibrary`), so the reducer itself stays pure. */
 export type LibraryEvent = LibraryAction & { now: number }
 
-export const initialLibrary: LibraryState = { statements: [], openId: null, view: 'statements', filter: 'all' }
+export const initialLibrary: LibraryState = {
+  statements: [],
+  openId: null,
+  view: 'statements',
+  filter: 'all',
+  settings: defaultSettings,
+}
 
 /** A statement for newly imported purchases, ready to review. */
 export function makeStatement(
@@ -61,7 +77,7 @@ function patch(state: LibraryState, id: string, change: (st: Statement) => State
 export function libraryReducer(state: LibraryState, event: LibraryEvent): LibraryState {
   switch (event.type) {
     case 'loaded': {
-      const { statements, ui } = event
+      const { statements, ui, settings } = event
       // Reopen the review the user was in, if it still exists; otherwise start on Statements.
       const open = ui?.view === 'review' ? statements.find((st) => st.id === ui.openId) : undefined
       return {
@@ -69,6 +85,7 @@ export function libraryReducer(state: LibraryState, event: LibraryEvent): Librar
         openId: open?.id ?? null,
         view: open ? 'review' : 'statements',
         filter: ui?.filter ?? 'all',
+        settings: { ...defaultSettings, ...settings },
       }
     }
 
@@ -110,10 +127,14 @@ export function libraryReducer(state: LibraryState, event: LibraryEvent): Librar
     }
 
     case 'eraseAll':
-      return { ...initialLibrary, filter: state.filter }
+      // Statements go; preferences (settings, the chosen filter) stay.
+      return { ...initialLibrary, filter: state.filter, settings: state.settings }
 
     case 'setFilter':
       return { ...state, filter: event.filter }
+
+    case 'setSettings':
+      return { ...state, settings: { ...state.settings, ...event.settings } }
 
     case 'review': {
       const st = openStatement(state)

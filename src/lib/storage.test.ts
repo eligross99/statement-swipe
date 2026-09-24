@@ -1,6 +1,6 @@
 import type { Session, Statement } from '../types'
 import { SAMPLE_LABEL } from './sample'
-import { isSession, isStatement, isUndoHistory, migrateLegacy, MIGRATED_ID } from './storage'
+import { isSession, isStatement, isUndoHistory, migrateLegacy, MIGRATED_ID, readSettings } from './storage'
 
 // Reading and writing the real database runs in a browser, in e2e/statements.spec.ts. These tests
 // cover the checks that keep a corrupt save from crashing the app, and moving the old saved review.
@@ -115,6 +115,14 @@ describe('migrateLegacy', () => {
     expect(migrateLegacy({ garbage: true }, undefined, 0)).toBeNull()
     expect(migrateLegacy({ ...legacy, txns: [] }, undefined, 0)).toBeNull()
     expect(migrateLegacy({ ...legacy, label: undefined }, undefined, 0)).toBeNull()
+  })
+})
+
+describe('readSettings', () => {
+  it('keeps recognized settings and drops junk, so defaults fill the gaps', () => {
+    expect(readSettings({ suggestFolders: false })).toEqual({ suggestFolders: false })
+    expect(readSettings({ suggestFolders: 'no', other: 1 })).toEqual({})
+    expect(readSettings(undefined)).toBeNull()
   })
 })
 

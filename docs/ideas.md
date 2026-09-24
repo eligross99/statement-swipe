@@ -132,7 +132,12 @@ Tasks tab.
 my bank"), which then counts as clear.
 
 ### Settings / preferences → Phase 6b (start light)
-**Built in 6b:** "About & privacy" and "Erase everything on this device". Reminder age comes with Tasks
+**Built in 6b:** "About & privacy", "Erase everything on this device", and a "Suggest past folder names"
+switch (on by default; Eli, 2026-09-24). Folders stay per statement either way: the switch only controls
+whether names used before are offered as one-tap choices ("Names you've used before") when filing.
+Eli considered a "save folders across statements" setting; Claude recommended against shared folders
+(a data-model change that overlaps the 6c Tasks dashboard) and pre-made empty folders (clutter, no
+tap saved), and Eli chose the suggestion switch instead. Reminder age comes with Tasks
 (6c); the Statements filter is remembered instead of being a setting (Eli, 2026-09-24).
 Originally planned: reminder age (e.g. 1 month), default statement filter, and "About & privacy".
 **Proposed:** no Account or Plan sections until accounts and payments exist (Phase 9). Empty

@@ -100,23 +100,35 @@ describe('managing statements', () => {
     expect(openStatement(s)).toBeNull()
   })
 
-  it('erasing everything keeps only the chosen filter', () => {
-    const s = run(add('one'), { type: 'setFilter', filter: 'archived' }, { type: 'eraseAll' })
-    expect(s).toEqual({ ...initialLibrary, filter: 'archived' })
+  it('erasing everything keeps only preferences: the chosen filter and settings', () => {
+    const s = run(
+      add('one'),
+      { type: 'setFilter', filter: 'archived' },
+      { type: 'setSettings', settings: { suggestFolders: false } },
+      { type: 'eraseAll' },
+    )
+    expect(s).toEqual({ ...initialLibrary, filter: 'archived', settings: { suggestFolders: false } })
   })
 })
 
 describe('loading', () => {
+  it('uses default settings for anything not saved', () => {
+    expect(run({ type: 'loaded', statements: [], ui: null, settings: null }).settings).toEqual({ suggestFolders: true })
+    expect(run({ type: 'loaded', statements: [], ui: null, settings: {} }).settings).toEqual({ suggestFolders: true })
+    const off = run({ type: 'loaded', statements: [], ui: null, settings: { suggestFolders: false } })
+    expect(off.settings.suggestFolders).toBe(false)
+  })
+
   it('reopens the review the user was in', () => {
-    const s = run({ type: 'loaded', statements: [statement('one')], ui: { openId: 'one', view: 'review', filter: 'action' } })
+    const s = run({ type: 'loaded', statements: [statement('one')], ui: { openId: 'one', view: 'review', filter: 'action' }, settings: null })
     expect(s).toMatchObject({ view: 'review', openId: 'one', filter: 'action' })
   })
 
   it('starts on Statements when nothing was open, or the open statement is gone', () => {
-    expect(run({ type: 'loaded', statements: [], ui: null }).view).toBe('statements')
-    const gone = run({ type: 'loaded', statements: [], ui: { openId: 'one', view: 'review', filter: 'all' } })
+    expect(run({ type: 'loaded', statements: [], ui: null, settings: null }).view).toBe('statements')
+    const gone = run({ type: 'loaded', statements: [], ui: { openId: 'one', view: 'review', filter: 'all' }, settings: null })
     expect(gone).toMatchObject({ view: 'statements', openId: null })
-    const settings = run({ type: 'loaded', statements: [], ui: { openId: null, view: 'settings', filter: 'all' } })
+    const settings = run({ type: 'loaded', statements: [], ui: { openId: null, view: 'settings', filter: 'all' }, settings: null })
     expect(settings.view).toBe('statements')
   })
 })
