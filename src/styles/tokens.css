@@ -39,6 +39,20 @@
   /* Type */
   --font-sans:
     system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  /* Text sizes in rem, so they follow the phone's text-size setting (see index.css). 1rem is 16px
+     on computers and 17px on an iPhone at its default setting. */
+  --text-xs: 0.9375rem; /* chips, button labels, fine print */
+  --text-sm: 0.9375rem; /* secondary text: dates, hints, details (same size as xs, used for longer text) */
+  --text-md: 1rem; /* body text and buttons */
+  --text-lg: 1.0625rem; /* purchase names, sheet titles */
+  --text-xl: 1.375rem; /* screen titles */
+  --text-2xl: 1.75rem; /* folder amounts */
+  --text-3xl: 2.625rem; /* amount in Look closer */
+  --text-4xl: 3rem; /* amount on a card */
+
+  /* Motion: react instantly, then settle gently. Durations mirror src/lib/motion.ts. */
+  --ease-out: cubic-bezier(0.22, 0.8, 0.36, 1);
+  --dur-enter: 380ms;
 
   /* Layout */
   --app-max-width: 420px;

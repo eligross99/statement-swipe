@@ -16,7 +16,15 @@
   place-items: center;
   margin: 0;
   color: var(--text-mute);
-  font-size: 14px;
+  font-size: var(--text-sm);
+}
+
+/* Holds the current screen; keyed by screen in App so each one plays its entrance. */
+.view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* A scrollable screen body (import, summary, folder detail). */
@@ -29,7 +37,7 @@
 
 .screen-title {
   margin: 8px 0 6px;
-  font-size: 22px;
+  font-size: var(--text-xl);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
@@ -38,9 +46,14 @@
   color: var(--text-mute);
 }
 
+/* No single word stranded alone on the last line of a paragraph. */
+p {
+  text-wrap: pretty;
+}
+
 .section-label {
   margin: 0 0 10px;
-  font-size: 15px;
+  font-size: var(--text-md);
   font-weight: 650;
 }
 
@@ -89,7 +102,7 @@
   border: 1px solid transparent;
   border-radius: var(--radius-control);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--text-md);
   font-weight: 600;
   cursor: pointer;
 }
@@ -128,21 +141,14 @@
 
 .btn-row {
   display: flex;
+  flex-wrap: wrap; /* side by side normally; stacked when large text can't fit */
   gap: 10px;
 }
 
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  min-height: var(--tap-min);
-  padding: 0 8px 0 0;
-  border: none;
-  background: none;
-  color: var(--text-mute);
-  font: inherit;
-  font-size: 15px;
-  cursor: pointer;
+.btn-row > .btn {
+  flex: 1 1 9rem;
+  width: auto;
+  white-space: nowrap; /* a label never breaks mid-button; the buttons stack instead */
 }
 
 /* White rounded surface */
@@ -158,7 +164,7 @@
   border-radius: var(--radius-control);
   background: var(--surface-sunken);
   color: var(--text-mute);
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1.45;
 }
 
@@ -175,23 +181,36 @@
   color: var(--flag);
 }
 
-/* Full-screen overlay (investigation view) */
+/* Full-screen overlay (investigation view). It slides in from the right over the deck, like
+   opening a page in an iPhone app, and slides back out when closed (see InvestigateView). */
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 40;
   background: var(--bg);
   overflow-y: auto;
+  overscroll-behavior-y: contain;
+  box-shadow: var(--shadow-sheet);
+  /* Starts a beat after the tap (like the folder sheet), so the pressed button is seen easing back. */
+  animation: overlay-in 360ms var(--ease-out) 90ms backwards;
+}
+
+@keyframes overlay-in {
+  from {
+    transform: translateX(100%);
+  }
 }
 
 .overlay-inner {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  /* One pixel taller than the screen, so it always scrolls and gets the iPhone bounce. */
+  min-height: calc(100% + 1px);
   max-width: var(--app-max-width);
   margin: 0 auto;
   /* Clear the notch/status bar and the home indicator when installed on a phone. */
-  padding: max(12px, env(safe-area-inset-top)) 16px max(32px, env(safe-area-inset-bottom));
+  /* Same top spacing as the header, so back buttons sit in the same place on every screen. */
+  padding: max(16px, env(safe-area-inset-top)) 16px max(32px, env(safe-area-inset-bottom));
 }
 
 /* Bottom sheet (folder picker) */
@@ -203,6 +222,13 @@
   align-items: flex-end;
   justify-content: center;
   background: var(--scrim);
+  animation: scrim-in var(--dur-enter) var(--ease-out) backwards;
+}
+
+@keyframes scrim-in {
+  from {
+    background-color: transparent;
+  }
 }
 
 .sheet {
@@ -214,6 +240,13 @@
   background: var(--surface);
   border-radius: 24px 24px 0 0;
   box-shadow: var(--shadow-sheet);
+  animation: sheet-in 340ms var(--ease-out) backwards;
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
 }
 
 /* Sheet title row: heading on the left, close button on the right. */
@@ -225,7 +258,7 @@
 
 .sheet-title {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--text-lg);
   font-weight: 650;
 }
 
@@ -239,7 +272,7 @@
   background: var(--surface-sunken);
   color: var(--text);
   font: inherit;
-  font-size: 16px; /* 16px+ stops iOS zooming in when the field is focused */
+  font-size: max(var(--text-md), 16px); /* at least 16px, or iOS zooms in when the field is focused */
 }
 
 .text-input:focus {

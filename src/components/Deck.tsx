@@ -1,7 +1,9 @@
 import { Check, Layers, Search } from 'lucide-react'
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { useAnimate } from '../hooks/useAnimate'
 import { formatDate } from '../lib/dates'
 import { usd } from '../lib/format'
+import { DURATION, EASE_FLY, EASE_OUT } from '../lib/motion'
 import { reviewedCount, sumAmounts } from '../lib/review'
 import type { Transaction } from '../types'
 import './Deck.css'
@@ -11,19 +13,30 @@ export interface Offset {
   y: number
 }
 
+export type Direction = 'left' | 'right' | 'up'
+
 /** A card that was just resolved, animating off the deck. */
 export interface LeavingCard {
   txn: Transaction
-  dir: 'left' | 'right' | 'up'
+  dir: Direction
   from: Offset
+}
+
+/** A card brought back by undo, flying in from the side it left. */
+export interface ReturningCard {
+  txnId: string
+  dir: Direction
 }
 
 interface Props {
   txns: Transaction[]
   index: number
-  /** True while an overlay is open, so arrow keys don't act on the hidden deck. */
+  /** True while an overlay is open or a card is on its way out: the deck ignores input. */
   paused: boolean
+  /** Where the top card rests while its action is in progress (leaning toward Look closer or File). */
+  lean: Offset | null
   leaving: LeavingCard | null
+  returning: ReturningCard | null
   onLeaveDone: () => void
   onApprove: (from: Offset) => void
   onInvestigate: () => void
@@ -36,14 +49,44 @@ const SWIPE_THRESHOLD = 92
 const STAMP_FULL = 120
 const CENTER: Offset = { x: 0, y: 0 }
 
-export function Deck({ txns, index, paused, leaving, onLeaveDone, onApprove, onInvestigate, onFile }: Props) {
+/** A card's transform at an offset: it tilts as it moves sideways, like a card held by its bottom. */
+const cardTransform = ({ x, y }: Offset) => `translate(${x}px, ${y}px) rotate(${x / 18}deg)`
+
+/** Where a card ends up when it flies off (or starts when it flies back in on undo). */
+function offscreen(dir: Direction, from: Offset = CENTER): string {
+  const { x, y } = from
+  if (dir === 'up') return `translate(${x}px, ${y - 680}px)`
+  const sign = dir === 'right' ? 1 : -1
+  return `translate(${x + sign * 480}px, ${y + 40}px) rotate(${sign * 22}deg)`
+}
+
+export function Deck(props: Props) {
+  const { txns, index, paused, lean, leaving, returning, onLeaveDone, onApprove, onInvestigate, onFile } = props
   const [drag, setDrag] = useState<Offset>(CENTER)
   const [dragging, setDragging] = useState(false)
   // The pointer position where the drag started; a ref because it doesn't affect rendering.
   const start = useRef<Offset | null>(null)
+  const topRef = useRef<HTMLDivElement>(null)
+  const animate = useAnimate()
 
   const top = txns[index] ?? null
   const reviewed = reviewedCount(txns)
+  const topId = top?.id
+
+  // Undo: the returning card flies back in from the side it left, so it's clear which one came back.
+  useEffect(() => {
+    if (!returning || returning.txnId !== topId) return
+    void animate(
+      topRef.current,
+      [
+        { transform: offscreen(returning.dir), opacity: 0 },
+        { transform: cardTransform(CENTER), opacity: 1 },
+      ],
+      // Lands firmly: most of the travel happens early, then it settles into place.
+      { duration: DURATION.flyBack, easing: EASE_OUT },
+      [{ opacity: 0 }, { opacity: 1 }],
+    )
+  }, [returning, topId, animate])
 
   // Arrow-key shortcuts for the three actions.
   useEffect(() => {
@@ -66,7 +109,7 @@ export function Deck({ txns, index, paused, leaving, onLeaveDone, onApprove, onI
   }
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return
+    if (paused || (e.pointerType === 'mouse' && e.button !== 0)) return
     start.current = { x: e.clientX, y: e.clientY }
     setDragging(true)
     try {
@@ -123,8 +166,9 @@ export function Deck({ txns, index, paused, leaving, onLeaveDone, onApprove, onI
           off === 0 ? (
             <div
               key={t.id}
+              ref={topRef}
               className={`deck-card deck-card--top${dragging ? ' is-dragging' : ''}`}
-              style={{ transform: `translate(${drag.x}px, ${drag.y}px) rotate(${drag.x / 18}deg)` }}
+              style={{ transform: cardTransform(dragging ? drag : (lean ?? CENTER)) }}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
@@ -152,13 +196,26 @@ export function Deck({ txns, index, paused, leaving, onLeaveDone, onApprove, onI
       </div>
 
       <div className="deck-actions">
-        <ActionButton kind="investigate" label="Look closer" keys="ArrowLeft" onClick={onInvestigate} disabled={!top}>
+        {/* While paused the buttons stay looking normal (no flicker) but do nothing. */}
+        <ActionButton
+          kind="investigate"
+          label="Look closer"
+          keys="ArrowLeft"
+          onClick={() => !paused && onInvestigate()}
+          disabled={!top}
+        >
           <Search size={22} />
         </ActionButton>
-        <ActionButton kind="pile" label="File it" keys="ArrowUp" onClick={onFile} disabled={!top} big>
+        <ActionButton kind="pile" label="File" keys="ArrowUp" onClick={() => !paused && onFile()} disabled={!top} big>
           <Layers size={26} />
         </ActionButton>
-        <ActionButton kind="approve" label="Approve" keys="ArrowRight" onClick={() => onApprove(CENTER)} disabled={!top}>
+        <ActionButton
+          kind="approve"
+          label="Approve"
+          keys="ArrowRight"
+          onClick={() => !paused && onApprove(CENTER)}
+          disabled={!top}
+        >
           <Check size={24} strokeWidth={2.5} />
         </ActionButton>
       </div>
@@ -183,7 +240,9 @@ function CardFace({ txn }: { txn: Transaction }) {
   )
 }
 
-function Stamp({ opacity, kind, label }: { opacity: number; kind: 'approve' | 'investigate' | 'pile'; label: string }) {
+type StampKind = 'approve' | 'investigate' | 'pile' | 'flag'
+
+function Stamp({ opacity, kind, label }: { opacity: number; kind: StampKind; label: string }) {
   return (
     <div className={`stamp stamp--${kind}`} style={{ opacity }} aria-hidden>
       {label}
@@ -191,9 +250,17 @@ function Stamp({ opacity, kind, label }: { opacity: number; kind: 'approve' | 'i
   )
 }
 
+/** The stamp a card shows as it flies off in each direction. Only flagging sends a card left. */
+const FLY_STAMP: Record<Direction, { kind: StampKind; label: string }> = {
+  right: { kind: 'approve', label: 'APPROVE' },
+  up: { kind: 'pile', label: 'FILE' },
+  left: { kind: 'flag', label: 'FLAG' },
+}
+
 /** Animates a copy of a resolved card off-screen, then reports back so it can be removed. */
 function FlyingCard({ card, onDone }: { card: LeavingCard; onDone: () => void }) {
   const ref = useRef<HTMLDivElement>(null)
+  const animate = useAnimate()
   // Keep the latest callback without restarting the animation when the parent re-renders.
   const done = useRef(onDone)
   useEffect(() => {
@@ -201,37 +268,32 @@ function FlyingCard({ card, onDone }: { card: LeavingCard; onDone: () => void })
   })
 
   useEffect(() => {
-    const el = ref.current
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    // No Web Animations support (e.g. the test environment) or reduced motion: skip the flourish.
-    if (!el || typeof el.animate !== 'function' || reduceMotion) {
-      done.current()
-      return
-    }
-    const { x, y } = card.from
-    const from = `translate(${x}px, ${y}px) rotate(${x / 18}deg)`
-    const to =
-      card.dir === 'right'
-        ? `translate(${x + 640}px, ${y + 60}px) rotate(28deg)`
-        : card.dir === 'left'
-          ? `translate(${x - 640}px, ${y + 60}px) rotate(-28deg)`
-          : `translate(${x}px, ${y - 900}px)`
-    const anim = el.animate(
+    const from = cardTransform(card.from)
+    // It stays solid until it's mostly off screen, so the eye can follow where the purchase went.
+    void animate(
+      ref.current,
       [
         { transform: from, opacity: 1 },
-        { transform: to, opacity: 0 },
+        { opacity: 1, offset: 0.75 },
+        { transform: offscreen(card.dir, card.from), opacity: 0 },
       ],
-      { duration: 260, easing: 'ease-in', fill: 'forwards' },
-    )
-    anim.onfinish = () => done.current()
-    return () => {
-      anim.onfinish = null
-      anim.cancel()
-    }
-  }, [card])
+      { duration: DURATION.fly, easing: EASE_FLY, hold: true },
+      [
+        { transform: from, opacity: 1 },
+        { transform: from, opacity: 0 },
+      ],
+    ).then(() => done.current())
+  }, [card, animate])
 
+  const stamp = FLY_STAMP[card.dir]
   return (
-    <div ref={ref} className="deck-card deck-card--leaving" aria-hidden>
+    <div
+      ref={ref}
+      className="deck-card deck-card--leaving"
+      style={{ transform: cardTransform(card.from) }}
+      aria-hidden
+    >
+      <Stamp opacity={1} kind={stamp.kind} label={stamp.label} />
       <CardFace txn={card.txn} />
     </div>
   )

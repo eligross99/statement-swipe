@@ -1,6 +1,7 @@
 import type { Transaction } from '../types'
 import {
   currentTxn,
+  folderGroups,
   initialReviewState,
   pileItems,
   reviewReducer,
@@ -70,6 +71,20 @@ describe('resolving cards', () => {
     const done = run({ type: 'approve' }, { type: 'approve' }, { type: 'approve' })
     expect(reviewReducer(done, { type: 'approve' })).toBe(done)
     expect(currentTxn(done.session)).toBeNull()
+  })
+})
+
+describe('changing your mind about a flagged purchase', () => {
+  it('moves a flagged purchase to approved, from the summary', () => {
+    const s = run({ type: 'flag' }, { type: 'approve' }, { type: 'approve' }, { type: 'approveFlagged', txnId: 'a' })
+    expect(s.session.screen).toBe('summary')
+    expect(statuses(s)).toEqual(['approved', 'approved', 'approved'])
+  })
+
+  it('ignores purchases that are not flagged', () => {
+    const before = run({ type: 'approve' })
+    expect(reviewReducer(before, { type: 'approveFlagged', txnId: 'a' })).toBe(before)
+    expect(reviewReducer(before, { type: 'approveFlagged', txnId: 'b' })).toBe(before)
   })
 })
 
@@ -169,5 +184,27 @@ describe('navigation', () => {
     const s = reviewReducer(initialReviewState, { type: 'restore', session: saved })
     expect(s.session.screen).toBe('deck')
     expect(s.session.index).toBe(1)
+  })
+})
+
+describe('folderGroups', () => {
+  const piles = [
+    { id: 'p1', name: 'Settled' },
+    { id: 'p2', name: 'Open' },
+    { id: 'p3', name: 'Empty' },
+    { id: 'p4', name: 'Also open' },
+  ]
+  const filed = (id: string, pileId: string, action: Transaction['action']): Transaction => ({
+    ...txn(id, 10),
+    status: 'piled',
+    pileId,
+    action,
+  })
+
+  it('lists folders needing action first, settled last, and leaves out empty ones', () => {
+    const txns = [filed('a', 'p1', 'done'), filed('b', 'p2', 'todo'), filed('c', 'p4', null), filed('d', 'p4', 'done')]
+    const groups = folderGroups(txns, piles)
+    expect(groups.map((g) => g.pile.name)).toEqual(['Open', 'Also open', 'Settled'])
+    expect(groups.map((g) => g.open)).toEqual([1, 1, 0])
   })
 })

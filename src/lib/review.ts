@@ -17,10 +17,11 @@ export interface ReviewState {
 }
 
 export type ReviewEvent =
-  | { type: 'restore'; session: Session }
+  | { type: 'restore'; session: Session; history?: UndoEntry[] }
   | { type: 'start'; txns: Transaction[]; label: string }
   | { type: 'approve' }
   | { type: 'flag' }
+  | { type: 'approveFlagged'; txnId: string }
   | { type: 'file'; pileId: string }
   | { type: 'createPileAndFile'; pile: Pile }
   | { type: 'deletePile'; pileId: string }
@@ -86,7 +87,7 @@ export function reviewReducer(state: ReviewState, event: ReviewEvent): ReviewSta
       // A saved session never reopens on the import screen; send the user back to their review.
       return {
         session: { ...event.session, screen: event.session.screen === 'import' ? reviewScreen(event.session) : event.session.screen },
-        history: [],
+        history: event.history ?? [],
       }
 
     case 'start':
@@ -100,6 +101,13 @@ export function reviewReducer(state: ReviewState, event: ReviewEvent): ReviewSta
 
     case 'flag':
       return resolveCurrent(state, 'flagged', null)
+
+    case 'approveFlagged': {
+      // After looking into a flagged purchase from the summary, the user recognizes it after all.
+      const txn = s.txns.find((t) => t.id === event.txnId)
+      if (!txn || txn.status !== 'flagged') return state
+      return patchTxn(state, event.txnId, { status: 'approved' })
+    }
 
     case 'file':
       if (!s.piles.some((p) => p.id === event.pileId)) return state
@@ -203,6 +211,26 @@ export function stillToActOn(items: Transaction[]): number {
 /** Folder items that still need follow-up (not marked Done). */
 export function openItems(items: Transaction[]): Transaction[] {
   return items.filter((t) => t.action !== 'done')
+}
+
+export interface FolderGroup {
+  pile: Pile
+  items: Transaction[]
+  /** How many purchases still need action (status not Done). */
+  open: number
+}
+
+/** Folders that have purchases, for the summary. Folders still needing action come first, so none
+ *  get forgotten below the fold; settled ones sink to the bottom. Otherwise creation order. */
+export function folderGroups(txns: Transaction[], piles: Pile[]): FolderGroup[] {
+  const groups = piles
+    .map((pile) => {
+      const items = pileItems(txns, pile.id)
+      return { pile, items, open: openItems(items).length }
+    })
+    .filter((g) => g.items.length > 0)
+  // A stable sort keeps creation order within each half.
+  return groups.sort((a, b) => Number(a.open === 0) - Number(b.open === 0))
 }
 
 /** The triage statuses, in the order the "Set status" menu lists them. */

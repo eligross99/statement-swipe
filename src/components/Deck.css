@@ -17,7 +17,7 @@
 .deck-progress-row {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: min(var(--text-sm), 20px);
   color: var(--text-mute);
 }
 
@@ -32,7 +32,7 @@
   height: 100%;
   border-radius: inherit;
   background: var(--brand);
-  transition: width 0.3s ease;
+  transition: width 0.45s var(--ease-out);
 }
 
 /* Card stack */
@@ -53,9 +53,11 @@
   overflow: hidden;
   /* Peeking cards shrink toward their bottom edge so that edge shows below the top card. */
   transform-origin: 50% 100%;
+  /* Peeking cards glide forward when the top card leaves; the top card settles into its lean. */
   transition:
-    transform 0.23s ease-out,
-    transform-origin 0.23s ease-out;
+    transform 0.34s var(--ease-out),
+    transform-origin 0.34s var(--ease-out),
+    box-shadow 0.2s ease;
 }
 
 .deck-card--top {
@@ -98,12 +100,12 @@
   border-radius: 999px;
   background: var(--brand-tint);
   color: var(--brand-strong);
-  font-size: 12px;
+  font-size: min(var(--text-xs), 18px);
   font-weight: 600;
 }
 
 .card-face-date {
-  font-size: 13px;
+  font-size: min(var(--text-sm), 20px);
   color: var(--text-mute);
 }
 
@@ -116,14 +118,14 @@
 
 .card-face-amount {
   margin: 0;
-  font-size: 48px;
+  font-size: min(var(--text-4xl), 60px);
   font-weight: 700;
   line-height: 1;
 }
 
 .card-face-desc {
   margin: 14px 0 0;
-  font-size: 17px;
+  font-size: min(var(--text-lg), 26px);
   font-weight: 600;
   line-height: 1.3;
   overflow-wrap: anywhere;
@@ -131,15 +133,16 @@
 
 .card-face-loc {
   margin: 6px 0 0;
-  font-size: 14px;
+  font-size: min(var(--text-sm), 22px);
   color: var(--text-mute);
 }
 
 .card-face-hint {
   margin: 0;
+  text-wrap: balance; /* even line lengths: no single word left alone on the last line */
   padding-top: 12px;
   border-top: 1px solid var(--border);
-  font-size: 12px;
+  font-size: min(var(--text-xs), 18px);
   color: var(--text-mute);
 }
 
@@ -152,7 +155,7 @@
   border: 3px solid currentColor;
   border-radius: 10px;
   background: var(--stamp-bg);
-  font-size: 15px;
+  font-size: min(var(--text-md), 20px);
   font-weight: 800;
   letter-spacing: 0.06em;
   pointer-events: none;
@@ -176,20 +179,29 @@
   transform: translateX(-50%);
 }
 
+.stamp--flag {
+  right: 22px;
+  color: var(--flag);
+  transform: rotate(14deg);
+}
+
 /* Action buttons */
 .deck-actions {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  gap: 28px;
+  gap: 8px;
   padding: 0 0 max(20px, env(safe-area-inset-bottom));
 }
 
+/* Equal-width columns keep the middle button centered whatever the label lengths, and a
+   fixed-height button row keeps all three labels on one line. */
 .action-btn-wrap {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 68px auto;
+  justify-items: center;
   align-items: center;
-  gap: 6px;
+  row-gap: 6px;
+  width: 104px;
 }
 
 .action-btn {
@@ -199,12 +211,21 @@
   height: 58px;
   border: none;
   border-radius: 50%;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
   cursor: pointer;
-  transition: transform 0.12s ease;
+  /* Letting go eases back more slowly than the press, so even a quick tap is visible. */
+  transition:
+    transform 0.3s var(--ease-out),
+    background-color 0.3s var(--ease-out);
 }
 
+/* The same press on all three: the circle shrinks and darkens together, easing in quickly. */
 .action-btn:active:not(:disabled) {
-  transform: scale(0.92);
+  transform: scale(0.88);
+  background: var(--btn-bg-pressed);
+  filter: none;
+  transition-duration: 0.12s;
 }
 
 .action-btn:disabled {
@@ -217,25 +238,31 @@
   height: 68px;
 }
 
+/* Each button supplies only its colors. The pressed color mixes in about a quarter more of the
+   action color (or darkens it, for the solid Approve button). */
 .action-btn--investigate {
-  background: var(--investigate-tint);
-  color: var(--investigate);
+  --btn-bg: var(--investigate-tint);
+  --btn-fg: var(--investigate);
+  --btn-bg-pressed: color-mix(in srgb, var(--investigate) 26%, var(--investigate-tint));
 }
 
 .action-btn--pile {
-  background: var(--pile-tint);
-  color: var(--pile);
+  --btn-bg: var(--pile-tint);
+  --btn-fg: var(--pile);
+  --btn-bg-pressed: color-mix(in srgb, var(--pile) 26%, var(--pile-tint));
 }
 
 /* Approve is the one solid action: the healthy default. */
 .action-btn--approve {
-  background: var(--approve);
-  color: var(--on-brand);
+  --btn-bg: var(--approve);
+  --btn-fg: var(--on-brand);
+  --btn-bg-pressed: var(--brand-strong);
   box-shadow: var(--shadow-card);
 }
 
 .action-btn-label {
-  font-size: 12px;
+  white-space: nowrap;
+  font-size: min(var(--text-xs), 18px);
   font-weight: 500;
   color: var(--text-mute);
 }

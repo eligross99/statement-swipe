@@ -45,6 +45,11 @@ or in real Chrome.
 6. **Offline.** Turn on airplane mode, close and reopen the app: it still opens and your review is there.
 7. **Updates.** After the next deploy, open the app twice (the first open downloads the update
    in the background; the second uses it).
+8. **Feel.** Swipes and button taps send the card off smoothly; Look closer slides in and out;
+   undo flies the card back from the side it left; the summary rises in after the last card.
+   Then try iPhone Settings → Accessibility → Display & Text Size → Larger Text at the largest
+   size (nothing cut off), and Settings → Accessibility → Motion → Reduce Motion (quick fades
+   instead of movement).
 
 If anything looks wrong, note what you did, what you expected, and what happened. Never share the
 CSV itself or a screenshot showing real transactions in a public place (like a GitHub issue).

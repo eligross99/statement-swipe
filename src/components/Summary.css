@@ -1,6 +1,6 @@
 .summary-recon {
   margin: 0 0 16px;
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 /* Breakdown: a bar of the statement's dollars split by decision, then one row per decision. */
@@ -17,8 +17,21 @@
   background: var(--surface-sunken);
 }
 
+/* The bar grows in from the left just after the summary rises in. */
+.ledger-bar > * {
+  transform-origin: left;
+  animation: ledger-grow 900ms var(--ease-out) 300ms backwards;
+}
+
+@keyframes ledger-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
 .ledger-seg {
   flex-basis: 0;
+  transition: flex-grow 0.6s var(--ease-out);
   min-width: 6px; /* a tiny share should still be visible */
 }
 
@@ -27,6 +40,14 @@
 }
 .ledger-seg--pile {
   background: var(--pile);
+}
+.ledger-seg--pile-settled {
+  /* Filed and settled: the folder color, faded, to read as "nothing left to do". */
+  background: color-mix(in srgb, var(--pile) 28%, var(--surface));
+}
+.ledger-seg--filed-done {
+  /* Filed, and every folder settled: a pale approve green, so a finished review reads all green. */
+  background: color-mix(in srgb, var(--approve) 32%, var(--surface));
 }
 .ledger-seg--flag {
   background: var(--flag);
@@ -37,15 +58,17 @@
 }
 
 .ledger-row {
-  display: grid;
-  grid-template-columns: 1fr auto 96px;
+  display: flex;
+  flex-wrap: wrap; /* at very large text sizes the numbers drop below the label */
+  justify-content: flex-end;
   align-items: baseline;
-  gap: 12px;
+  gap: 0 12px;
   padding: 8px 0;
-  font-size: 15px;
+  font-size: var(--text-md);
 }
 
 .ledger-row dt {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -68,6 +91,7 @@
 }
 
 .ledger-amount {
+  min-width: 5.5em; /* lines the amounts up in a column; grows with the text size */
   font-weight: 650;
 }
 
@@ -81,13 +105,13 @@
   gap: 6px;
   margin: 0 0 4px;
   color: var(--flag);
-  font-size: 15px;
+  font-size: var(--text-md);
   font-weight: 650;
 }
 
 .summary-flag-help {
   margin: 0 0 10px;
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 .summary-flag-row {
@@ -102,7 +126,7 @@
   background: none;
   color: var(--text);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--text-sm);
   text-align: left;
   cursor: pointer;
 }
@@ -114,6 +138,40 @@
 .summary-flag-desc {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.summary-folders-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 12px;
+  margin-bottom: 10px;
+}
+
+.summary-folders-head .section-label {
+  margin: 0;
+}
+
+.summary-folders-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.summary-folders-group {
+  margin: 0 0 8px;
+  color: var(--text-mute);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* The gap that separates settled folders from the ones needing action. */
+.summary-folders-group--settled {
+  margin-top: 22px;
 }
 
 .summary-folders {
@@ -152,8 +210,17 @@
   flex-direction: column;
 }
 
+/* Name on the left, amount on the right; the details line below gets the card's full width. */
+.folder-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .folder-card-name {
-  font-size: 15px;
+  min-width: 0;
+  font-size: var(--text-md);
   font-weight: 650;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -162,13 +229,26 @@
 
 .folder-card-meta {
   margin-top: 1px;
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--text-mute);
 }
 
+/* A settled folder reads as finished at a glance: green check icon, quieter amount. */
+.folder-card.is-settled .folder-card-icon {
+  background: var(--approve-tint);
+  color: var(--approve);
+}
+
+.folder-card.is-settled .folder-card-total {
+  color: var(--text-mute);
+  font-weight: 500;
+}
+
 .folder-card-total {
-  font-size: 15px;
+  flex-shrink: 0;
+  font-size: var(--text-md);
   font-weight: 650;
+  white-space: nowrap;
 }
 
 .summary-actions {
@@ -182,6 +262,6 @@
 
 .summary-confirm p {
   margin: 0 0 12px;
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.45;
 }

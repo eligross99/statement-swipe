@@ -1,7 +1,7 @@
-import { ChevronRight, Folder, ShieldAlert } from 'lucide-react'
+import { Check, ChevronRight, Folder, FolderCheck, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
 import { plural, usd } from '../lib/format'
-import { openItems, pileItems, sumAmounts } from '../lib/review'
+import { folderGroups, openItems, stillToActOn, sumAmounts, type FolderGroup } from '../lib/review'
 import type { Pile, Transaction } from '../types'
 import './Summary.css'
 
@@ -11,20 +11,34 @@ interface Props {
   onInspect: (t: Transaction) => void
   onOpenPile: (pileId: string) => void
   onRestart: () => void
-  onNew: () => void
 }
 
 type Tone = 'approve' | 'pile' | 'flag'
 
-export function Summary({ txns, piles, onInspect, onOpenPile, onRestart, onNew }: Props) {
+export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props) {
   const [confirmRestart, setConfirmRestart] = useState(false)
   const total = sumAmounts(txns)
   const flagged = txns.filter((t) => t.status === 'flagged')
-  const groups = piles.map((p) => ({ p, items: pileItems(txns, p.id) })).filter((g) => g.items.length)
+  const filed = txns.filter((t) => t.status === 'piled')
+  const groups = folderGroups(txns, piles)
+  const needAction = groups.filter((g) => g.open > 0)
+  const settledGroups = groups.filter((g) => g.open === 0)
+  // Filed purchases stay filed as a record; this says whether any of them still need doing.
+  const toActOn = stillToActOn(filed)
+
+  // The bar splits Filed in two: still to act on (solid) and settled (pale), so a fully settled
+  // review reads as done while still showing how much was filed.
+  const bar: { key: string; amount: number }[] = [
+    { key: 'approve', amount: sumAmounts(txns.filter((t) => t.status === 'approved')) },
+    { key: 'pile', amount: toActOn },
+    // Pale indigo while anything is left; pale green once every folder is settled ("all green").
+    { key: toActOn > 0 ? 'pile-settled' : 'filed-done', amount: sumAmounts(filed) - sumAmounts(openItems(filed)) },
+    { key: 'flag', amount: sumAmounts(flagged) },
+  ]
 
   const rows: { tone: Tone; label: string; items: Transaction[] }[] = [
     { tone: 'approve', label: 'Approved', items: txns.filter((t) => t.status === 'approved') },
-    { tone: 'pile', label: 'Filed', items: txns.filter((t) => t.status === 'piled') },
+    { tone: 'pile', label: 'Filed', items: filed },
     { tone: 'flag', label: 'Flagged', items: flagged },
   ]
 
@@ -38,16 +52,19 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart, onNew }
       {/* Where the statement's money went: one bar split by decision, then the numbers behind it. */}
       <section className="panel ledger" aria-label="Breakdown">
         <div className="ledger-bar" aria-hidden>
-          {rows.map(({ tone, items }) => {
-            const amount = sumAmounts(items)
-            return amount > 0 ? <span key={tone} className={`ledger-seg ledger-seg--${tone}`} style={{ flexGrow: amount }} /> : null
-          })}
+          {bar.map(({ key, amount }) =>
+            amount > 0 ? <span key={key} className={`ledger-seg ledger-seg--${key}`} style={{ flexGrow: amount }} /> : null,
+          )}
         </div>
         <dl className="ledger-rows">
           {rows.map(({ tone, label, items }) => (
             <div key={tone} className="ledger-row">
               <dt>
-                <span className={`ledger-dot ledger-seg--${tone}`} aria-hidden />
+                {/* When every filed purchase is settled, the dot turns pale green to match the bar. */}
+                <span
+                  className={`ledger-dot ledger-seg--${tone === 'pile' && items.length > 0 && toActOn === 0 ? 'filed-done' : tone}`}
+                  aria-hidden
+                />
                 {label}
               </dt>
               <dd className="ledger-count num">{items.length}</dd>
@@ -62,7 +79,9 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart, onNew }
           <h3 className="summary-flag-title">
             <ShieldAlert size={16} /> Flagged as possible fraud
           </h3>
-          <p className="muted summary-flag-help">Call the number on the back of your card to dispute these.</p>
+          <p className="muted summary-flag-help">
+            Tap one to look into it. If it still isn’t yours, call the number on the back of your card.
+          </p>
           <div className="panel">
             {flagged.map((t) => (
               <button key={t.id} type="button" className="summary-flag-row" onClick={() => onInspect(t)}>
@@ -76,32 +95,32 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart, onNew }
 
       {groups.length > 0 && (
         <section className="summary-section">
-          <h3 className="section-label">Your folders</h3>
-          <div className="summary-folders">
-            {groups.map(({ p, items }) => {
-              const open = openItems(items).length
-              return (
-                <button key={p.id} type="button" className="panel folder-card" onClick={() => onOpenPile(p.id)}>
-                  <span className="folder-card-icon">
-                    <Folder size={20} />
-                  </span>
-                  <span className="folder-card-main">
-                    <span className="folder-card-name">{p.name}</span>
-                    <span className="folder-card-meta">
-                      {plural(items.length, 'purchase')},{' '}
-                      {open > 0 ? (
-                        <span className="tone-investigate">{open} to act on</span>
-                      ) : (
-                        <span className="tone-approve">all done</span>
-                      )}
-                    </span>
-                  </span>
-                  <span className="folder-card-total num">${usd(sumAmounts(items))}</span>
-                  <ChevronRight size={18} className="muted" />
-                </button>
-              )
-            })}
+          {/* Filed purchases stay filed as a record; this says whether any still need doing. */}
+          <div className="summary-folders-head">
+            <h3 className="section-label">Your folders</h3>
+            {toActOn > 0 ? (
+              <span className="summary-folders-status tone-investigate">
+                <span className="num">${usd(toActOn)}</span> still to act on
+              </span>
+            ) : (
+              <span className="summary-folders-status tone-approve">
+                <Check size={15} aria-hidden /> All settled
+              </span>
+            )}
           </div>
+          {/* Two groups when both exist: folders needing action on top, settled below. Folders move
+              between them on their own as statuses change. With only one group, the status beside
+              the heading already says which it is. */}
+          {needAction.length > 0 && settledGroups.length > 0 ? (
+            <>
+              <h4 className="summary-folders-group">Action needed</h4>
+              <FolderList groups={needAction} onOpen={onOpenPile} />
+              <h4 className="summary-folders-group summary-folders-group--settled">Settled</h4>
+              <FolderList groups={settledGroups} onOpen={onOpenPile} />
+            </>
+          ) : (
+            <FolderList groups={groups} onOpen={onOpenPile} />
+          )}
         </section>
       )}
 
@@ -118,15 +137,46 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart, onNew }
           </div>
         </div>
       ) : (
-        <div className="btn-row summary-actions">
-          <button type="button" className="btn btn--secondary" onClick={() => setConfirmRestart(true)}>
-            Start over
-          </button>
-          <button type="button" className="btn btn--primary" onClick={onNew}>
-            New statement
-          </button>
-        </div>
+        // A new statement starts from the button at the top right.
+        <button type="button" className="btn btn--secondary summary-actions" onClick={() => setConfirmRestart(true)}>
+          Start over
+        </button>
       )}
+    </div>
+  )
+}
+
+function FolderList({ groups, onOpen }: { groups: FolderGroup[]; onOpen: (pileId: string) => void }) {
+  return (
+    <div className="summary-folders">
+      {groups.map(({ pile: p, items, open }) => {
+        const settled = open === 0
+        return (
+          <button
+            key={p.id}
+            type="button"
+            className={`panel folder-card${settled ? ' is-settled' : ''}`}
+            onClick={() => onOpen(p.id)}
+          >
+            <span className="folder-card-icon">{settled ? <FolderCheck size={20} /> : <Folder size={20} />}</span>
+            <span className="folder-card-main">
+              <span className="folder-card-top">
+                <span className="folder-card-name">{p.name}</span>
+                <span className="folder-card-total num">${usd(sumAmounts(items))}</span>
+              </span>
+              <span className="folder-card-meta">
+                {plural(items.length, 'purchase')},{' '}
+                {settled ? (
+                  <span className="tone-approve">all settled</span>
+                ) : (
+                  <span className="tone-investigate">{open} to act on</span>
+                )}
+              </span>
+            </span>
+            <ChevronRight size={18} className="muted" />
+          </button>
+        )
+      })}
     </div>
   )
 }

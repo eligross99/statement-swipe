@@ -230,8 +230,9 @@ for server functions, databases, auth, env vars, and deployments. Eli suggested 
 we deferred it because a static Vite app uses almost none of it. **Install it at the start of
 Phase 9**, when we add the backend, Stripe, and the bank-connection relay.
 
-### Feel and motion → Phase 5.5
-From Eli's first phone test (2026-09-23). The app works, but it feels abrupt: things change
+### Feel and motion → Phase 5.5 (built 2026-09-23)
+From Eli's first phone test (2026-09-23). All 12 items below are built; the header's new button is a
+labeled "New statement" pill, and the card "leans" toward Look closer or File while they're open. The app works, but it feels abrupt: things change
 instantly, so it's hard to see what just happened. Principles:
 - **React instantly, then let the result be seen.** No delay before a response. The dragged card
   follows the finger 1:1. After the finger lifts, motion is slower and eased (roughly 250–400ms,
@@ -267,6 +268,13 @@ Items:
     field, and the preview updates visibly.
 12. **Look for more:** e.g. the progress bar animates as it fills; changing a status pulses the row.
     Keep it subtle.
+
+### One purchase in several folders → later (Phase 8 at the earliest)
+Eli asked (2026-09-24) about filing one purchase into two folders, e.g. "Restaurants" and "Venmo
+requests". **Decision: not now.** Each purchase has one folder and one status (To do / Waiting /
+Done), so multiple folders would need a status per folder, new summary math (no double-counting),
+and a reworked filing sheet. Most such cases are really a *label* for tracking spending (like
+"Restaurants") alongside one *to-do* folder. Revisit as tags with the Phase 8 on-device smarts.
 
 ### PDF statements → Phase 6 (priority)
 **Why:** Eli's bank app only offers PDF statements on the phone. Getting a CSV means downloading on a

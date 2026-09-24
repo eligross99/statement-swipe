@@ -1,6 +1,12 @@
+/* Rise a beat after the tap, so the card lifting behind it is seen first. */
+.sheet-scrim:has(.folder-sheet-sub),
+.sheet:has(.folder-sheet-sub) {
+  animation-delay: 90ms;
+}
+
 .folder-sheet-sub {
   margin: 0 0 14px;
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 .folder-sheet-empty {
@@ -16,7 +22,7 @@
   max-width: 250px;
   margin: 8px 0 0;
   color: var(--text-mute);
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.45;
 }
 
@@ -48,7 +54,7 @@
   background: var(--pile-tint);
   color: var(--pile);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--text-md);
   font-weight: 600;
   cursor: pointer;
 }
@@ -76,47 +82,15 @@
   cursor: pointer;
 }
 
-.folder-confirm {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 52px;
-  padding: 4px 6px 4px 14px;
-  border-radius: var(--radius-control);
-  background: var(--flag-tint);
-  color: var(--flag);
-  font-size: 13px;
-}
-
-.folder-confirm-btns {
-  display: flex;
-  gap: 6px;
-}
-
-.folder-confirm-yes,
-.folder-confirm-no {
-  display: grid;
-  place-items: center;
-  width: var(--tap-min);
-  height: var(--tap-min);
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.folder-confirm-yes {
-  background: var(--flag);
-  color: var(--on-brand);
-}
-
-.folder-confirm-no {
-  background: var(--surface);
-  color: var(--text-mute);
-}
-
 .folder-new {
   display: flex;
   gap: 8px;
+}
+
+.folder-delete-text {
+  margin: 8px 0 18px;
+  color: var(--text-mute);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }

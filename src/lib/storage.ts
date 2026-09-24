@@ -3,8 +3,11 @@
 
 import { get, set } from 'idb-keyval'
 import type { Session } from '../types'
+import type { UndoEntry } from './review'
 
 const STORE_KEY = 'statement-swipe-session-v1'
+/** Undo history lives beside the session (not inside it), so the session's saved shape is unchanged. */
+const UNDO_KEY = 'statement-swipe-undo-v1'
 
 const STATUSES = new Set(['unreviewed', 'approved', 'piled', 'flagged'])
 const SCREENS = new Set(['import', 'deck', 'summary', 'pile'])
@@ -68,5 +71,41 @@ export async function saveSession(session: Session): Promise<void> {
     await set(STORE_KEY, session)
   } catch {
     // Saving is best-effort; the app keeps working in memory.
+  }
+}
+
+/** Checks saved undo steps are well formed and still point at purchases in this session. */
+export function isUndoHistory(v: unknown, session: Session): v is UndoEntry[] {
+  if (!Array.isArray(v)) return false
+  const ids = new Set(session.txns.map((t) => t.id))
+  return v.every(
+    (e) =>
+      isObject(e) &&
+      typeof e.txnId === 'string' &&
+      ids.has(e.txnId) &&
+      typeof e.index === 'number' &&
+      e.index >= 0 &&
+      e.index < session.txns.length &&
+      STATUSES.has(e.status as string) &&
+      (e.pileId === null || typeof e.pileId === 'string'),
+  )
+}
+
+/** The saved undo steps for `session`, so undo still works after leaving and reopening the app.
+ *  Anything unusable (missing, corrupt, from another review) gives an empty history. */
+export async function loadUndo(session: Session): Promise<UndoEntry[]> {
+  try {
+    const saved: unknown = await get(UNDO_KEY)
+    return isUndoHistory(saved, session) ? saved : []
+  } catch {
+    return []
+  }
+}
+
+export async function saveUndo(history: UndoEntry[]): Promise<void> {
+  try {
+    await set(UNDO_KEY, history)
+  } catch {
+    // Best-effort, like the session.
   }
 }

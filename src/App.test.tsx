@@ -82,13 +82,13 @@ describe('App', () => {
 
   it('files a purchase into a new folder, then into the same folder', async () => {
     const user = await startSample()
-    await user.click(screen.getByRole('button', { name: 'File it' }))
+    await user.click(screen.getByRole('button', { name: 'File' }))
     expect(screen.getByText(/No folders yet/)).toBeInTheDocument()
     await user.type(screen.getByRole('textbox', { name: 'New folder name' }), 'Ski trip{Enter}')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'File it' }))
+    await user.click(screen.getByRole('button', { name: 'File' }))
     await user.click(screen.getByRole('button', { name: /^Ski trip/ }))
     expect(screen.getByText('2 of 16 reviewed')).toBeInTheDocument()
   })
@@ -104,13 +104,13 @@ describe('App', () => {
 
   it('reaches the summary after the last card and opens a folder for triage', async () => {
     const user = await startSample()
-    await user.click(screen.getByRole('button', { name: 'File it' }))
+    await user.click(screen.getByRole('button', { name: 'File' }))
     await user.type(screen.getByRole('textbox', { name: 'New folder name' }), 'Ski trip{Enter}')
     for (let i = 0; i < 15; i++) await user.click(screen.getByRole('button', { name: 'Approve' }))
 
     expect(screen.getByRole('heading', { name: 'Review complete' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /Ski trip/ }))
-    expect(screen.getByRole('heading', { name: 'Ski trip' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Ski trip' })).toBeInTheDocument()
 
     expect(screen.getByText('Still to act on')).toBeInTheDocument()
 
@@ -135,6 +135,130 @@ describe('App', () => {
     expect(screen.getByRole('textbox', { name: /Note for/ })).toHaveValue('Venmo Sam')
   })
 
+  it('asks before a new statement replaces a review in progress, and can go back to it', async () => {
+    const user = await startSample()
+    await user.click(screen.getByRole('button', { name: 'Approve' }))
+    await user.click(screen.getByRole('button', { name: 'New statement' }))
+    expect(screen.getByText(/is saved/)).toBeInTheDocument()
+
+    // Keeping the review closes the question and changes nothing.
+    await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
+    const confirm = screen.getByRole('dialog', { name: 'Replace your review?' })
+    expect(within(confirm).getByText(/1 of 16 purchases/)).toBeInTheDocument()
+    await user.click(within(confirm).getByRole('button', { name: 'Keep my review' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    // The header's back button returns to the review where it was left.
+    await user.click(screen.getByRole('button', { name: 'Back to your review' }))
+    expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
+
+    // Replacing it starts fresh.
+    await user.click(screen.getByRole('button', { name: 'New statement' }))
+    await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
+    await user.click(screen.getByRole('button', { name: 'Replace it' }))
+    expect(screen.getByText('0 of 16 reviewed')).toBeInTheDocument()
+  })
+
+  it('starts a new statement without asking when nothing has been reviewed yet', async () => {
+    const user = await startSample()
+    await user.click(screen.getByRole('button', { name: 'New statement' }))
+    await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByText('0 of 16 reviewed')).toBeInTheDocument()
+  })
+
+  it('uses the top-left button to go back from a folder to all folders', async () => {
+    const user = await startSample()
+    await user.click(screen.getByRole('button', { name: 'File' }))
+    await user.type(screen.getByRole('textbox', { name: 'New folder name' }), 'Ski trip{Enter}')
+    for (let i = 0; i < 15; i++) await user.click(screen.getByRole('button', { name: 'Approve' }))
+    await user.click(screen.getByRole('button', { name: /Ski trip/ }))
+    expect(screen.queryByRole('button', { name: 'Undo last action' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Back to all folders' }))
+    expect(screen.getByRole('heading', { name: 'Review complete' })).toBeInTheDocument()
+  })
+
+  it('lets a purchase flagged earlier be approved from the summary', async () => {
+    const user = await startSample()
+    await user.click(screen.getByRole('button', { name: 'Look closer' }))
+    await user.click(screen.getByRole('button', { name: /flag as possible fraud/ }))
+    for (let i = 0; i < 15; i++) await user.click(screen.getByRole('button', { name: 'Approve' }))
+    expect(screen.getByRole('heading', { name: /Flagged as possible fraud/ })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /TRADER JOE'S/ }))
+    // It asks first; cancelling keeps the purchase flagged.
+    await user.click(screen.getByRole('button', { name: 'I recognize it, approve it' }))
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('dialog', { name: 'Approve this purchase?' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'I recognize it, approve it' }))
+    await user.click(screen.getByRole('button', { name: 'Yes, approve it' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Flagged as possible fraud/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Undo last action' })).toBeEnabled()
+  })
+
+  it('says under Filed whether anything is left to act on', async () => {
+    const user = await startSample()
+    await user.click(screen.getByRole('button', { name: 'File' }))
+    await user.type(screen.getByRole('textbox', { name: 'New folder name' }), 'Ski trip{Enter}')
+    for (let i = 0; i < 15; i++) await user.click(screen.getByRole('button', { name: 'Approve' }))
+    expect(screen.getByText(/still to act on/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Ski trip/ }))
+    await user.click(screen.getByRole('button', { name: /Status: not set/ }))
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: /^Done/ }))
+    await user.click(screen.getByRole('button', { name: 'Back to all folders' }))
+    expect(screen.queryByText(/still to act on/)).not.toBeInTheDocument()
+    expect(screen.getByText('All settled')).toBeInTheDocument()
+  })
+
+  it('asks before deleting a folder and says what happens to its purchases', async () => {
+    const user = await startSample()
+    await user.click(screen.getByRole('button', { name: 'File' }))
+    await user.type(screen.getByRole('textbox', { name: 'New folder name' }), 'Ski trip{Enter}')
+    await user.click(screen.getByRole('button', { name: 'File' }))
+
+    await user.click(screen.getByRole('button', { name: 'Delete folder Ski trip' }))
+    const confirm = screen.getByRole('dialog', { name: 'Delete this folder?' })
+    expect(within(confirm).getByText(/The 1 purchase in “Ski trip” will move to Approved/)).toBeInTheDocument()
+    await user.click(within(confirm).getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByRole('button', { name: /^Ski trip/ })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Delete folder Ski trip' }))
+    await user.click(screen.getByRole('button', { name: 'Delete folder' }))
+    expect(screen.queryByRole('button', { name: /^Ski trip/ })).not.toBeInTheDocument()
+    expect(screen.getByText(/No folders yet/)).toBeInTheDocument()
+  })
+
+  it('splits folders into Action needed and Settled, moving them as statuses change', async () => {
+    const user = await startSample()
+    for (const name of ['Ski trip', 'Taxes']) {
+      await user.click(screen.getByRole('button', { name: 'File' }))
+      await user.type(screen.getByRole('textbox', { name: 'New folder name' }), `${name}{Enter}`)
+    }
+    for (let i = 0; i < 14; i++) await user.click(screen.getByRole('button', { name: 'Approve' }))
+    // Both need action: one list, no group labels.
+    expect(screen.queryByRole('heading', { name: 'Action needed' })).not.toBeInTheDocument()
+
+    const settle = async (folder: string) => {
+      await user.click(screen.getByRole('button', { name: new RegExp(folder) }))
+      await user.click(screen.getByRole('button', { name: /Status: not set/ }))
+      await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: /^Done/ }))
+      await user.click(screen.getByRole('button', { name: 'Back to all folders' }))
+    }
+    await settle('Ski trip')
+    const needed = screen.getByRole('heading', { name: 'Action needed' })
+    const settled = screen.getByRole('heading', { name: 'Settled' })
+    expect(needed.nextElementSibling).toHaveTextContent('Taxes')
+    expect(settled.nextElementSibling).toHaveTextContent('Ski trip')
+
+    // Everything settled: back to one list, with "All settled" beside the heading.
+    await settle('Taxes')
+    expect(screen.queryByRole('heading', { name: 'Settled' })).not.toBeInTheDocument()
+    expect(screen.getByText('All settled')).toBeInTheDocument()
+  })
+
   it('shows the same readable date on the card and in the investigation view', async () => {
     const user = await startSample()
     expect(within(topCard()).getByText('Mar 3')).toBeInTheDocument()
@@ -146,9 +270,32 @@ describe('App', () => {
     const user = await startSample()
     await user.click(screen.getByRole('button', { name: 'Approve' }))
     await waitFor(() => expect(set).toHaveBeenCalled())
-    const saved = vi.mocked(set).mock.lastCall?.[1] as Session
+    const saved = vi.mocked(set).mock.calls.findLast(([key]) => key === 'statement-swipe-session-v1')?.[1] as Session
     expect(saved.index).toBe(1)
     expect(saved.txns[0].status).toBe('approved')
+  })
+
+  it('keeps undo working after the app is closed and reopened', async () => {
+    const saved: Session = {
+      txns: [
+        { id: 'a', desc: 'FIRST SHOP', amount: 5, date: '', cat: '—', status: 'approved', pileId: null, action: null, note: '' },
+        { id: 'b', desc: 'SECOND SHOP', amount: 7, date: '', cat: '—', status: 'unreviewed', pileId: null, action: null, note: '' },
+      ],
+      index: 1,
+      piles: [],
+      screen: 'deck',
+      label: 'Saved March',
+      openPile: null,
+    }
+    const undo = [{ txnId: 'a', index: 0, status: 'unreviewed', pileId: null }]
+    vi.mocked(get).mockImplementation(async (key) => (key === 'statement-swipe-undo-v1' ? undo : saved))
+    const user = userEvent.setup()
+    render(<App />)
+    const undoButton = await screen.findByRole('button', { name: 'Undo last action' })
+    await waitFor(() => expect(undoButton).toBeEnabled())
+    await user.click(undoButton)
+    expect(within(topCard()).getByText('FIRST SHOP')).toBeInTheDocument()
+    expect(screen.getByText('0 of 2 reviewed')).toBeInTheDocument()
   })
 
   it('restores a saved session on load', async () => {

@@ -1,21 +1,25 @@
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   padding: max(16px, env(safe-area-inset-top)) 16px 12px;
 }
 
-.header-title {
-  min-width: 0;
-  text-align: center;
-}
-
 .header-name {
+  flex: 1;
+  min-width: 0;
   margin: 0;
-  font-size: 16px;
+  /* Capped so very large text settings can't push the buttons off the header. */
+  font-size: min(var(--text-md), 22px);
   font-weight: 650;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Keeps the title centered when one side has no button. */
+.header-spacer {
+  width: var(--tap-min);
+  flex-shrink: 0;
 }
