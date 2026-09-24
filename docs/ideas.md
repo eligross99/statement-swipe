@@ -23,6 +23,11 @@ statements) and 6c (Tasks dashboard and easier files)**, each phone-tested befor
 **moving Android "Share to" to Phase 7**, next to Android haptics, since both need an Android phone to
 test. For tuning the PDF reader, Eli chose the **masked layout** approach (see "PDF statements").
 
+On 2026-09-24 Eli phone-tested and approved Phase 6a (PDF import); it's merged. Its feedback also set
+the card fly-out to 700ms, centered the swipe hint, and added "Show fewer" (see Eli's design notes in
+`CLAUDE.md` and `src/lib/motion.ts`). **Next: Phase 6b in a fresh session. Start with "Starting Phase
+6b" below.**
+
 ## Roadmap order
 
 | Phase | What | Why here |
@@ -44,7 +49,37 @@ test. For tuning the PDF reader, Eli chose the **masked layout** approach (see "
 Rename "Set next step" to "Set status"; tapping opens a menu with To do / Waiting / Done (plus a way
 to clear it). Agreed as-is.
 
-### Statements repository → Phase 6
+### Starting Phase 6b: handoff notes from 6a (2026-09-24)
+**Scope** (decided): Dexie storage with automatic migration of the saved review, the Statements
+screen (see "Statements repository"), navigation (see "Navigation"), rename statements and smart
+default names (see "Rename statements…"), and light Settings. Tasks dashboard, remembered bank
+setups, and OFX/QFX stay in 6c.
+
+**Open question: ask Eli before building.** The approved navigation is bottom tabs *Statements ·
+Tasks*, but the Tasks dashboard is scheduled for 6c. A tab bar with one tab looks unfinished. Options to
+put to Eli, with a recommendation: (a) in 6b, make Statements the home screen with the gear for Settings
+and no tab bar, then add the tab bar in 6c with Tasks (recommended: nothing half-built ships); (b) move
+the Tasks dashboard into 6b.
+
+**What 6a left in place that 6b builds on:**
+- **Migration source:** the current review is one `Session` blob in idb-keyval under
+  `statement-swipe-session-v1`, with undo steps under `statement-swipe-undo-v1` (`src/lib/storage.ts`).
+  Dexie is pre-approved in `CLAUDE.md`'s stack. Migrate both keys into the first saved statement.
+- **Smart default names:** imports are named after the file today (`labelFrom` in
+  `ImportScreen.tsx`, e.g. "eStmt_2026-07-13"). PDF imports also know the statement's closing date
+  (`PdfStatement.closing`), which is a better source for "July 2026" than purchase dates. The bank name
+  can join the default once bank setups are remembered (6c).
+- **The "Replace your review?" sheet** (`ImportScreen.tsx`) exists because there's only one saved
+  review. With multiple statements, importing adds a statement instead, so this sheet should go away
+  (keep asking before *deleting* a statement).
+- **Categories:** statements without categories use the placeholder `cat: '—'`, hidden everywhere
+  via `hasCategory` (`src/lib/format.ts`). Keep using it on new screens.
+- **Testing:** `npm run test:e2e` (Playwright WebKit, iPhone-sized, live CSP) runs on CI; add a spec for
+  the Statements screen. Try each change in the iPhone simulator's Safari before Eli's phone test.
+  Eli's real statement stays in `private/statement.pdf` (git-ignored); the private tests check it
+  reporting counts only.
+
+### Statements repository → Phase 6b
 One screen listing every imported statement, with:
 - Tags: **New · needs review**, **In progress**, or a completed summary (flagged / to do / waiting
   counts, or a green **✓ Clear**).
@@ -67,7 +102,7 @@ for statement history). An existing in-progress review gets migrated automatical
 **Decided:** folders stay per statement (simpler, and the Tasks dashboard already
 gives the cross-statement view), but offer your past folder names as one-tap choices when filing.
 
-### Navigation → Phase 6
+### Navigation → Phase 6b (see the open question in "Starting Phase 6b")
 **Proposed instead of Statements / Swipe / Settings tabs:**
 - **Bottom tabs: Statements · Tasks.** Tabs are for places you visit often.
 - **No "Swipe" tab.** Swiping belongs to one specific statement, so the tab would be empty or confusing
@@ -79,13 +114,13 @@ gives the cross-statement view), but offer your past folder names as one-tap cho
   screens.
 - **"+ Import"** button on the Statements screen.
 
-### Tasks dashboard → Phase 6
+### Tasks dashboard → Phase 6c
 Every open purchase across completed statements, grouped **Flagged · To do · Waiting · Done**, each
 linking back to its statement and folder. "Remind me after X" is a preference; until push
 notifications exist, open items past that age get an **Overdue** highlight and a count badge on the
 Tasks tab.
 
-### Settings / preferences → Phase 6 (start light)
+### Settings / preferences → Phase 6b (start light)
 Start with: reminder age (e.g. 1 month), default statement filter, and "About & privacy".
 **Proposed:** no Account or Plan sections until accounts and payments exist (Phase 9). Empty
 placeholder screens make an app feel unfinished.
@@ -121,7 +156,7 @@ later. "Try the sample statement" is no longer offered outside the tour.
   Phase 6 creates. Until then, keep the "Try the sample statement" button. It's how Eli (and testers)
   will try the app on the phone in Phase 5. The sample data stays in the code for automated tests.
 
-### Easier statement import → Phases 6–7 (files), Phase 9 (bank connection)
+### Easier statement import → Phases 6a–7 (files), Phase 9 (bank connection)
 Eli's goal (2026-09-23): getting a statement into the app should be easier than "download a CSV from
 the bank's website, save it, upload it". **Approved plan:** make files painless first (no server
 needed), then add an opt-in bank connection once accounts and a backend exist.

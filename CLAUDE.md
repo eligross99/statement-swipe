@@ -106,6 +106,11 @@ direction: calm, clear, efficient, and signaling financial well-being.
 ## Workflow
 
 - One roadmap phase per branch (`phase-1-scaffold`, `phase-2-port`, …), merged to `main` via a PR.
+  A phase too big to phone-test in one go is split into parts (Phase 6 → `phase-6a-pdf-import`, 6b, 6c),
+  each with its own branch, PR, and phone test.
+- Before asking Eli to phone-test a PR, try it in the iPhone simulator's Safari (see Gotchas). When
+  sending the preview link, remind Eli to pull down to refresh once or twice: the service worker
+  keeps serving the previous version until the new one has downloaded.
 - Small commits with clear messages. Before each commit: `npm run build`, `npm test`, and `npm run lint` pass.
 - Verify UI changes by running the app in the browser at phone width, not just by reading code.
 - At the end of each phase, update the Roadmap status below, then start a fresh Claude session.
@@ -126,10 +131,13 @@ See `docs/handoff.md` §11 for details.
   confirm before replacing a review (see `docs/ideas.md`). Motion helpers: `src/lib/motion.ts`,
   `src/hooks/useAnimate.ts`; bottom sheets share `src/components/Sheet.tsx`
 - [ ] 6. Split into three parts, each with its own branch, PR, and phone test (see `docs/ideas.md`):
-  - [ ] 6a. **On-device PDF statements** (`PDFSource`, `src/lib/statementPdf.ts`), tuned on Eli's
-    Bank of America PDF via the masked-layout script (totals match); needs the phone test  ← **in progress**
+  - [x] 6a. **On-device PDF statements** (`PDFSource`, `src/lib/statementPdf.ts`), tuned on Eli's
+    Bank of America PDF via the masked-layout script (totals match to the cent), phone-tested on Eli's
+    iPhone. Also added: Playwright WebKit e2e tests on CI, iPhone-simulator testing, `npm run preview`
+    with the live CSP, "Show all/Show fewer" in the import preview, no "—" category chip
   - [ ] 6b. Multiple statements: Dexie storage (migrate the saved session), Statements screen, bottom
-    navigation, rename statements + smart default names, light Settings
+    navigation, rename statements + smart default names, light Settings  ← **next.** Start with
+    "Starting Phase 6b" in `docs/ideas.md` (handoff notes and an open question for Eli)
   - [ ] 6c. Tasks dashboard; remembered bank setups; OFX/QFX files
 - [ ] 7. Dark mode (follows the phone, override in Settings), Android haptics and Android "Share to" first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
   Settings; the standalone "Try the sample statement" button goes away; per-bank download guides
@@ -143,8 +151,10 @@ See `docs/handoff.md` §11 for details.
 
 ## Gotchas
 
-- The Claude desktop app's built-in browser can't register service workers. Verify offline/install
-  behavior in real Chrome or on the phone, not the preview pane.
+- The Claude desktop app's built-in browser pane may or may not register the service worker; when it
+  does, it keeps serving the old build after a rebuild (unregister it and clear caches from the page, then
+  reload). While the pane is hidden its animation clock is frozen, so measure motion in Playwright
+  WebKit instead. Verify offline/install behavior in real Chrome or on the phone.
 - The Content-Security-Policy in `vercel.json` blocks all requests to other servers. `npm run preview`
   (and so the e2e tests) sends the same headers, read from `vercel.json`; `npm run dev` doesn't.
 - **iPhone Safari lags desktop engines**, even Playwright's WebKit. Example: iOS 26 Safari can't
