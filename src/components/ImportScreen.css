@@ -259,21 +259,3 @@
   font-size: var(--text-xs);
   text-align: center;
 }
-
-/* A quiet note that the review is saved (the header's back arrow returns to it). */
-.import-current {
-  margin: 4px 0 16px;
-  padding: 12px 14px;
-  border-radius: var(--radius-control);
-  background: var(--surface-sunken);
-  color: var(--text-mute);
-  font-size: var(--text-sm);
-  line-height: 1.45;
-}
-
-.import-confirm-text {
-  margin: 8px 0 18px;
-  font-size: var(--text-md);
-  line-height: 1.5;
-  color: var(--text-mute);
-}

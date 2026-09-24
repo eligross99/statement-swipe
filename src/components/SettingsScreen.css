@@ -1,0 +1,32 @@
+.settings-section {
+  margin: 8px 0 24px;
+}
+
+.settings-panel {
+  padding: 16px;
+}
+
+.settings-panel p {
+  margin: 0 0 10px;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.settings-panel p:last-child {
+  margin-bottom: 0;
+}
+
+.settings-panel .settings-lead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-md);
+  font-weight: 650;
+}
+
+.settings-foot {
+  margin: 8px 0 0;
+  text-wrap: balance;
+  font-size: var(--text-sm);
+  text-align: center;
+}

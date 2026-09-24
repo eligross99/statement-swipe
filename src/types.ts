@@ -7,7 +7,8 @@ export type Status = 'unreviewed' | 'approved' | 'piled' | 'flagged'
 /** Next-step triage state for a transaction inside a folder. */
 export type Action = null | 'todo' | 'waiting' | 'done'
 
-export type Screen = 'import' | 'deck' | 'summary' | 'pile'
+/** Where the user is inside one statement's review. */
+export type Screen = 'deck' | 'summary' | 'pile'
 
 export interface Transaction {
   id: string
@@ -30,20 +31,44 @@ export interface Transaction {
   loc?: string | null
 }
 
-/** A session-scoped folder the user files purchases into. */
+/** A statement-scoped folder the user files purchases into. */
 export interface Pile {
   id: string
   name: string
 }
 
-/** The whole review session, persisted as one blob in IndexedDB. */
+/** One statement's review: its purchases, decisions, and folders. */
 export interface Session {
   txns: Transaction[]
   index: number
   piles: Pile[]
   screen: Screen
-  label: string
   openPile: string | null
+}
+
+/** What undo needs to put one resolved card back. */
+export interface UndoEntry {
+  txnId: string
+  index: number
+  status: Status
+  pileId: string | null
+}
+
+/** One imported statement, saved on this device as a row in IndexedDB (see src/lib/storage.ts). */
+export interface Statement {
+  id: string
+  /** Shown everywhere; the user can rename it. Defaults to the statement's month, e.g. "July 2026". */
+  name: string
+  /** When it was imported and last changed (milliseconds since 1970). */
+  addedAt: number
+  updatedAt: number
+  /** The date the statement covers up to, "YYYY-MM-DD": a PDF's closing date, else the latest
+   *  purchase date. Null when the file had no readable dates. Sorts the Statements list. */
+  period: string | null
+  archived: boolean
+  session: Session
+  /** Undo steps, so undo still works after leaving and reopening the app. */
+  history: UndoEntry[]
 }
 
 /** Anything that can produce normalized transactions: CSV now, bank sync later. */

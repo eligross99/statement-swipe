@@ -10,25 +10,14 @@ import { SAMPLE_LABEL, sampleTransactions } from '../lib/sample'
 import { CSVSource, guessSettings, type CsvSettings } from '../sources/csvSource'
 import { isPdf, PdfImportError, PDFSource, type PdfProblem } from '../sources/pdfSource'
 import type { Transaction } from '../types'
-import { Sheet } from './Sheet'
 import './ImportScreen.css'
 
-/** The review already on this device, which a new statement would replace. */
-export interface CurrentReview {
-  label: string
-  reviewed: number
-  total: number
-}
+/** What the app needs to name a new statement: a fixed name (the sample), or hints for a smart
+ *  default: the PDF's closing date and the file's name, used if the purchases have no dates. */
+export type Naming = { name: string } | { fallback: string; closing: string | null }
 
 interface Props {
-  /** The saved review the user can go back to, if any. */
-  current: CurrentReview | null
-  onStart: (txns: Transaction[], label: string) => void
-}
-
-interface PendingStart {
-  txns: Transaction[]
-  label: string
+  onStart: (txns: Transaction[], naming: Naming) => void
 }
 
 interface Parsed {
@@ -51,13 +40,13 @@ const PDF_PROBLEMS: Record<PdfProblem, string> = {
   unreadable: 'Couldn’t open that PDF. Try downloading it again, or use a CSV.',
 }
 
-/** The statement's name for its review: the file name without ".csv" or ".pdf". */
+/** The file name without ".csv" or ".pdf": a statement's name when it has no readable dates. */
 const labelFrom = (fileName: string) => fileName.replace(/\.[^.]+$/, '')
 
 /** How many of the file's first lines the header-row picker offers. */
 const HEADER_CHOICES = 15
 
-export function ImportScreen({ current, onStart }: Props) {
+export function ImportScreen({ onStart }: Props) {
   const [parsed, setParsed] = useState<Parsed | null>(null)
   const [settings, setSettings] = useState<CsvSettings | null>(null)
   const [pdf, setPdf] = useState<ParsedPdf | null>(null)
@@ -65,18 +54,10 @@ export function ImportScreen({ current, onStart }: Props) {
   const [reading, setReading] = useState(false)
   const [error, setError] = useState('')
   const [dragOver, setDragOver] = useState(false)
-  // A new statement waiting for the user to confirm it may replace their review.
-  const [pending, setPending] = useState<PendingStart | null>(null)
   // True after removing a chosen file, so the file picker slides back in from the left.
   const [cameBack, setCameBack] = useState(false)
   const chosen = useRef<HTMLDivElement>(null)
   const animate = useAnimate()
-
-  /** Starts right away, unless that would replace a review the user has made decisions in. */
-  const start = (txns: Transaction[], label: string) => {
-    if (current && current.reviewed > 0) setPending({ txns, label })
-    else onStart(txns, label)
-  }
 
   /** Briefly highlights a field the user just changed, so the change is easy to see. */
   const flash = (el: HTMLElement) => {
@@ -86,33 +67,6 @@ export function ImportScreen({ current, onStart }: Props) {
       duration: 700,
     })
   }
-
-  const confirmSheet = pending && current && (
-    <Sheet id="replace-title" title="Replace your review?" onDismiss={() => setPending(null)}>
-      {(close) => (
-        <>
-          <p className="import-confirm-text">
-            {current.reviewed < current.total
-              ? `You’ve reviewed ${current.reviewed} of ${plural(current.total, 'purchase')} in “${current.label}”. `
-              : `Your review of “${current.label}” is finished. `}
-            Starting a new statement clears it, including its folders and notes.
-          </p>
-          <div className="btn-row">
-            <button type="button" className="btn btn--secondary" onClick={() => close()} autoFocus>
-              Keep my review
-            </button>
-            <button
-              type="button"
-              className="btn btn--flag"
-              onClick={() => close(() => onStart(pending.txns, pending.label))}
-            >
-              Replace it
-            </button>
-          </div>
-        </>
-      )}
-    </Sheet>
-  )
 
   const source = useMemo(() => (parsed && settings ? new CSVSource(parsed.grid, settings) : null), [parsed, settings])
   const purchases = useMemo(() => source?.purchases() ?? [], [source])
@@ -196,9 +150,10 @@ export function ImportScreen({ current, onStart }: Props) {
         <StartButton
           purchases={purchases}
           total={total}
-          onClick={async () => start(await pdf.source.load(), labelFrom(pdf.fileName))}
+          onClick={async () =>
+            onStart(await pdf.source.load(), { fallback: labelFrom(pdf.fileName), closing: pdf.source.statement.closing })
+          }
         />
-        {confirmSheet}
       </div>
     )
   }
@@ -206,9 +161,6 @@ export function ImportScreen({ current, onStart }: Props) {
   if (!parsed) {
     return (
       <div className={`screen${cameBack ? ' enter-pop' : ''}`} key="choose">
-        {/* Just information: the header's back arrow is the one way back to the review. */}
-        {current && <p className="import-current">Your review of “{current.label}” is saved.</p>}
-
         <h2 className="screen-title">Import your statement</h2>
         <p className="muted import-lede">
           Add a statement PDF from your bank’s app, or a CSV from its website. It never leaves this device.
@@ -260,11 +212,10 @@ export function ImportScreen({ current, onStart }: Props) {
         <button
           type="button"
           className="btn btn--secondary import-sample"
-          onClick={() => start(sampleTransactions(), SAMPLE_LABEL)}
+          onClick={() => onStart(sampleTransactions(), { name: SAMPLE_LABEL })}
         >
           <Sparkles size={16} /> Try the sample statement
         </button>
-        {confirmSheet}
       </div>
     )
   }
@@ -364,9 +315,8 @@ export function ImportScreen({ current, onStart }: Props) {
         purchases={purchases}
         total={total}
         disabled={!ready}
-        onClick={async () => start(await source.load(), labelFrom(parsed.fileName))}
+        onClick={async () => onStart(await source.load(), { fallback: labelFrom(parsed.fileName), closing: null })}
       />
-      {confirmSheet}
     </div>
   )
 }

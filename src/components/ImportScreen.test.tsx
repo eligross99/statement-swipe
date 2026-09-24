@@ -22,7 +22,7 @@ const pdfFile = () => new File(['%PDF-1.4\n'], 'eStmt_2026-07-13.pdf', { type: '
 async function choosePdf() {
   const user = userEvent.setup()
   const onStart = vi.fn()
-  const { container } = render(<ImportScreen current={null} onStart={onStart} />)
+  const { container } = render(<ImportScreen onStart={onStart} />)
   await user.upload(container.querySelector<HTMLInputElement>('input[type=file]')!, pdfFile())
   return { user, onStart }
 }
@@ -41,7 +41,8 @@ describe('ImportScreen with a PDF', () => {
     await user.click(screen.getByRole('button', { name: /Review 2 purchases/ }))
     expect(onStart).toHaveBeenCalledWith(
       [expect.objectContaining({ desc: 'FAKE COFFEE CO #12', amount: 4.75, status: 'unreviewed' }), expect.anything()],
-      'eStmt_2026-07-13',
+      // The closing date names the statement ("July 2026"); the file name is the fallback.
+      { fallback: 'eStmt_2026-07-13', closing: '2026-07-13' },
     )
   })
 

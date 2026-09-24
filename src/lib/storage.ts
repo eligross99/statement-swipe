@@ -1,26 +1,30 @@
-// Saves and restores the review session in IndexedDB, the browser's on-device database.
-// Nothing here touches the network: the statement stays on this device.
+// Saves and restores statements in IndexedDB, the browser's on-device database, through Dexie
+// (a small library that makes IndexedDB easier to use). Nothing here touches the network: the
+// statements stay on this device.
 
-import { get, set } from 'idb-keyval'
-import type { Session } from '../types'
-import type { UndoEntry } from './review'
+import { Dexie, type Table } from 'dexie'
+import { del, get } from 'idb-keyval'
+import type { Session, Statement, UndoEntry } from '../types'
+import type { SavedUi, View } from './library'
+import { reviewScreen } from './review'
+import { SAMPLE_LABEL } from './sample'
+import { defaultName, statementPeriod, type StatementFilter } from './statements'
 
-const STORE_KEY = 'statement-swipe-session-v1'
-/** Undo history lives beside the session (not inside it), so the session's saved shape is unchanged. */
-const UNDO_KEY = 'statement-swipe-undo-v1'
+// ---------- shape checks, so a stale or corrupt save can't crash the app ----------
 
 const STATUSES = new Set(['unreviewed', 'approved', 'piled', 'flagged'])
-const SCREENS = new Set(['import', 'deck', 'summary', 'pile'])
+const SCREENS = new Set(['deck', 'summary', 'pile'])
 const ACTIONS = new Set([null, 'todo', 'waiting', 'done'])
+const VIEWS = new Set<View>(['statements', 'import', 'settings', 'review'])
+const FILTERS = new Set<StatementFilter>(['all', 'action', 'archived'])
 
 function isObject(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null
 }
 
-/** Checks a saved blob has the shape we expect, so a stale or corrupt save can't crash the app. */
-export function isSession(v: unknown): v is Session {
-  if (!isObject(v) || !Array.isArray(v.txns) || !Array.isArray(v.piles)) return false
-  if (typeof v.index !== 'number' || typeof v.label !== 'string' || !SCREENS.has(v.screen as string)) return false
+/** The parts of a review every version of the app has saved the same way. */
+function isReviewData(v: Record<string, unknown>): boolean {
+  if (!Array.isArray(v.txns) || !Array.isArray(v.piles) || typeof v.index !== 'number') return false
   if (v.openPile !== null && typeof v.openPile !== 'string') return false
   const txnsOk = v.txns.every(
     (t) =>
@@ -37,13 +41,146 @@ export function isSession(v: unknown): v is Session {
   return txnsOk && pilesOk
 }
 
-/** The saved session, or null if there isn't a usable one. */
-export async function loadSession(): Promise<Session | null> {
+export function isSession(v: unknown): v is Session {
+  return isObject(v) && isReviewData(v) && SCREENS.has(v.screen as string)
+}
+
+/** Checks saved undo steps are well formed and still point at purchases in this session. */
+export function isUndoHistory(v: unknown, session: Session): v is UndoEntry[] {
+  if (!Array.isArray(v)) return false
+  const ids = new Set(session.txns.map((t) => t.id))
+  return v.every(
+    (e) =>
+      isObject(e) &&
+      typeof e.txnId === 'string' &&
+      ids.has(e.txnId) &&
+      typeof e.index === 'number' &&
+      e.index >= 0 &&
+      e.index < session.txns.length &&
+      STATUSES.has(e.status as string) &&
+      (e.pileId === null || typeof e.pileId === 'string'),
+  )
+}
+
+export function isStatement(v: unknown): v is Statement {
+  return (
+    isObject(v) &&
+    typeof v.id === 'string' &&
+    typeof v.name === 'string' &&
+    typeof v.addedAt === 'number' &&
+    typeof v.updatedAt === 'number' &&
+    (v.period === null || typeof v.period === 'string') &&
+    typeof v.archived === 'boolean' &&
+    isSession(v.session) &&
+    v.session.txns.length > 0 &&
+    isUndoHistory(v.history, v.session)
+  )
+}
+
+function isSavedUi(v: unknown): v is SavedUi {
+  return (
+    isObject(v) &&
+    VIEWS.has(v.view as View) &&
+    FILTERS.has(v.filter as StatementFilter) &&
+    (v.openId === null || typeof v.openId === 'string')
+  )
+}
+
+// ---------- moving the single review saved before Phase 6b ----------
+
+/** Before Phase 6b the app kept one review, under these keys in idb-keyval's database. */
+export const LEGACY_SESSION_KEY = 'statement-swipe-session-v1'
+export const LEGACY_UNDO_KEY = 'statement-swipe-undo-v1'
+/** The id the moved review gets, so moving it twice can't make two copies. */
+export const MIGRATED_ID = 'st_migrated'
+
+/** Turns the old single saved review (and its undo steps) into the first saved statement. */
+export function migrateLegacy(session: unknown, undo: unknown, now: number): Statement | null {
+  // Old saves also had a `label` (the file name) and could be on the import screen.
+  if (!isObject(session) || !isReviewData(session) || typeof session.label !== 'string') return null
+  const screen = session.screen as string
+  if (!SCREENS.has(screen) && screen !== 'import') return null
+  const { txns, index, piles, openPile } = session as unknown as Session
+  if (!txns.length) return null
+  const base: Session = { txns, index, piles, screen: 'deck', openPile }
+  const restored: Session = { ...base, screen: screen === 'import' ? reviewScreen(base) : (screen as Session['screen']) }
+  const period = statementPeriod(txns)
+  return {
+    id: MIGRATED_ID,
+    // The sample keeps its name; a real statement gets its month instead of its file name.
+    name: session.label === SAMPLE_LABEL ? SAMPLE_LABEL : defaultName(period, session.label, []),
+    addedAt: now,
+    updatedAt: now,
+    period,
+    archived: false,
+    session: restored,
+    history: isUndoHistory(undo, restored) ? undo : [],
+  }
+}
+
+// ---------- the database ----------
+
+class StatementsDb extends Dexie {
+  statements!: Table<Statement, string>
+  /** Small app settings, stored by name (e.g. "ui"). */
+  prefs!: Table<unknown, string>
+
+  constructor() {
+    super('statement-swipe')
+    this.version(1).stores({ statements: 'id', prefs: '' })
+  }
+}
+
+// Opened on first use, not when this file loads, so tests and old browsers can't fail at startup.
+let instance: StatementsDb | null = null
+const db = () => (instance ??= new StatementsDb())
+
+const UI_KEY = 'ui'
+
+/** Moves a review saved before Phase 6b into the statements table, once, then removes the old copy. */
+async function migrate(): Promise<void> {
+  const legacy = await get(LEGACY_SESSION_KEY)
+  if (legacy === undefined) return
+  const moved = migrateLegacy(legacy, await get(LEGACY_UNDO_KEY), Date.now())
+  if (moved && !(await db().statements.get(MIGRATED_ID))) {
+    await db().transaction('rw', db().statements, db().prefs, async () => {
+      await db().statements.add(moved)
+      // Open it, so the user lands exactly where they were.
+      await db().prefs.put({ openId: moved.id, view: 'review', filter: 'all' } satisfies SavedUi, UI_KEY)
+    })
+  }
+  // Only once the statement is safely saved above (or there was nothing usable to move).
+  await del(LEGACY_SESSION_KEY)
+  await del(LEGACY_UNDO_KEY)
+}
+
+export interface SavedLibrary {
+  statements: Statement[]
+  ui: SavedUi | null
+}
+
+/** Every saved statement and where the user was. Empty if IndexedDB can't be used. */
+export async function loadLibrary(): Promise<SavedLibrary> {
   try {
-    const saved: unknown = await get(STORE_KEY)
-    return isSession(saved) && saved.txns.length > 0 ? saved : null
+    await migrate().catch(() => undefined) // a failed move leaves the old copy to try again next time
+    const [rows, ui] = await Promise.all([db().statements.toArray(), db().prefs.get(UI_KEY)])
+    return { statements: rows.filter(isStatement), ui: isSavedUi(ui) ? ui : null }
   } catch {
-    return null // IndexedDB unavailable (e.g. some private-browsing modes): start fresh
+    return { statements: [], ui: null } // IndexedDB unavailable (e.g. some private-browsing modes): start fresh
+  }
+}
+
+/** Saves changed statements, removes deleted ones, and remembers where the user is, all at once. */
+export async function saveLibrary(put: Statement[], remove: string[], ui: SavedUi): Promise<void> {
+  if (put.length) void requestPersistentStorage()
+  try {
+    await db().transaction('rw', db().statements, db().prefs, async () => {
+      if (put.length) await db().statements.bulkPut(put)
+      if (remove.length) await db().statements.bulkDelete(remove)
+      await db().prefs.put(ui, UI_KEY)
+    })
+  } catch {
+    // Saving is best-effort; the app keeps working in memory.
   }
 }
 
@@ -65,47 +202,11 @@ export async function requestPersistentStorage(): Promise<boolean> {
   }
 }
 
-export async function saveSession(session: Session): Promise<void> {
-  void requestPersistentStorage()
+/** Whether the browser has promised not to clear our data on its own. Null if it can't say. */
+export async function isStoragePersisted(): Promise<boolean | null> {
   try {
-    await set(STORE_KEY, session)
+    return navigator.storage?.persisted ? await navigator.storage.persisted() : null
   } catch {
-    // Saving is best-effort; the app keeps working in memory.
-  }
-}
-
-/** Checks saved undo steps are well formed and still point at purchases in this session. */
-export function isUndoHistory(v: unknown, session: Session): v is UndoEntry[] {
-  if (!Array.isArray(v)) return false
-  const ids = new Set(session.txns.map((t) => t.id))
-  return v.every(
-    (e) =>
-      isObject(e) &&
-      typeof e.txnId === 'string' &&
-      ids.has(e.txnId) &&
-      typeof e.index === 'number' &&
-      e.index >= 0 &&
-      e.index < session.txns.length &&
-      STATUSES.has(e.status as string) &&
-      (e.pileId === null || typeof e.pileId === 'string'),
-  )
-}
-
-/** The saved undo steps for `session`, so undo still works after leaving and reopening the app.
- *  Anything unusable (missing, corrupt, from another review) gives an empty history. */
-export async function loadUndo(session: Session): Promise<UndoEntry[]> {
-  try {
-    const saved: unknown = await get(UNDO_KEY)
-    return isUndoHistory(saved, session) ? saved : []
-  } catch {
-    return []
-  }
-}
-
-export async function saveUndo(history: UndoEntry[]): Promise<void> {
-  try {
-    await set(UNDO_KEY, history)
-  } catch {
-    // Best-effort, like the session.
+    return null
   }
 }

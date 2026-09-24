@@ -137,7 +137,7 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
           </div>
         </div>
       ) : (
-        // A new statement starts from the button at the top right.
+        // New statements are imported from the Statements screen (the back arrow at the top left).
         <button type="button" className="btn btn--secondary summary-actions" onClick={() => setConfirmRestart(true)}>
           Start over
         </button>

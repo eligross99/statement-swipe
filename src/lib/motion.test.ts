@@ -4,7 +4,11 @@ describe('screenEnter', () => {
   it('slides forward screens in from the right and back screens from the left', () => {
     expect(screenEnter('summary', 'pile')).toBe('push')
     expect(screenEnter('pile', 'summary')).toBe('pop')
-    expect(screenEnter('deck', 'import')).toBe('push')
+    expect(screenEnter('statements', 'import')).toBe('push')
+    expect(screenEnter('statements', 'deck')).toBe('push')
+    expect(screenEnter('statements', 'settings')).toBe('push')
+    expect(screenEnter('summary', 'statements')).toBe('pop')
+    expect(screenEnter('settings', 'statements')).toBe('pop')
   })
 
   it('rises into the summary after the last card, and into a review from the import screen', () => {

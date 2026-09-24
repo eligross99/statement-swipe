@@ -303,3 +303,19 @@ p {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
+
+/* Explanatory text inside a sheet, e.g. what a confirmation will do. */
+.sheet-text {
+  margin: 8px 0 18px;
+  color: var(--text-mute);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.rename-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}

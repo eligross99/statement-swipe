@@ -13,6 +13,7 @@ for (const file of files) {
     page.on('console', (m) => m.type() === 'error' && problems.push(m.text().slice(0, 200)))
     page.on('pageerror', (e) => problems.push(e.message.slice(0, 200)))
     await page.goto('/')
+    await page.getByRole('button', { name: 'Import a statement' }).click()
     await page.locator('input[type=file]').setInputFiles(`private/${file}`)
     const found = page.getByText(/purchases? found in this statement/)
     const error = page.getByRole('alert')
@@ -21,5 +22,11 @@ for (const file of files) {
     const matches = await page.getByText(/^Matches the/).isVisible()
     console.log(`${file}: error shown: ${message}; totals match: ${matches ? 'yes' : 'no'}; console errors: ${problems.join(' | ') || 'none'}`)
     expect(matches).toBe(true)
+
+    // The new statement is named for its month ("July 2026"), not the file name.
+    await page.getByRole('button', { name: /^Review \d+ purchases?/ }).click()
+    const named = /^[A-Z][a-z]+ \d{4}$/.test((await page.getByRole('heading', { level: 1 }).textContent()) ?? '')
+    console.log(`${file}: named by month: ${named ? 'yes' : 'no'}`)
+    expect(named).toBe(true)
   })
 }

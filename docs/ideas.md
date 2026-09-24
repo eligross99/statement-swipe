@@ -28,6 +28,12 @@ the card fly-out to 700ms, centered the swipe hint, and added "Show fewer" (see 
 `CLAUDE.md` and `src/lib/motion.ts`). **Next: Phase 6b in a fresh session. Start with "Starting Phase
 6b" below.**
 
+On 2026-09-24, starting Phase 6b, Eli chose: **no tab bar until Tasks exists** (Statements is the home
+screen, gear for Settings; the Statements · Tasks bar arrives in 6c), **Settings starts with About &
+privacy plus "Erase everything on this device"** (reminder age moves to 6c with Tasks; no "default
+filter" setting, the screen remembers the last filter instead), and **filters All · Needs action ·
+Archived** ("Last 6 months" waits until people have years of statements).
+
 ## Roadmap order
 
 | Phase | What | Why here |
@@ -55,7 +61,7 @@ screen (see "Statements repository"), navigation (see "Navigation"), rename stat
 default names (see "Rename statements…"), and light Settings. Tasks dashboard, remembered bank
 setups, and OFX/QFX stay in 6c.
 
-**Open question: ask Eli before building.** The approved navigation is bottom tabs *Statements ·
+**Open question (answered 2026-09-24: option a).** The approved navigation is bottom tabs *Statements ·
 Tasks*, but the Tasks dashboard is scheduled for 6c. A tab bar with one tab looks unfinished. Options to
 put to Eli, with a recommendation: (a) in 6b, make Statements the home screen with the gear for Settings
 and no tab bar, then add the tab bar in 6c with Tasks (recommended: nothing half-built ships); (b) move
@@ -120,8 +126,15 @@ linking back to its statement and folder. "Remind me after X" is a preference; u
 notifications exist, open items past that age get an **Overdue** highlight and a count badge on the
 Tasks tab.
 
+**Gap found in 6b, to solve here:** a flagged purchase has no "resolved" state. The only way out is
+"I recognize it, approve it", so a statement with a real fraud charge (disputed, refunded) stays in
+**Needs action** forever. Tasks needs a way to mark a flagged purchase as handled (e.g. "Disputed with
+my bank"), which then counts as clear.
+
 ### Settings / preferences → Phase 6b (start light)
-Start with: reminder age (e.g. 1 month), default statement filter, and "About & privacy".
+**Built in 6b:** "About & privacy" and "Erase everything on this device". Reminder age comes with Tasks
+(6c); the Statements filter is remembered instead of being a setting (Eli, 2026-09-24).
+Originally planned: reminder age (e.g. 1 month), default statement filter, and "About & privacy".
 **Proposed:** no Account or Plan sections until accounts and payments exist (Phase 9). Empty
 placeholder screens make an app feel unfinished.
 
