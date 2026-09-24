@@ -1,4 +1,4 @@
-import { Check, Folder, FolderPlus, Trash2, X } from 'lucide-react'
+import { Folder, FolderPlus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { plural } from '../lib/format'
 import { pileItems } from '../lib/review'
@@ -19,11 +19,14 @@ interface Props {
 /** Bottom sheet for filing the current purchase: pick a folder, make a new one, or delete one. */
 export function FolderSheet({ piles, txns, onClose, onFile, onCreate, onDelete }: Props) {
   const [name, setName] = useState('')
+  // The folder waiting for "are you sure?" before it's deleted.
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const trimmed = name.trim()
+  const confirming = piles.find((p) => p.id === confirmId) ?? null
+  const confirmCount = confirming ? pileItems(txns, confirming.id).length : 0
 
   return (
-    <Sheet id="folder-sheet-title" title="File this purchase" onDismiss={onClose}>
+    <Sheet id="folder-sheet-title" title="File this purchase" onDismiss={onClose} dismissible={!confirming}>
       {(close) => {
         // The sheet slides away first, then the card flies up into the folder.
         const create = () => {
@@ -44,52 +47,20 @@ export function FolderSheet({ piles, txns, onClose, onFile, onCreate, onDelete }
                   const n = pileItems(txns, p.id).length
                   return (
                     <li key={p.id} className="folder-list-item">
-                      {confirmId === p.id ? (
-                        <div className="folder-confirm" role="alert">
-                          <span>
-                            Delete “{p.name}”? Un-files {plural(n, 'purchase')}.
-                          </span>
-                          <div className="folder-confirm-btns">
-                            <button
-                              type="button"
-                              className="folder-confirm-yes"
-                              onClick={() => {
-                                setConfirmId(null)
-                                onDelete(p.id)
-                              }}
-                              aria-label={`Yes, delete ${p.name}`}
-                            >
-                              <Check size={18} />
-                            </button>
-                            <button
-                              type="button"
-                              className="folder-confirm-no"
-                              onClick={() => setConfirmId(null)}
-                              aria-label="Keep folder"
-                            >
-                              <X size={18} />
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <button type="button" className="folder-pick" onClick={() => close(() => onFile(p.id))}>
-                            <span className="folder-pick-name">
-                              <Folder size={16} /> {p.name}
-                            </span>
-                            {n > 0 && <span className="num">{n}</span>}
-                          </button>
-                          <button
-                            type="button"
-                            className="folder-delete"
-                            // Empty folders go instantly; ones with purchases ask first.
-                            onClick={() => (n === 0 ? onDelete(p.id) : setConfirmId(p.id))}
-                            aria-label={`Delete folder ${p.name}`}
-                          >
-                            <Trash2 size={17} />
-                          </button>
-                        </>
-                      )}
+                      <button type="button" className="folder-pick" onClick={() => close(() => onFile(p.id))}>
+                        <span className="folder-pick-name">
+                          <Folder size={16} /> {p.name}
+                        </span>
+                        {n > 0 && <span className="num">{n}</span>}
+                      </button>
+                      <button
+                        type="button"
+                        className="folder-delete"
+                        onClick={() => setConfirmId(p.id)}
+                        aria-label={`Delete folder ${p.name}`}
+                      >
+                        <Trash2 size={17} />
+                      </button>
                     </li>
                   )
                 })}
@@ -124,6 +95,36 @@ export function FolderSheet({ piles, txns, onClose, onFile, onCreate, onDelete }
                 <FolderPlus size={18} /> File
               </button>
             </form>
+            {confirming && (
+              <Sheet id="delete-folder-title" title="Delete this folder?" onDismiss={() => setConfirmId(null)}>
+                {(closeConfirm) => (
+                  <>
+                    <p className="folder-delete-text">
+                      {confirmCount > 0
+                        ? `The ${plural(confirmCount, 'purchase')} in “${confirming.name}” will move to Approved.`
+                        : `“${confirming.name}” is empty, so no purchases are affected.`}
+                    </p>
+                    <div className="btn-row">
+                      <button type="button" className="btn btn--secondary" onClick={() => closeConfirm()} autoFocus>
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn--flag"
+                        onClick={() =>
+                          closeConfirm(() => {
+                            setConfirmId(null)
+                            onDelete(confirming.id)
+                          })
+                        }
+                      >
+                        Delete folder
+                      </button>
+                    </div>
+                  </>
+                )}
+              </Sheet>
+            )}
           </>
         )
       }}

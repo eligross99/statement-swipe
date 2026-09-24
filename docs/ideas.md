@@ -269,6 +269,13 @@ Items:
 12. **Look for more:** e.g. the progress bar animates as it fills; changing a status pulses the row.
     Keep it subtle.
 
+### One purchase in several folders → later (Phase 8 at the earliest)
+Eli asked (2026-09-24) about filing one purchase into two folders, e.g. "Restaurants" and "Venmo
+requests". **Decision: not now.** Each purchase has one folder and one status (To do / Waiting /
+Done), so multiple folders would need a status per folder, new summary math (no double-counting),
+and a reworked filing sheet. Most such cases are really a *label* for tracking spending (like
+"Restaurants") alongside one *to-do* folder. Revisit as tags with the Phase 8 on-device smarts.
+
 ### PDF statements → Phase 6 (priority)
 **Why:** Eli's bank app only offers PDF statements on the phone. Getting a CSV means downloading on a
 computer and sending it to the phone, which is too many steps for anyone who isn't a friendly tester.

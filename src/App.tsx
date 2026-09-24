@@ -121,7 +121,6 @@ export default function App() {
                   ? { label: session.label, reviewed: reviewedCount(session.txns), total: session.txns.length }
                   : null
               }
-              onResume={() => dispatch({ type: 'resume' })}
               onStart={(txns, label) => jump({ type: 'start', txns, label })}
             />
           )}

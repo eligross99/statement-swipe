@@ -213,6 +213,24 @@ describe('App', () => {
     expect(screen.getByText('All settled')).toBeInTheDocument()
   })
 
+  it('asks before deleting a folder and says what happens to its purchases', async () => {
+    const user = await startSample()
+    await user.click(screen.getByRole('button', { name: 'File' }))
+    await user.type(screen.getByRole('textbox', { name: 'New folder name' }), 'Ski trip{Enter}')
+    await user.click(screen.getByRole('button', { name: 'File' }))
+
+    await user.click(screen.getByRole('button', { name: 'Delete folder Ski trip' }))
+    const confirm = screen.getByRole('dialog', { name: 'Delete this folder?' })
+    expect(within(confirm).getByText(/The 1 purchase in “Ski trip” will move to Approved/)).toBeInTheDocument()
+    await user.click(within(confirm).getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByRole('button', { name: /^Ski trip/ })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Delete folder Ski trip' }))
+    await user.click(screen.getByRole('button', { name: 'Delete folder' }))
+    expect(screen.queryByRole('button', { name: /^Ski trip/ })).not.toBeInTheDocument()
+    expect(screen.getByText(/No folders yet/)).toBeInTheDocument()
+  })
+
   it('shows the same readable date on the card and in the investigation view', async () => {
     const user = await startSample()
     expect(within(topCard()).getByText('Mar 3')).toBeInTheDocument()

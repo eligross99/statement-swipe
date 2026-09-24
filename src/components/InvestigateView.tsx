@@ -43,8 +43,9 @@ export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag, onR
     <div ref={ref} className="overlay motion-fade" role="dialog" aria-modal="true" aria-labelledby="investigate-title">
       <div className="overlay-inner">
         <div className="investigate-top">
-          <button type="button" className="back-link" onClick={() => leave(onBack)} autoFocus>
-            <ChevronLeft size={20} /> Back
+          {/* Same round back button, in the same spot, as the header on other screens. */}
+          <button type="button" className="icon-btn" onClick={() => leave(onBack)} aria-label="Back" autoFocus>
+            <ChevronLeft size={22} />
           </button>
           {txn.sus && (
             <span className="investigate-badge">

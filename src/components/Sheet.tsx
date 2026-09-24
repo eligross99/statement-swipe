@@ -11,6 +11,8 @@ interface Props {
   title: string
   /** Called after the sheet is dismissed without a choice (close button, tap outside, Escape). */
   onDismiss: () => void
+  /** False while another sheet is open on top of this one: Escape and outside taps then belong to that one. */
+  dismissible?: boolean
   children: (close: CloseSheet) => ReactNode
 }
 
@@ -18,7 +20,7 @@ interface Props {
  * A bottom sheet that rises in, and slides back down before anything else happens, so the user
  * sees where it went. Children get `close(after)` to finish with a choice.
  */
-export function Sheet({ id, title, onDismiss, children }: Props) {
+export function Sheet({ id, title, onDismiss, dismissible = true, children }: Props) {
   const animate = useAnimate()
   // Elements are kept in state (via callback refs) so `close` can be handed to children while rendering.
   const [scrim, setScrim] = useState<HTMLDivElement | null>(null)
@@ -41,10 +43,10 @@ export function Sheet({ id, title, onDismiss, children }: Props) {
       ]),
     ]).then(after)
   }
-  useEscape(() => close())
+  useEscape(() => dismissible && close())
 
   return (
-    <div ref={setScrim} className="sheet-scrim" onClick={() => close()}>
+    <div ref={setScrim} className="sheet-scrim" onClick={() => dismissible && close()}>
       <div
         ref={setPanel}
         className="sheet motion-fade"

@@ -151,20 +151,6 @@ p {
   white-space: nowrap; /* a label never breaks mid-button; the buttons stack instead */
 }
 
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  min-height: var(--tap-min);
-  padding: 0 8px 0 0;
-  border: none;
-  background: none;
-  color: var(--text-mute);
-  font: inherit;
-  font-size: var(--text-md);
-  cursor: pointer;
-}
-
 /* White rounded surface */
 .panel {
   background: var(--surface);
@@ -223,7 +209,8 @@ p {
   max-width: var(--app-max-width);
   margin: 0 auto;
   /* Clear the notch/status bar and the home indicator when installed on a phone. */
-  padding: max(12px, env(safe-area-inset-top)) 16px max(32px, env(safe-area-inset-bottom));
+  /* Same top spacing as the header, so back buttons sit in the same place on every screen. */
+  padding: max(16px, env(safe-area-inset-top)) 16px max(32px, env(safe-area-inset-bottom));
 }
 
 /* Bottom sheet (folder picker) */

@@ -1,4 +1,4 @@
-import { ChevronLeft, FileText, Sparkles, X } from 'lucide-react'
+import { FileText, Sparkles, X } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
 import { parseGrid, type ColumnMap, type Grid } from '../lib/csv'
@@ -21,7 +21,6 @@ export interface CurrentReview {
 interface Props {
   /** The saved review the user can go back to, if any. */
   current: CurrentReview | null
-  onResume: () => void
   onStart: (txns: Transaction[], label: string) => void
 }
 
@@ -38,7 +37,7 @@ interface Parsed {
 /** How many of the file's first lines the header-row picker offers. */
 const HEADER_CHOICES = 15
 
-export function ImportScreen({ current, onResume, onStart }: Props) {
+export function ImportScreen({ current, onStart }: Props) {
   const [parsed, setParsed] = useState<Parsed | null>(null)
   const [settings, setSettings] = useState<CsvSettings | null>(null)
   const [error, setError] = useState('')
@@ -117,14 +116,8 @@ export function ImportScreen({ current, onResume, onStart }: Props) {
   if (!parsed) {
     return (
       <div className={`screen${cameBack ? ' enter-pop' : ''}`} key="choose">
-        {current && (
-          <div className="import-current">
-            <span className="import-current-text">“{current.label}” is saved</span>
-            <button type="button" className="import-current-back" onClick={onResume}>
-              <ChevronLeft size={16} aria-hidden /> Back to it
-            </button>
-          </div>
-        )}
+        {/* Just information: the header's back arrow is the one way back to the review. */}
+        {current && <p className="import-current">Your review of “{current.label}” is saved.</p>}
 
         <h2 className="screen-title">Import your statement</h2>
         <p className="muted import-lede">

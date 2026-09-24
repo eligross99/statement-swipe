@@ -78,20 +78,6 @@
   text-align: right;
 }
 
-/* Under Filed: whether anything in the folders still needs doing. Lines up with the label text. */
-.ledger-row .ledger-note {
-  flex-basis: 100%;
-  padding-left: 18px;
-  font-size: var(--text-sm);
-  text-align: left;
-}
-
-.ledger-row .ledger-note span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
 .ledger-count {
   color: var(--text-mute);
 }
@@ -146,6 +132,28 @@
   overflow-wrap: anywhere;
 }
 
+.summary-folders-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 12px;
+  margin-bottom: 10px;
+}
+
+.summary-folders-head .section-label {
+  margin: 0;
+}
+
+.summary-folders-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .summary-folders {
   display: flex;
   flex-direction: column;
@@ -182,7 +190,16 @@
   flex-direction: column;
 }
 
+/* Name on the left, amount on the right; the details line below gets the card's full width. */
+.folder-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .folder-card-name {
+  min-width: 0;
   font-size: var(--text-md);
   font-weight: 650;
   overflow: hidden;
@@ -208,8 +225,10 @@
 }
 
 .folder-card-total {
+  flex-shrink: 0;
   font-size: var(--text-md);
   font-weight: 650;
+  white-space: nowrap;
 }
 
 .summary-actions {

@@ -54,19 +54,6 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
               </dt>
               <dd className="ledger-count num">{items.length}</dd>
               <dd className="ledger-amount num">${usd(sumAmounts(items))}</dd>
-              {tone === 'pile' && items.length > 0 && (
-                <dd className="ledger-note">
-                  {toActOn > 0 ? (
-                    <span className="tone-investigate">
-                      <span className="num">${usd(toActOn)}</span> still to act on
-                    </span>
-                  ) : (
-                    <span className="tone-approve">
-                      <Check size={14} aria-hidden /> All settled
-                    </span>
-                  )}
-                </dd>
-              )}
             </div>
           ))}
         </dl>
@@ -93,7 +80,19 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
 
       {groups.length > 0 && (
         <section className="summary-section">
-          <h3 className="section-label">Your folders</h3>
+          {/* Filed purchases stay filed as a record; this says whether any still need doing. */}
+          <div className="summary-folders-head">
+            <h3 className="section-label">Your folders</h3>
+            {toActOn > 0 ? (
+              <span className="summary-folders-status tone-investigate">
+                <span className="num">${usd(toActOn)}</span> still to act on
+              </span>
+            ) : (
+              <span className="summary-folders-status tone-approve">
+                <Check size={15} aria-hidden /> All settled
+              </span>
+            )}
+          </div>
           <div className="summary-folders">
             {groups.map(({ pile: p, items, open }) => {
               const settled = open === 0
@@ -106,7 +105,10 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
                 >
                   <span className="folder-card-icon">{settled ? <FolderCheck size={20} /> : <Folder size={20} />}</span>
                   <span className="folder-card-main">
-                    <span className="folder-card-name">{p.name}</span>
+                    <span className="folder-card-top">
+                      <span className="folder-card-name">{p.name}</span>
+                      <span className="folder-card-total num">${usd(sumAmounts(items))}</span>
+                    </span>
                     <span className="folder-card-meta">
                       {plural(items.length, 'purchase')},{' '}
                       {settled ? (
@@ -116,7 +118,6 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
                       )}
                     </span>
                   </span>
-                  <span className="folder-card-total num">${usd(sumAmounts(items))}</span>
                   <ChevronRight size={18} className="muted" />
                 </button>
               )
