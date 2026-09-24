@@ -66,7 +66,7 @@ describe('ImportScreen with a PDF', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/Check your internet connection/)
   })
 
-  it('shows every purchase after "Show all"', async () => {
+  it('shows every purchase after "Show all", and fewer again after "Show fewer"', async () => {
     const many = statement(null)
     many.purchases = Array.from({ length: 7 }, (_, i) => ({ desc: `SHOP ${i + 1}`, amount: 1, date: '', cat: '' }))
     vi.spyOn(PDFSource, 'fromData').mockResolvedValue(new PDFSource(many))
@@ -76,6 +76,9 @@ describe('ImportScreen with a PDF', () => {
     expect(screen.queryByText('SHOP 6')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Show all 7' }))
     expect(screen.getByText('SHOP 7')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Show all/ })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Show fewer' }))
+    expect(screen.queryByText('SHOP 6')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Show all 7' })).toHaveAttribute('aria-expanded', 'false')
   })
 })

@@ -4,7 +4,7 @@ import { useAnimate } from '../hooks/useAnimate'
 import { parseGrid, type ColumnMap, type Grid, type Purchase } from '../lib/csv'
 import { formatDate } from '../lib/dates'
 import { plural, usd } from '../lib/format'
-import { token } from '../lib/motion'
+import { reducedMotion, token } from '../lib/motion'
 import { SAMPLE_LABEL, sampleTransactions } from '../lib/sample'
 import { CSVSource, guessSettings, type CsvSettings } from '../sources/csvSource'
 import { isPdf, PdfImportError, PDFSource, type PdfProblem } from '../sources/pdfSource'
@@ -386,15 +386,27 @@ function ChosenFile({ name, onRemove }: { name: string; onRemove: () => void }) 
 /** How many purchases the preview shows before "Show all". */
 const PREVIEW_ROWS = 5
 
-/** The first few purchases found, with a button to see them all. */
+/** The first few purchases found, with a button to show them all and to show fewer again. */
 function PreviewList({ purchases }: { purchases: Purchase[] }) {
   const [all, setAll] = useState(false)
+  const toggle = useRef<HTMLButtonElement>(null)
   const shown = all ? purchases : purchases.slice(0, PREVIEW_ROWS)
+
+  const showFewer = () => {
+    setAll(false)
+    // The list just got much shorter, so bring the button back into view instead of leaving
+    // the user looking at empty space below it.
+    requestAnimationFrame(() =>
+      toggle.current?.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' }),
+    )
+  }
+
   return (
     <>
       <div className="panel preview-list enter-fade">
         {shown.map((p, i) => (
-          <div key={i} className="preview-row">
+          // Rows revealed by "Show all" fade in.
+          <div key={i} className={`preview-row${i >= PREVIEW_ROWS ? ' enter-fade' : ''}`}>
             <div className="preview-main">
               <span className="preview-desc">{p.desc}</span>
               {p.date && <span className="preview-date">{formatDate(p.date)}</span>}
@@ -403,9 +415,15 @@ function PreviewList({ purchases }: { purchases: Purchase[] }) {
           </div>
         ))}
       </div>
-      {!all && purchases.length > PREVIEW_ROWS && (
-        <button type="button" className="btn btn--ghost import-more" onClick={() => setAll(true)}>
-          Show all {purchases.length}
+      {purchases.length > PREVIEW_ROWS && (
+        <button
+          ref={toggle}
+          type="button"
+          className="btn btn--quiet import-more"
+          aria-expanded={all}
+          onClick={all ? showFewer : () => setAll(true)}
+        >
+          {all ? 'Show fewer' : `Show all ${purchases.length}`}
         </button>
       )}
     </>
