@@ -3,115 +3,170 @@
 << /Type /Catalog /Pages 2 0 R >>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [5 0 R 7 0 R] /Count 2 >>
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R] /Count 4 >>
 endobj
 3 0 obj
 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
 endobj
 4 0 obj
-<< /Length 878 >>
+<< /Length 909 >>
 stream
-BT /F1 14 Tf 40 750 Td (Example Bank Rewards Card) Tj ET
-BT /F1 10 Tf 40 732 Td (June 14 - July 13, 2026) Tj ET
-BT /F1 12 Tf 40 700 Td (Account Summary) Tj ET
-BT /F1 9 Tf 40 684 Td (Previous Balance) Tj ET
-BT /F1 9 Tf 300 684 Td ($537.39) Tj ET
-BT /F1 9 Tf 40 670 Td (Payments and Other Credits) Tj ET
-BT /F1 9 Tf 300 670 Td (-$537.39) Tj ET
-BT /F1 9 Tf 40 656 Td (Purchases and Adjustments) Tj ET
-BT /F1 9 Tf 300 656 Td (+$1,079.95) Tj ET
-BT /F1 9 Tf 40 642 Td (Fees Charged) Tj ET
-BT /F1 9 Tf 300 642 Td (+$0.00) Tj ET
-BT /F1 9 Tf 40 628 Td (Interest Charged) Tj ET
-BT /F1 9 Tf 300 628 Td (+$0.00) Tj ET
-BT /F1 9 Tf 40 614 Td (New Balance Total) Tj ET
-BT /F1 9 Tf 300 614 Td ($1,079.95) Tj ET
-BT /F1 9 Tf 40 590 Td (Payment Due Date) Tj ET
-BT /F1 9 Tf 300 590 Td (08/07/2026) Tj ET
-BT /F1 9 Tf 40 576 Td (Statement Closing Date) Tj ET
-BT /F1 9 Tf 300 576 Td (07/13/2026) Tj ET
+BT /F1 14 Tf 36 750 Td (Example Bank Rewards Card) Tj ET
+BT /F1 10 Tf 400 732 Td (June 14 - July 13, 2026) Tj ET
+BT /F1 12 Tf 36 700 Td (Account Summary) Tj ET
+BT /F1 9 Tf 36 684 Td (Previous Balance) Tj ET
+BT /F1 9 Tf 246 684 Td ($537.39) Tj ET
+BT /F1 9 Tf 36 670 Td (Payments and Other Credits) Tj ET
+BT /F1 9 Tf 246 670 Td (-$537.39) Tj ET
+BT /F1 9 Tf 36 656 Td (Purchases and Adjustments) Tj ET
+BT /F1 9 Tf 240 657 Td ($) Tj ET
+BT /F1 9 Tf 251 656 Td (1,079.95) Tj ET
+BT /F1 9 Tf 300 656 Td (Payment Due Date) Tj ET
+BT /F1 9 Tf 500 656 Td (08/07/2026) Tj ET
+BT /F1 9 Tf 36 642 Td (Fees Charged) Tj ET
+BT /F1 9 Tf 246 642 Td ($0.00) Tj ET
+BT /F1 9 Tf 36 628 Td (Interest Charged) Tj ET
+BT /F1 9 Tf 246 628 Td ($0.00) Tj ET
+BT /F1 9 Tf 36 614 Td (New Balance Total) Tj ET
+BT /F1 9 Tf 246 614 Td ($1,079.95) Tj ET
+BT /F1 9 Tf 36 576 Td (Statement Closing Date) Tj ET
+BT /F1 9 Tf 246 576 Td (07/13/2026) Tj ET
 endstream
 endobj
 5 0 obj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
 endobj
 6 0 obj
-<< /Length 2477 >>
+<< /Length 217 >>
 stream
-BT /F1 12 Tf 40 750 Td (Transactions) Tj ET
-BT /F1 7 Tf 40 730 Td (Date) Tj ET
-BT /F1 7 Tf 85 730 Td (Posted) Tj ET
-BT /F1 7 Tf 130 730 Td (Description) Tj ET
-BT /F1 7 Tf 400 730 Td (Reference) Tj ET
-BT /F1 7 Tf 460 730 Td (Account) Tj ET
-BT /F1 7 Tf 530 730 Td (Amount) Tj ET
-BT /F1 10 Tf 40 712 Td (Payments and Other Credits) Tj ET
-BT /F1 9 Tf 40 698 Td (07/01) Tj ET
-BT /F1 9 Tf 85 698 Td (07/01) Tj ET
-BT /F1 9 Tf 130 698 Td (PAYMENT - THANK YOU) Tj ET
-BT /F1 9 Tf 400 698 Td (0001) Tj ET
-BT /F1 9 Tf 460 698 Td (9876) Tj ET
-BT /F1 9 Tf 530 698 Td (-512.40) Tj ET
-BT /F1 9 Tf 40 684 Td (06/20) Tj ET
-BT /F1 9 Tf 85 684 Td (06/21) Tj ET
-BT /F1 9 Tf 130 684 Td (EXAMPLE OUTFITTERS SEATTLE WA) Tj ET
-BT /F1 9 Tf 400 684 Td (0002) Tj ET
-BT /F1 9 Tf 460 684 Td (9876) Tj ET
-BT /F1 9 Tf 530 684 Td (-24.99) Tj ET
-BT /F1 9 Tf 40 668 Td (TOTAL PAYMENTS AND OTHER CREDITS FOR THIS PERIOD) Tj ET
-BT /F1 9 Tf 530 668 Td (-$537.39) Tj ET
-BT /F1 10 Tf 40 648 Td (Purchases and Adjustments) Tj ET
-BT /F1 9 Tf 40 634 Td (06/15) Tj ET
-BT /F1 9 Tf 85 634 Td (06/16) Tj ET
-BT /F1 9 Tf 130 634 Td (FAKE COFFEE CO #12 OAKLAND CA) Tj ET
-BT /F1 9 Tf 400 634 Td (4411) Tj ET
-BT /F1 9 Tf 460 634 Td (9876) Tj ET
-BT /F1 9 Tf 530 634 Td (4.75) Tj ET
-BT /F1 9 Tf 40 620 Td (06/28) Tj ET
-BT /F1 9 Tf 85 620 Td (06/29) Tj ET
-BT /F1 9 Tf 130 620 Td (SAMPLE GROCERY 0042 BERKELEY CA) Tj ET
-BT /F1 9 Tf 400 620 Td (4412) Tj ET
-BT /F1 9 Tf 460 620 Td (9876) Tj ET
-BT /F1 9 Tf 530 620 Td (86.20) Tj ET
-BT /F1 9 Tf 40 606 Td (07/02) Tj ET
-BT /F1 9 Tf 85 606 Td (07/03) Tj ET
-BT /F1 9 Tf 130 606 Td (SQ *EXAMPLE BAR SAN FRANCISCO CA) Tj ET
-BT /F1 9 Tf 400 606 Td (4413) Tj ET
-BT /F1 9 Tf 460 606 Td (9876) Tj ET
-BT /F1 9 Tf 530 606 Td (42.00) Tj ET
-BT /F1 9 Tf 40 592 Td (07/10) Tj ET
-BT /F1 9 Tf 85 592 Td (07/11) Tj ET
-BT /F1 9 Tf 130 592 Td (EXAMPLE AIRLINES 0061234567890) Tj ET
-BT /F1 9 Tf 400 592 Td (4414) Tj ET
-BT /F1 9 Tf 460 592 Td (9876) Tj ET
-BT /F1 9 Tf 530 592 Td (947.00) Tj ET
-BT /F1 9 Tf 40 576 Td (TOTAL PURCHASES AND ADJUSTMENTS FOR THIS PERIOD) Tj ET
-BT /F1 9 Tf 530 576 Td ($1,079.95) Tj ET
-BT /F1 10 Tf 40 556 Td (Fees Charged) Tj ET
-BT /F1 9 Tf 40 542 Td (TOTAL FEES CHARGED FOR THIS PERIOD) Tj ET
-BT /F1 9 Tf 530 542 Td ($0.00) Tj ET
-BT /F1 10 Tf 40 522 Td (Interest Charged) Tj ET
-BT /F1 9 Tf 130 508 Td (INTEREST CHARGED ON PURCHASES) Tj ET
-BT /F1 9 Tf 530 508 Td (0.00) Tj ET
-BT /F1 9 Tf 40 494 Td (TOTAL INTEREST CHARGED FOR THIS PERIOD) Tj ET
-BT /F1 9 Tf 530 494 Td ($0.00) Tj ET
+BT /F1 9 Tf 40 700 Td (Your balance includes new Purchases and fees, minus any payments and credits.) Tj ET
+BT /F1 9 Tf 40 690 Td (Interest is charged on Purchases from the transaction date unless paid in full.) Tj ET
 endstream
 endobj
 7 0 obj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
 endobj
+8 0 obj
+<< /Length 1817 >>
+stream
+BT /F1 9 Tf 36 749 Td (Account # 0000 0000 0000 9876 June 14 - July 13, 2026) Tj ET
+BT /F1 12 Tf 36 707 Td (Transactions) Tj ET
+BT /F1 7 Tf 36 682 Td (Date) Tj ET
+BT /F1 7 Tf 82 682 Td (Date) Tj ET
+BT /F1 7 Tf 117 682 Td (Description) Tj ET
+BT /F1 7 Tf 358 682 Td (Number) Tj ET
+BT /F1 7 Tf 417 682 Td (Number) Tj ET
+BT /F1 7 Tf 497 682 Td (Amount) Tj ET
+BT /F1 10 Tf 117 666 Td (Payments and Other Credits) Tj ET
+BT /F1 9 Tf 36 657 Td (07/01) Tj ET
+BT /F1 9 Tf 82 657 Td (07/01) Tj ET
+BT /F1 9 Tf 117 657 Td (PAYMENT FROM CHK 0000 CONF#abc123) Tj ET
+BT /F1 9 Tf 365 657 Td (0001) Tj ET
+BT /F1 9 Tf 423 657 Td (9876) Tj ET
+BT /F1 9 Tf 500 657 Td (-512.40) Tj ET
+BT /F1 9 Tf 36 645 Td (06/20) Tj ET
+BT /F1 9 Tf 82 645 Td (06/21) Tj ET
+BT /F1 9 Tf 117 645 Td (EXAMPLE OUTFITTERS) Tj ET
+BT /F1 9 Tf 246 645 Td (SEATTLE) Tj ET
+BT /F1 9 Tf 303.5 645 Td (WA) Tj ET
+BT /F1 9 Tf 365 645 Td (0002) Tj ET
+BT /F1 9 Tf 423 645 Td (9876) Tj ET
+BT /F1 9 Tf 500 645 Td (-24.99) Tj ET
+BT /F1 9 Tf 132 633 Td (TOTAL PAYMENTS AND OTHER CREDITS FOR THIS PERIOD) Tj ET
+BT /F1 9 Tf 535 633 Td (-$537.39) Tj ET
+BT /F1 10 Tf 117 611 Td (Purchases and Adjustments) Tj ET
+BT /F1 9 Tf 36 602 Td (06/15) Tj ET
+BT /F1 9 Tf 82 602 Td (06/16) Tj ET
+BT /F1 9 Tf 117 602 Td (FAKE COFFEE CO #12) Tj ET
+BT /F1 9 Tf 246 602 Td (OAKLAND) Tj ET
+BT /F1 9 Tf 303.5 602 Td (CA) Tj ET
+BT /F1 9 Tf 365 602 Td (4411) Tj ET
+BT /F1 9 Tf 423 602 Td (9876) Tj ET
+BT /F1 9 Tf 500 602 Td (4.75) Tj ET
+BT /F1 9 Tf 36 592 Td (06/28) Tj ET
+BT /F1 9 Tf 82 592 Td (06/29) Tj ET
+BT /F1 9 Tf 117 592 Td (SAMPLE GROCERY 0042) Tj ET
+BT /F1 9 Tf 252.5 592 Td (BERKELEY) Tj ET
+BT /F1 9 Tf 316.5 592 Td (CA) Tj ET
+BT /F1 9 Tf 365 592 Td (4412) Tj ET
+BT /F1 9 Tf 423 592 Td (9876) Tj ET
+BT /F1 9 Tf 500 592 Td (86.20) Tj ET
+BT /F1 9 Tf 117 61 Td (continued on next page...) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 2007 >>
+stream
+BT /F1 9 Tf 36 749 Td (Account # 0000 0000 0000 9876 June 14 - July 13, 2026) Tj ET
+BT /F1 12 Tf 36 707 Td (Transactions Continued) Tj ET
+BT /F1 7 Tf 36 682 Td (Date) Tj ET
+BT /F1 7 Tf 82 682 Td (Date) Tj ET
+BT /F1 7 Tf 117 682 Td (Description) Tj ET
+BT /F1 7 Tf 358 682 Td (Number) Tj ET
+BT /F1 7 Tf 417 682 Td (Number) Tj ET
+BT /F1 7 Tf 497 682 Td (Amount) Tj ET
+BT /F1 10 Tf 117 666 Td (Purchases and Adjustments) Tj ET
+BT /F1 9 Tf 36 657 Td (07/02) Tj ET
+BT /F1 9 Tf 82 657 Td (07/03) Tj ET
+BT /F1 9 Tf 117 657 Td (SQ *EXAMPLE BAR) Tj ET
+BT /F1 9 Tf 226.5 657 Td (SAN FRANCISCO) Tj ET
+BT /F1 9 Tf 323 657 Td (CA) Tj ET
+BT /F1 9 Tf 365 657 Td (4413) Tj ET
+BT /F1 9 Tf 423 657 Td (9876) Tj ET
+BT /F1 9 Tf 500 657 Td (42.00) Tj ET
+BT /F1 9 Tf 36 648 Td (07/10) Tj ET
+BT /F1 9 Tf 82 648 Td (07/11) Tj ET
+BT /F1 9 Tf 117 648 Td (EXAMPLE AIRLINES 0061234567890) Tj ET
+BT /F1 9 Tf 365 648 Td (4414) Tj ET
+BT /F1 9 Tf 423 648 Td (9876) Tj ET
+BT /F1 9 Tf 500 648 Td (947.00) Tj ET
+BT /F1 9 Tf 117 639 Td (FOREIGN CURRENCY 07/10 USD/EUR 1.08) Tj ET
+BT /F1 9 Tf 132 620 Td (TOTAL PURCHASES AND ADJUSTMENTS FOR THIS PERIOD) Tj ET
+BT /F1 9 Tf 540 620 Td ($1,079.95) Tj ET
+BT /F1 10 Tf 117 598 Td (Interest Charged) Tj ET
+BT /F1 9 Tf 36 589 Td (07/13) Tj ET
+BT /F1 9 Tf 82 589 Td (07/13) Tj ET
+BT /F1 9 Tf 117 589 Td (INTEREST CHARGED ON PURCHASES) Tj ET
+BT /F1 9 Tf 365 589 Td () Tj ET
+BT /F1 9 Tf 423 589 Td (9876) Tj ET
+BT /F1 9 Tf 500 589 Td (0.00) Tj ET
+BT /F1 9 Tf 36 580 Td (07/13) Tj ET
+BT /F1 9 Tf 82 580 Td (07/13) Tj ET
+BT /F1 9 Tf 117 580 Td (INTEREST CHARGED ON CASH ADVANCES) Tj ET
+BT /F1 9 Tf 365 580 Td () Tj ET
+BT /F1 9 Tf 423 580 Td (9876) Tj ET
+BT /F1 9 Tf 500 580 Td (0.00) Tj ET
+BT /F1 9 Tf 132 571 Td (TOTAL INTEREST CHARGED FOR THIS PERIOD) Tj ET
+BT /F1 9 Tf 556 571 Td ($0.00) Tj ET
+BT /F1 9 Tf 128 540 Td (Total fees charged in 2026) Tj ET
+BT /F1 9 Tf 350 540 Td ($0.00) Tj ET
+BT /F1 9 Tf 36 500 Td (Purchases) Tj ET
+BT /F1 9 Tf 189 500 Td (21.99%V) Tj ET
+BT /F1 9 Tf 474 500 Td ($0.00) Tj ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 10 0 R >>
+endobj
 xref
-0 8
+0 12
 0000000000 65535 f 
 0000000009 00000 n 
 0000000058 00000 n 
-0000000121 00000 n 
-0000000218 00000 n 
-0000001147 00000 n 
-0000001273 00000 n 
-0000003802 00000 n 
+0000000134 00000 n 
+0000000231 00000 n 
+0000001191 00000 n 
+0000001317 00000 n 
+0000001585 00000 n 
+0000001711 00000 n 
+0000003580 00000 n 
+0000003706 00000 n 
+0000005766 00000 n 
 trailer
-<< /Size 8 /Root 1 0 R >>
+<< /Size 12 /Root 1 0 R >>
 startxref
-3928
+5894
 %%EOF

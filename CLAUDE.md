@@ -40,7 +40,9 @@ Local-first: **the user's statement never leaves their device.**
 - `sh scripts/make-icons.sh`: regenerate the PNG app icons from the SVGs in `public/` (macOS)
 - `node scripts/make-pdf-fixtures.ts`: regenerate the synthetic PDF statements in `tests/fixtures/`
 - `node scripts/pdf-layout.ts private/statement.pdf`: print a real statement's layout with names and
-  numbers masked, for tuning the PDF reader. Real statements go in `private/` (git-ignored), never in `tests/`
+  numbers masked, for tuning the PDF reader. Real statements go in `private/` (git-ignored), never in `tests/`.
+  `npm test` also checks every PDF in `private/` adds up to its printed total, reporting counts only
+  (`src/sources/pdfSource.private.test.ts`; skipped on CI)
 
 Deploys, CI, security headers, and the phone test checklist: `docs/deploy.md`.
 
@@ -123,7 +125,7 @@ See `docs/handoff.md` §11 for details.
   `src/hooks/useAnimate.ts`; bottom sheets share `src/components/Sheet.tsx`
 - [ ] 6. Split into three parts, each with its own branch, PR, and phone test (see `docs/ideas.md`):
   - [ ] 6a. **On-device PDF statements** (`PDFSource`, `src/lib/statementPdf.ts`), tuned on Eli's
-    Bank of America PDF via the masked-layout script  ← **in progress**
+    Bank of America PDF via the masked-layout script (totals match); needs the phone test  ← **in progress**
   - [ ] 6b. Multiple statements: Dexie storage (migrate the saved session), Statements screen, bottom
     navigation, rename statements + smart default names, light Settings
   - [ ] 6c. Tasks dashboard; remembered bank setups; OFX/QFX files

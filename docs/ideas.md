@@ -307,7 +307,9 @@ This reverses the old "PDF is out of scope" decision (`docs/handoff.md` §12).
   real statement nobody else sees) knows the read is complete.
 - **Masked layout (chosen 2026-09-24):** to tune the reader on Eli's real Bank of America PDF without
   sharing it, `scripts/pdf-layout.ts` prints its layout with letters as X and digits as 9 (common
-  statement words kept). Only that masked output is shared with Claude.
+  statement words kept). Only that masked output is shared with Claude. Result on Eli's July–August
+  2026 statement: every dated row accounted for, and the purchases found match the printed total to the
+  cent. `src/sources/pdfSource.private.test.ts` re-checks it (counts only) whenever tests run on Eli's Mac.
 
 ### Rename statements and smart default names → Phase 6b
 - **Rename** from each statement's "⋯" menu on the Statements screen, and by tapping the title at the

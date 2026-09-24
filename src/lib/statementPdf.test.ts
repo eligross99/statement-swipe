@@ -38,6 +38,21 @@ describe('parseStatement', () => {
     expect(parseStatement(lines).check).toEqual({ printed: 1079.95, found: 1037.95 })
   })
 
+  it('uses the summary’s purchases total when the transaction list has none, even with a column after it', () => {
+    const lines = sampleLines().filter((l) => !/^TOTAL PURCHASES/.test(l.text))
+    expect(parseStatement(lines).check).toEqual({ printed: 1079.95, found: 1079.95 })
+  })
+
+  it('ignores section names inside fine print', () => {
+    const { purchases } = parseStatement([
+      line('Purchases and Adjustments'),
+      line('03/02', 'COFFEE', '4.75'),
+      line('Your balance includes new Purchases and fees, minus any payments and credits.'),
+      line('03/03', 'BAKERY', '8.00'),
+    ])
+    expect(purchases.map((p) => p.desc)).toEqual(['COFFEE', 'BAKERY'])
+  })
+
   it('has no check when the statement prints no purchases total', () => {
     expect(parseStatement([line('03/02', 'COFFEE', '4.75')]).check).toBeNull()
   })

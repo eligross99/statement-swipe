@@ -31,18 +31,22 @@ const ROW_DATE = new RegExp(
 )
 /** An amount at the end of a row: "6.50", "$1,234.56", "+$6.50", "-6.50", "(6.50)", "6.50 CR", "6.50-". */
 const ROW_AMOUNT = /(?:^|\s)([-−–+])?\s?\$?\s?(\(?)(\d{1,3}(?:,\d{3})+|\d+)\.(\d{2})\)?\s?(CR|-)?$/i
+/** The first amount anywhere in a line (not a percentage), for totals that may be followed by other columns. */
+const ANY_AMOUNT = /(?:^|\s)([-−–+])?\s?\$?\s?(\(?)(\d{1,3}(?:,\d{3})+|\d+)\.(\d{2})(?![\d%])\)?/
+/** A heading is a short label, never words inside a paragraph of fine print. */
+const MAX_HEADING = 40
 /** A cell holding only reference or account numbers, which some statements print beside the description. */
 const NUMBERS_ONLY = /^[\d\s#*-]+$/
 
-/** Section headings, tested on lines that aren't purchase rows. */
+/** Section headings, tested on the first cell of lines that aren't purchase rows. */
 const HEADINGS: [RegExp, Exclude<Section, null>][] = [
-  [/payments?,?\s+(?:and|&)\s+(?:other\s+)?credits|^(?:other\s+)?credits\b|^payments\b/i, 'credits'],
-  [/^(?:new\s+)?(?:purchases|charges)\b|purchases?\s+(?:and|&)\s+(?:adjustments|other\s+charges)/i, 'purchases'],
-  [/^fees\b|fees\s+charged/i, 'fees'],
-  [/^interest\b|interest\s+charged/i, 'interest'],
+  [/^(?:payments?,?\s+(?:and|&)\s+(?:other\s+)?credits|(?:other\s+)?credits|payments)\b/i, 'credits'],
+  [/^(?:new\s+)?(?:purchases|charges)\b/i, 'purchases'],
+  [/^fees\b/i, 'fees'],
+  [/^interest\b/i, 'interest'],
 ]
 /** A printed purchases total: the transaction list's "Total purchases…" line, or the summary's "Purchases…" line. */
-const PURCHASE_TOTAL = /^total\s+(?:new\s+)?(?:purchases|charges)|^(?:new\s+)?purchases\b|^purchases?\s+(?:and|&)\s+adjustments/i
+const PURCHASE_TOTAL = /^(?:total\s+)?(?:new\s+)?(?:purchases|charges)\b/i
 /** Lines whose dates describe the statement itself, for working out the year of row dates. */
 const PERIOD_WORDS = /closing|statement\s+(?:date|period)|billing\s+(?:period|cycle)|opening|through/i
 
@@ -102,8 +106,10 @@ function isCredit(m: RegExpExecArray): boolean {
   return (!!m[1] && m[1] !== '+') || !!m[2] || !!m[5]
 }
 
-function headingOf(text: string): Section | undefined {
-  for (const [rx, section] of HEADINGS) if (rx.test(text)) return section
+function headingOf(line: Line): Section | undefined {
+  const label = line.cells[0]?.text ?? ''
+  if (label.length > MAX_HEADING) return undefined
+  for (const [rx, section] of HEADINGS) if (rx.test(label)) return section
   return undefined
 }
 
@@ -126,12 +132,12 @@ export function parseStatement(lines: Line[]): PdfStatement {
     if (!date || !amount) {
       const plain = line.text.trim()
       if (PURCHASE_TOTAL.test(plain)) {
-        const total = ROW_AMOUNT.exec(plain)
+        const total = ANY_AMOUNT.exec(plain)
         // The transaction list's own total wins over the summary's.
         if (total && (printed === null || /^total/i.test(plain))) printed = amountValue(total)
       }
       if (/^total\b/i.test(plain)) continue
-      const heading = headingOf(plain)
+      const heading = headingOf(line)
       if (heading) {
         section = heading
         if (heading === 'purchases') sawPurchaseSection = true
