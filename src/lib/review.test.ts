@@ -2,6 +2,7 @@ import type { Transaction } from '../types'
 import {
   currentTxn,
   folderGroups,
+  ledgerSegments,
   newReview,
   pileItems,
   reviewReducer,
@@ -196,5 +197,39 @@ describe('folderGroups', () => {
     const groups = folderGroups(txns, piles)
     expect(groups.map((g) => g.pile.name)).toEqual(['Open', 'Also open', 'Settled'])
     expect(groups.map((g) => g.open)).toEqual([1, 1, 0])
+  })
+})
+
+describe('ledgerSegments', () => {
+  const t = (id: string, amount: number, status: Transaction['status'], action: Transaction['action'] = null) => ({
+    ...txn(id, amount),
+    status,
+    action,
+    pileId: status === 'piled' ? 'f' : null,
+  })
+
+  it('reads left to right: done, then still to do, then not reviewed', () => {
+    const txns = [
+      t('u', 1, 'unreviewed'),
+      t('f', 2, 'flagged'),
+      t('o', 3, 'piled', 'waiting'),
+      t('s', 4, 'piled', 'done'),
+      t('a', 5, 'approved'),
+    ]
+    expect(ledgerSegments(txns)).toEqual([
+      { key: 'approve', amount: 5 },
+      { key: 'settled', amount: 4 },
+      { key: 'pile', amount: 3 },
+      { key: 'flag', amount: 2 },
+      { key: 'left', amount: 1 },
+    ])
+  })
+
+  it('is one solid approved piece when nothing is left to do', () => {
+    expect(ledgerSegments([t('a', 5, 'approved'), t('s', 4, 'piled', 'done')])).toEqual([{ key: 'approve', amount: 9 }])
+  })
+
+  it('leaves out empty pieces', () => {
+    expect(ledgerSegments([t('a', 5, 'approved'), t('f', 2, 'flagged')]).map((s) => s.key)).toEqual(['approve', 'flag'])
   })
 })

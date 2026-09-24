@@ -8,7 +8,6 @@ import {
   needsAction,
   pastFolderNames,
   progress,
-  resumeCandidate,
   statementPeriod,
   uniqueName,
 } from './statements'
@@ -90,16 +89,6 @@ describe('filterStatements', () => {
   it('shows only statements needing action, or only archived ones', () => {
     expect(filterStatements(list, 'action').map((s) => s.id)).toEqual(['open', 'undated'])
     expect(filterStatements(list, 'archived').map((s) => s.id)).toEqual(['archived'])
-  })
-})
-
-describe('resumeCandidate', () => {
-  it('offers the in-progress review worked on most recently, never a new or archived one', () => {
-    const older = st('older', [{ type: 'approve' }], { updatedAt: 1 })
-    const newer = st('newer', [{ type: 'approve' }], { updatedAt: 2 })
-    const hidden = st('hidden', [{ type: 'approve' }], { updatedAt: 3, archived: true })
-    expect(resumeCandidate([older, newer, hidden, st('new', [], { updatedAt: 9 })])?.id).toBe('newer')
-    expect(resumeCandidate([st('new')])).toBeNull()
   })
 })
 

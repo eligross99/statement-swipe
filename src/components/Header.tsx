@@ -1,4 +1,4 @@
-import { ChevronLeft, Pencil, RotateCcw, Settings } from 'lucide-react'
+import { ChevronLeft, RotateCcw, Settings } from 'lucide-react'
 import './Header.css'
 
 /** A round icon button in a header corner. */
@@ -10,31 +10,15 @@ export type HeaderButton =
 
 interface Props {
   title: string
-  /** When given, tapping the title renames what it names (e.g. the open statement). */
-  onRename?: () => void
   left: HeaderButton
   right: HeaderButton
 }
 
-export function Header({ title, onRename, left, right }: Props) {
+export function Header({ title, left, right }: Props) {
   return (
     <header className="header">
       <Corner button={left} />
-      <h1 className="header-name">
-        {onRename ? (
-          <button type="button" className="header-title-btn" onClick={onRename} aria-describedby="header-rename-hint">
-            <span className="header-title-text">{title}</span>
-            <Pencil size={14} className="header-title-icon" aria-hidden />
-          </button>
-        ) : (
-          title
-        )}
-      </h1>
-      {onRename && (
-        <span id="header-rename-hint" className="visually-hidden">
-          Tap to rename
-        </span>
-      )}
+      <h1 className="header-name">{title}</h1>
       <Corner button={right} />
     </header>
   )

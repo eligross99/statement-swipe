@@ -34,6 +34,12 @@ privacy plus "Erase everything on this device"** (reminder age moves to 6c with 
 filter" setting, the screen remembers the last filter instead), and **filters All · Needs action ·
 Archived** ("Last 6 months" waits until people have years of statements).
 
+From Eli's 6b phone test (2026-09-24): no resume banner, rename only from the ⋯ menu, and one rule for
+every breakdown bar (`ledgerSegments` in `src/lib/review.ts`): it reads like a progress bar, done on the
+left (approved dark green, settled folder items pale green), still to do on the right (open folder items
+indigo, flagged red, then unreviewed as empty track), and **a statement with nothing left to do is one
+solid dark green**.
+
 ## Roadmap order
 
 | Phase | What | Why here |
@@ -112,8 +118,9 @@ gives the cross-statement view), but offer your past folder names as one-tap cho
 **Proposed instead of Statements / Swipe / Settings tabs:**
 - **Bottom tabs: Statements · Tasks.** Tabs are for places you visit often.
 - **No "Swipe" tab.** Swiping belongs to one specific statement, so the tab would be empty or confusing
-  when nothing is in progress. Instead, a **"Resume: March 2026 · 8 left"** banner sits at the top of
-  Statements, and tapping any statement opens it (per the rules above).
+  when nothing is in progress. Instead, tapping any statement opens it (per the rules above). A
+  "Pick up where you left off" banner was built in 6b, then **removed after Eli's phone test**: it
+  repeated a row already on the screen.
 - **Swiping is full-screen with the tab bar hidden**, with a back arrow. That gives the cards more
   room, and the swipe-up gesture doesn't compete with the tab bar.
 - **Settings behind a gear icon in the top-right corner**, the common pattern for rarely visited
@@ -365,8 +372,9 @@ This reverses the old "PDF is out of scope" decision (`docs/handoff.md` §12).
   cent. `src/sources/pdfSource.private.test.ts` re-checks it (counts only) whenever tests run on Eli's Mac.
 
 ### Rename statements and smart default names → Phase 6b
-- **Rename** from each statement's "⋯" menu on the Statements screen, and by tapping the title at the
-  top of a review. Any name, e.g. "July 2026 Bank of America Credit Card Statement".
+- **Rename** from each statement's "⋯" menu on the Statements screen. Any name, e.g. "July 2026 Bank of
+  America Credit Card Statement". (Renaming by tapping the review's title was built, then removed after
+  Eli's phone test: the pencil icon looked like an edit mode, and a tap-only title is a hidden feature.)
 - **Smart default names** instead of the file name: from the purchase dates, plus the bank name once
   bank setups are remembered, e.g. "July 2026 Bank of America". Likely enough for most people.
 - **Later (nice-to-have):** a custom naming pattern in Settings, so users never rename by hand.

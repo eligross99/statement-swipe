@@ -4,46 +4,6 @@
   padding-bottom: 16px; /* the import button below has its own bottom spacing */
 }
 
-/* "Pick up where you left off": the one tinted block on the screen, so it's the first thing seen. */
-.st-resume {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  margin: 4px 0 18px;
-  padding: 14px 16px;
-  border: none;
-  border-radius: 16px;
-  background: var(--brand-tint);
-  color: var(--brand-strong);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.st-resume-text {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.st-resume-kicker {
-  font-size: var(--text-sm);
-}
-
-.st-resume-name {
-  color: var(--text);
-  font-size: var(--text-lg);
-  font-weight: 650;
-  overflow-wrap: anywhere;
-}
-
-.st-resume-left {
-  font-size: var(--text-sm);
-}
-
 /* Filters: a segmented control, three equal parts. */
 .st-filters {
   display: flex;

@@ -1,13 +1,12 @@
-import { Archive, ArchiveRestore, Check, ChevronRight, FileText, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, Check, FileText, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
 import { plural, usd } from '../lib/format'
-import { openItems, sumAmounts } from '../lib/review'
+import { ledgerSegments, sumAmounts } from '../lib/review'
 import {
   FILTER_LABELS,
   filterStatements,
   progress,
-  resumeCandidate,
   type Progress,
   type StatementFilter,
 } from '../lib/statements'
@@ -41,10 +40,6 @@ export function StatementsScreen(props: Props) {
   const animate = useAnimate()
 
   const shown = filterStatements(statements, filter)
-  // The banner only earns its place when the review isn't already the top row; otherwise it would
-  // be a second button doing the same thing.
-  const candidate = resumeCandidate(statements)
-  const resume = candidate && shown[0]?.id !== candidate.id ? candidate : null
   const target = statements.find((st) => st.id === pending?.id) ?? null
 
   /** The row folds away, then the statement is archived or deleted, so the user sees where it went. */
@@ -78,8 +73,6 @@ export function StatementsScreen(props: Props) {
           </div>
         ) : (
           <>
-            {resume && <ResumeBanner statement={resume} onOpen={() => onOpen(resume.id)} />}
-
             <div className="st-filters" role="group" aria-label="Show statements">
               {FILTERS.map((f) => (
                 <button
@@ -213,43 +206,16 @@ export function StatementsScreen(props: Props) {
   )
 }
 
-/** The review worked on most recently, one tap away. */
-function ResumeBanner({ statement, onOpen }: { statement: Statement; onOpen: () => void }) {
-  const p = progress(statement)
-  return (
-    <button type="button" className="st-resume" onClick={onOpen}>
-      <span className="st-resume-text">
-        <span className="st-resume-kicker">Pick up where you left off</span>
-        <span className="st-resume-name">{statement.name}</span>
-        <span className="st-resume-left">
-          {p.left} of {plural(p.total, 'purchase')} left
-        </span>
-      </span>
-      <ChevronRight size={20} />
-    </button>
-  )
-}
-
 /**
- * A slim version of the summary's breakdown bar: the statement's dollars by decision so far.
- * The empty part of the track is what's still to review.
+ * A slim version of the summary's breakdown bar (same rule: `ledgerSegments`). The empty part of
+ * the track, on the right, is what's still to review.
  */
 function MiniLedger({ statement }: { statement: Statement }) {
-  const { txns } = statement.session
-  const filed = txns.filter((t) => t.status === 'piled')
-  const open = sumAmounts(openItems(filed))
-  const segs = [
-    { key: 'approve', amount: sumAmounts(txns.filter((t) => t.status === 'approved')) },
-    { key: 'pile', amount: open },
-    { key: 'settled', amount: sumAmounts(filed) - open },
-    { key: 'flag', amount: sumAmounts(txns.filter((t) => t.status === 'flagged')) },
-    { key: 'left', amount: sumAmounts(txns.filter((t) => t.status === 'unreviewed')) },
-  ]
   return (
     <span className="st-ledger" aria-hidden>
-      {segs.map(({ key, amount }) =>
-        amount > 0 ? <span key={key} className={`st-seg st-seg--${key}`} style={{ flexGrow: amount }} /> : null,
-      )}
+      {ledgerSegments(statement.session.txns).map(({ key, amount }) => (
+        <span key={key} className={`st-seg st-seg--${key}`} style={{ flexGrow: amount }} />
+      ))}
     </span>
   )
 }

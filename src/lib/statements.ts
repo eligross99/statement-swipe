@@ -106,12 +106,6 @@ export function filterStatements(list: Statement[], filter: StatementFilter): St
   return sortStatements(shown)
 }
 
-/** The review to offer in the "Pick up where you left off" banner: the one most recently worked on. */
-export function resumeCandidate(list: Statement[]): Statement | null {
-  const open = list.filter((st) => !st.archived && progress(st).stage === 'progress')
-  return open.length ? open.reduce((a, b) => (b.updatedAt > a.updatedAt ? b : a)) : null
-}
-
 /** How many past folder names the filing sheet offers. */
 const PAST_FOLDERS = 6
 

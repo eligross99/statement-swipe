@@ -181,9 +181,7 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Approve' }))
     await user.click(screen.getByRole('button', { name: 'Back to statements' }))
 
-    // Alone, the review in progress is the top row, so there's no banner repeating it.
     expect(screen.getByText('In progress, 15 of 16 left')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Pick up where you left off/ })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Import a statement' }))
     await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
@@ -195,21 +193,9 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Back to statements' }))
     expect(screen.getAllByRole('button', { name: /^March 2026 sample/ })).toHaveLength(2)
     expect(screen.getByText('Needs review')).toBeInTheDocument()
-    // The newer statement is on top now, so the banner offers the one in progress below it.
-    const banner = screen.getByRole('button', { name: /Pick up where you left off/ })
-    expect(banner).toHaveTextContent('15 of 16 purchases left')
-    await user.click(banner)
+    // Tapping the one in progress opens it where it was left.
+    await user.click(screen.getByRole('button', { name: /^March 2026 sample\d/ }))
     expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
-  })
-
-  it('renames the open statement by tapping its title', async () => {
-    const user = await startSample()
-    await user.click(screen.getByRole('button', { name: 'March 2026 sample' }))
-    const field = screen.getByRole('textbox', { name: 'Statement name' })
-    await user.clear(field)
-    await user.type(field, 'Try-out{Enter}')
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Try-out')
   })
 
   it('renames, archives, and deletes from a statement’s ⋯ menu, asking before deleting', async () => {

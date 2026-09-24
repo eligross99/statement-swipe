@@ -6,7 +6,6 @@ import { FolderSheet } from './components/FolderSheet'
 import { Header, type HeaderButton } from './components/Header'
 import { ImportScreen, type Naming } from './components/ImportScreen'
 import { InvestigateView } from './components/InvestigateView'
-import { RenameSheet } from './components/RenameSheet'
 import { SettingsScreen } from './components/SettingsScreen'
 import { StatementsScreen } from './components/StatementsScreen'
 import { Summary } from './components/Summary'
@@ -37,7 +36,6 @@ export default function App() {
   const history = statement?.history ?? []
   /** Changes the open statement's review. */
   const dispatch = (event: ReviewEvent) => send({ type: 'review', event })
-  const [renaming, setRenaming] = useState(false)
   // Screen-level UI state that isn't part of the saved session.
   const [investigatingId, setInvestigatingId] = useState<string | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -86,7 +84,6 @@ export default function App() {
     generation.current++
     setInvestigatingId(null)
     setSheetOpen(false)
-    setRenaming(false)
     setLeaving(null)
     setReturning(null)
     setLean(null)
@@ -121,7 +118,7 @@ export default function App() {
 
   const home = () => go({ type: 'go', view: 'statements' })
 
-  let header: { title: string; left: HeaderButton; right: HeaderButton; onRename?: () => void }
+  let header: { title: string; left: HeaderButton; right: HeaderButton }
   if (place === 'statements') {
     header = { title: 'Statements', left: null, right: { kind: 'settings', onClick: () => go({ type: 'go', view: 'settings' }) } }
   } else if (place === 'import') {
@@ -137,7 +134,6 @@ export default function App() {
   } else {
     header = {
       title: statement?.name ?? '',
-      onRename: () => setRenaming(true),
       left: { kind: 'back', label: 'Back to statements', onClick: home },
       right: { kind: 'undo', enabled: history.length > 0, onClick: undo },
     }
@@ -255,17 +251,6 @@ export default function App() {
             resolve({ type: 'createPileAndFile', pile: { id: makeId('f'), name } }, 'up', LEAN_UP)
           }}
           onDelete={(pileId) => dispatch({ type: 'deletePile', pileId })}
-        />
-      )}
-
-      {renaming && statement && (
-        <RenameSheet
-          name={statement.name}
-          onRename={(name) => {
-            setRenaming(false)
-            send({ type: 'rename', id: statement.id, name })
-          }}
-          onClose={() => setRenaming(false)}
         />
       )}
     </div>

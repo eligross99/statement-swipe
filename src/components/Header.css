@@ -23,31 +23,3 @@
   width: var(--tap-min);
   flex-shrink: 0;
 }
-
-/* A title that renames the statement when tapped: the whole title is the button, with a small
-   pencil so it's clear it can be changed. */
-.header-title-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 100%;
-  min-height: var(--tap-min);
-  padding: 0 10px;
-  border: none;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.header-title-text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.header-title-icon {
-  flex-shrink: 0;
-  color: var(--text-mute);
-}
