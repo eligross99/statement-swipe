@@ -1,7 +1,7 @@
-import { ChevronRight, Folder, FolderCheck, ShieldAlert } from 'lucide-react'
+import { Check, ChevronRight, Folder, FolderCheck, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
 import { plural, usd } from '../lib/format'
-import { folderGroups, sumAmounts } from '../lib/review'
+import { folderGroups, stillToActOn, sumAmounts } from '../lib/review'
 import type { Pile, Transaction } from '../types'
 import './Summary.css'
 
@@ -19,11 +19,14 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
   const [confirmRestart, setConfirmRestart] = useState(false)
   const total = sumAmounts(txns)
   const flagged = txns.filter((t) => t.status === 'flagged')
+  const filed = txns.filter((t) => t.status === 'piled')
   const groups = folderGroups(txns, piles)
+  // Filed purchases stay filed as a record; this says whether any of them still need doing.
+  const toActOn = stillToActOn(filed)
 
   const rows: { tone: Tone; label: string; items: Transaction[] }[] = [
     { tone: 'approve', label: 'Approved', items: txns.filter((t) => t.status === 'approved') },
-    { tone: 'pile', label: 'Filed', items: txns.filter((t) => t.status === 'piled') },
+    { tone: 'pile', label: 'Filed', items: filed },
     { tone: 'flag', label: 'Flagged', items: flagged },
   ]
 
@@ -51,6 +54,19 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
               </dt>
               <dd className="ledger-count num">{items.length}</dd>
               <dd className="ledger-amount num">${usd(sumAmounts(items))}</dd>
+              {tone === 'pile' && items.length > 0 && (
+                <dd className="ledger-note">
+                  {toActOn > 0 ? (
+                    <span className="tone-investigate">
+                      <span className="num">${usd(toActOn)}</span> still to act on
+                    </span>
+                  ) : (
+                    <span className="tone-approve">
+                      <Check size={14} aria-hidden /> All settled
+                    </span>
+                  )}
+                </dd>
+              )}
             </div>
           ))}
         </dl>

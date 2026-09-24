@@ -198,6 +198,21 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Undo last action' })).toBeEnabled()
   })
 
+  it('says under Filed whether anything is left to act on', async () => {
+    const user = await startSample()
+    await user.click(screen.getByRole('button', { name: 'File' }))
+    await user.type(screen.getByRole('textbox', { name: 'New folder name' }), 'Ski trip{Enter}')
+    for (let i = 0; i < 15; i++) await user.click(screen.getByRole('button', { name: 'Approve' }))
+    expect(screen.getByText(/still to act on/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Ski trip/ }))
+    await user.click(screen.getByRole('button', { name: /Status: not set/ }))
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: /^Done/ }))
+    await user.click(screen.getByRole('button', { name: 'Back to all folders' }))
+    expect(screen.queryByText(/still to act on/)).not.toBeInTheDocument()
+    expect(screen.getByText('All settled')).toBeInTheDocument()
+  })
+
   it('shows the same readable date on the card and in the investigation view', async () => {
     const user = await startSample()
     expect(within(topCard()).getByText('Mar 3')).toBeInTheDocument()

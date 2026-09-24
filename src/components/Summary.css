@@ -78,6 +78,20 @@
   text-align: right;
 }
 
+/* Under Filed: whether anything in the folders still needs doing. Lines up with the label text. */
+.ledger-row .ledger-note {
+  flex-basis: 100%;
+  padding-left: 18px;
+  font-size: var(--text-sm);
+  text-align: left;
+}
+
+.ledger-row .ledger-note span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .ledger-count {
   color: var(--text-mute);
 }
