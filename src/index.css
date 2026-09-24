@@ -119,6 +119,10 @@ button:not(:disabled):active {
   .motion-fade {
     animation: enter-fade 150ms ease-out backwards !important;
   }
+
+  .spin {
+    animation: none !important;
+  }
 }
 
 /* Hidden visually but still available to screen readers and keyboard focus. */

@@ -25,7 +25,7 @@ Local-first: **the user's statement never leaves their device.**
 - React + Vite + **TypeScript** (strict mode)
 - `vite-plugin-pwa`: installable, works offline
 - `idb-keyval`: IndexedDB persistence (switch to Dexie only if we add statement history)
-- `papaparse`: CSV parsing · `lucide-react`: icons
+- `papaparse`: CSV parsing · `pdfjs-dist`: PDF statements, loaded only when a PDF is picked · `lucide-react`: icons
 - Vitest + Testing Library for unit/component tests; Playwright for end-to-end tests later
 - Hosting: Vercel (auto-deploys from GitHub; set up in the PWA-finish phase)
 
@@ -38,6 +38,9 @@ Local-first: **the user's statement never leaves their device.**
 - `npm run preview`: serve the production build (the only mode where the PWA/service worker is active)
 - `npm run lint`: lint (oxlint; `docs/` is excluded)
 - `sh scripts/make-icons.sh`: regenerate the PNG app icons from the SVGs in `public/` (macOS)
+- `node scripts/make-pdf-fixtures.ts`: regenerate the synthetic PDF statements in `tests/fixtures/`
+- `node scripts/pdf-layout.ts private/statement.pdf`: print a real statement's layout with names and
+  numbers masked, for tuning the PDF reader. Real statements go in `private/` (git-ignored), never in `tests/`
 
 Deploys, CI, security headers, and the phone test checklist: `docs/deploy.md`.
 
@@ -118,11 +121,13 @@ See `docs/handoff.md` §11 for details.
   states, overscroll bounce, larger text that follows the phone's text size, clearer header buttons,
   confirm before replacing a review (see `docs/ideas.md`). Motion helpers: `src/lib/motion.ts`,
   `src/hooks/useAnimate.ts`; bottom sheets share `src/components/Sheet.tsx`
-- [ ] 6. Multiple statements: Dexie storage (migrate the saved session), Statements screen, bottom
-  navigation, Tasks dashboard, light Settings, rename statements + smart default names; easier import:
-  **on-device PDF statements (priority)**, remembered bank setups, OFX/QFX files, Android "Share to"
-  (see `docs/ideas.md`)  ← **next**
-- [ ] 7. Dark mode (follows the phone, override in Settings) and Android haptics first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
+- [ ] 6. Split into three parts, each with its own branch, PR, and phone test (see `docs/ideas.md`):
+  - [ ] 6a. **On-device PDF statements** (`PDFSource`, `src/lib/statementPdf.ts`), tuned on Eli's
+    Bank of America PDF via the masked-layout script  ← **in progress**
+  - [ ] 6b. Multiple statements: Dexie storage (migrate the saved session), Statements screen, bottom
+    navigation, rename statements + smart default names, light Settings
+  - [ ] 6c. Tasks dashboard; remembered bank setups; OFX/QFX files
+- [ ] 7. Dark mode (follows the phone, override in Settings), Android haptics and Android "Share to" first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
   Settings; the standalone "Try the sample statement" button goes away; per-bank download guides
   (see `docs/ideas.md`)
 - [ ] 8. On-device smarts: familiar/new merchant tags, merchant-code decoder, web-search link,
@@ -144,6 +149,9 @@ See `docs/handoff.md` §11 for details.
 - Bank CSVs vary: column names/order, sign conventions (purchases negative vs positive, or split
   debit/credit columns), and preamble rows above the header.
 - Cryptic merchant names (`SQ *DD BAR`) can't be decoded from CSV. Don't fake enrichment.
-- PDF statements are now in scope (Phase 6, on-device), reversing `docs/handoff.md` §12.
+- PDF statements are now in scope (Phase 6a, on-device), reversing `docs/handoff.md` §12. The PDF reader's
+  worker is an `.mjs` file; `vite.config.ts` precaches `mjs` so PDF import works offline.
+- PDF import can't be tested in jsdom (the reader needs a worker). Reader tests run in Vitest's Node
+  environment (`// @vitest-environment node`); screen tests stub `PDFSource.fromData`.
 - Out of scope for now: custom per-folder statuses. Native apps wait for the
   App Store step at the start of Phase 9 (via Capacitor, not a rewrite; ask Eli first).

@@ -39,3 +39,6 @@ npm-debug.log*
 *.qfx
 *.pdf
 !tests/fixtures/**/*.csv
+!tests/fixtures/**/*.pdf
+# Real statements for local testing only. Never committed.
+private/

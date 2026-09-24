@@ -10,8 +10,9 @@ export default defineConfig({
     VitePWA({
       // New versions install silently in the background and apply on next load.
       registerType: 'autoUpdate',
-      // Precache the whole app shell so it works fully offline.
-      workbox: { globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'] },
+      // Precache the whole app shell so it works fully offline, including the PDF reader
+      // (its worker is an .mjs file, about 1.3 MB, under Workbox's 2 MB per-file limit).
+      workbox: { globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,webmanifest}'] },
       // Files in public/ that aren't referenced by the built app but should still work offline.
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {

@@ -34,7 +34,7 @@ export interface Purchase {
 }
 
 /** Card payments and credits aren't purchases, so they're skipped. */
-const PAYMENT_RX = /payment|autopay|thank you|online pmt|e-payment/i
+export const PAYMENT_RX = /payment|autopay|thank you|online pmt|e-payment/i
 
 /** Only the first lines of a file are considered when looking for the header row. */
 const HEADER_SEARCH_LIMIT = 30

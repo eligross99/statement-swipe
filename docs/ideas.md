@@ -18,6 +18,11 @@ from their feedback, **on-device PDF import** as a priority in Phase 6 (their ba
 PDF downloads, so a CSV means a computer detour), and **renaming statements plus smart default
 names** in Phase 6. Text scaling moved from Phase 6 into Phase 5.5.
 
+On 2026-09-24, starting Phase 6, Eli approved **splitting Phase 6 into 6a (PDF import), 6b (multiple
+statements) and 6c (Tasks dashboard and easier files)**, each phone-tested before the next, and
+**moving Android "Share to" to Phase 7**, next to Android haptics, since both need an Android phone to
+test. For tuning the PDF reader, Eli chose the **masked layout** approach (see "PDF statements").
+
 ## Roadmap order
 
 | Phase | What | Why here |
@@ -25,8 +30,10 @@ names** in Phase 6. Text scaling moved from Phase 6 into Phase 5.5.
 | 4 | Triage & folder polish, **"Set status" menu**, consistent date display | Already planned; the status menu is the same UI |
 | 5 | PWA finish, Vercel deploy, CI, test on phone | Gets the app into real use sooner |
 | 5.5 | **Feel and motion:** smoother swipes and screen transitions, pressed states, overscroll bounce, larger and scalable text, clearer header buttons | Eli's phone-test feedback; the app works but feels abrupt |
-| 6 | **Multiple statements:** storage, Statements screen, bottom navigation, Tasks dashboard, Settings (light), **rename statements + smart default names**; **easier import:** **PDF statements (priority)**, remembered bank setups, OFX/QFX files, Android "Share to" | Most new ideas depend on keeping more than one statement; PDF is the only thing many phone users can download |
-| 7 | **Dark mode** and **haptics** first, then the **onboarding tour** (replaces the always-visible sample statement), with **per-bank download guides** | Needs the Phase 6 screens to exist; dark mode before the tour so the tour is designed once, in both themes |
+| 6a | **PDF statements** | The only thing many phone users can download; plugs into the existing import screen, so it ships first |
+| 6b | **Multiple statements:** storage, Statements screen, bottom navigation, Settings (light), **rename statements + smart default names** | Most new ideas depend on keeping more than one statement |
+| 6c | **Tasks dashboard**; **easier files:** remembered bank setups, OFX/QFX files | Needs 6b's statement history |
+| 7 | **Dark mode**, **haptics** and Android **"Share to"** first, then the **onboarding tour** (replaces the always-visible sample statement), with **per-bank download guides** | Needs the Phase 6 screens to exist; dark mode before the tour so the tour is designed once, in both themes |
 | 8 | **On-device smarts:** familiar/new merchant tags, merchant-code decoder, web-search link, calendar reminders | Need statement history; no server needed; privacy stays intact |
 | 9 | **App Store version** (Capacitor; ask Eli first), then accounts, backend, Stripe, **opt-in bank connection** (Teller → Plaid, relay-only server) (was Phase 6, then 8) | Unlocks push notifications and, if chosen, AI merchant explanations; App Store first because Apple's subscription rules shape the payment plan |
 | 10 | Security & compliance (was Phase 7, then 9) | Unchanged |
@@ -119,7 +126,7 @@ Eli's goal (2026-09-23): getting a statement into the app should be easier than 
 the bank's website, save it, upload it". **Approved plan:** make files painless first (no server
 needed), then add an opt-in bank connection once accounts and a backend exist.
 
-**Phase 6: easier files** (goes with statement history, since it needs saved settings)
+**Phase 6c: easier files** (goes with statement history, since it needs saved settings)
 - **Remember each bank's setup.** After the first import, save the detected column mapping, sign
   convention, and header row, keyed by the file's header row (e.g. "Chase card CSV"). The next import
   from the same bank skips the mapping screen: one tap to start. Settings stay on-device.
@@ -127,7 +134,8 @@ needed), then add an opt-in bank connection once accounts and a backend exist.
   there's no column mapping. Add an `OFXSource` behind the existing `TransactionSource` seam; nothing
   downstream changes. Keep real files out of the repo (already blocked in `.gitignore`); use synthetic
   fixtures.
-- **"Share to Statement Swipe" on Android.** A `share_target` entry in the web-app manifest lets the
+- **"Share to Statement Swipe" on Android → moved to Phase 7** (2026-09-24), next to Android haptics, so
+  both Android features are tested together on one Android phone. A `share_target` entry in the web-app manifest lets the
   installed app receive a shared file straight from the Files/Downloads app. iPhone doesn't support
   this for web apps; there the file picker already opens to recent downloads, so no workaround needed.
 
@@ -276,7 +284,7 @@ Done), so multiple folders would need a status per folder, new summary math (no 
 and a reworked filing sheet. Most such cases are really a *label* for tracking spending (like
 "Restaurants") alongside one *to-do* folder. Revisit as tags with the Phase 8 on-device smarts.
 
-### PDF statements → Phase 6 (priority)
+### PDF statements → Phase 6a (priority)
 **Why:** Eli's bank app only offers PDF statements on the phone. Getting a CSV means downloading on a
 computer and sending it to the phone, which is too many steps for anyone who isn't a friendly tester.
 This reverses the old "PDF is out of scope" decision (`docs/handoff.md` §12).
@@ -292,8 +300,16 @@ This reverses the old "PDF is out of scope" decision (`docs/handoff.md` §12).
   Eli's real statement **locally only, never committed** (the repo is public).
 - **Not instead of** bank connection (Phase 9) or download guides (Phase 7); it's the quickest fix
   that keeps the privacy promise.
+- **Built (6a):** rows are found by pattern (a date first, an amount last, under section headings like
+  "Payments and Other Credits" or "Purchases"), and years come from the closing date, so a
+  December–January statement dates correctly. The statement's printed purchases total is checked
+  against what was found, and the preview says whether they match. That's how a user (or Eli, on a
+  real statement nobody else sees) knows the read is complete.
+- **Masked layout (chosen 2026-09-24):** to tune the reader on Eli's real Bank of America PDF without
+  sharing it, `scripts/pdf-layout.ts` prints its layout with letters as X and digits as 9 (common
+  statement words kept). Only that masked output is shared with Claude.
 
-### Rename statements and smart default names → Phase 6
+### Rename statements and smart default names → Phase 6b
 - **Rename** from each statement's "⋯" menu on the Statements screen, and by tapping the title at the
   top of a review. Any name, e.g. "July 2026 Bank of America Credit Card Statement".
 - **Smart default names** instead of the file name: from the purchase dates, plus the bank name once
