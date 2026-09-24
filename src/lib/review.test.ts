@@ -21,7 +21,7 @@ const SKI = { id: 'ski', name: 'Ski trip' }
 
 /** Applies events in order, starting from a fresh review of TXNS. */
 function run(...events: ReviewEvent[]): ReviewState {
-  return events.reduce(reviewReducer, newReview(TXNS))
+  return events.reduce((s, e) => reviewReducer(s, e, 0), newReview(TXNS))
 }
 
 const statuses = (s: ReviewState) => s.session.txns.map((t) => t.status)
@@ -64,14 +64,14 @@ describe('resolving cards', () => {
   it('only reaches the summary once every card is in a terminal state', () => {
     let s = run({ type: 'approve' }, { type: 'approve' })
     expect(s.session.screen).toBe('deck')
-    s = reviewReducer(s, { type: 'flag' })
+    s = reviewReducer(s, { type: 'flag' }, 0)
     expect(s.session.screen).toBe('summary')
     expect(s.session.txns.every((t) => t.status !== 'unreviewed')).toBe(true)
   })
 
   it('does nothing once the deck is finished', () => {
     const done = run({ type: 'approve' }, { type: 'approve' }, { type: 'approve' })
-    expect(reviewReducer(done, { type: 'approve' })).toBe(done)
+    expect(reviewReducer(done, { type: 'approve' }, 0)).toBe(done)
     expect(currentTxn(done.session)).toBeNull()
   })
 })
@@ -83,10 +83,17 @@ describe('changing your mind about a flagged purchase', () => {
     expect(statuses(s)).toEqual(['approved', 'approved', 'approved'])
   })
 
+  it('clears its resolution status, so it leaves Tasks', () => {
+    let s = run({ type: 'flag' }, { type: 'approve' }, { type: 'approve' })
+    s = reviewReducer(s, { type: 'setAction', txnId: 'a', action: 'waiting' }, 0)
+    s = reviewReducer(s, { type: 'approveFlagged', txnId: 'a' }, 0)
+    expect(s.session.txns[0]).toMatchObject({ status: 'approved', action: null })
+  })
+
   it('ignores purchases that are not flagged', () => {
     const before = run({ type: 'approve' })
-    expect(reviewReducer(before, { type: 'approveFlagged', txnId: 'a' })).toBe(before)
-    expect(reviewReducer(before, { type: 'approveFlagged', txnId: 'b' })).toBe(before)
+    expect(reviewReducer(before, { type: 'approveFlagged', txnId: 'a' }, 0)).toBe(before)
+    expect(reviewReducer(before, { type: 'approveFlagged', txnId: 'b' }, 0)).toBe(before)
   })
 })
 
@@ -107,14 +114,14 @@ describe('undo', () => {
 
   it('keeps notes and triage on other purchases', () => {
     let s = run({ type: 'createPileAndFile', pile: SKI }, { type: 'approve' }, { type: 'approve' })
-    s = reviewReducer(s, { type: 'setNote', txnId: 'a', note: 'Venmo Sam' })
-    s = reviewReducer(s, { type: 'undo' })
+    s = reviewReducer(s, { type: 'setNote', txnId: 'a', note: 'Venmo Sam' }, 0)
+    s = reviewReducer(s, { type: 'undo' }, 0)
     expect(s.session.txns[0].note).toBe('Venmo Sam')
   })
 
   it('does nothing with an empty history', () => {
     const s = run()
-    expect(reviewReducer(s, { type: 'undo' })).toBe(s)
+    expect(reviewReducer(s, { type: 'undo' }, 0)).toBe(s)
   })
 })
 
@@ -132,7 +139,7 @@ describe('deleting a folder', () => {
   it('leaves the summary if the open folder is deleted', () => {
     let s = run({ type: 'createPileAndFile', pile: SKI }, { type: 'approve' }, { type: 'approve' }, { type: 'openPile', pileId: 'ski' })
     expect(s.session.screen).toBe('pile')
-    s = reviewReducer(s, { type: 'deletePile', pileId: 'ski' })
+    s = reviewReducer(s, { type: 'deletePile', pileId: 'ski' }, 0)
     expect(s.session.screen).toBe('summary')
     expect(s.session.openPile).toBeNull()
   })
@@ -147,18 +154,36 @@ describe('folder triage', () => {
     )
     const items = () => pileItems(s.session.txns, 'ski')
     expect(stillToActOn(items())).toBe(60)
-    s = reviewReducer(s, { type: 'setAction', txnId: 'b', action: 'done' })
-    s = reviewReducer(s, { type: 'setAction', txnId: 'c', action: 'waiting' })
+    s = reviewReducer(s, { type: 'setAction', txnId: 'b', action: 'done' }, 0)
+    s = reviewReducer(s, { type: 'setAction', txnId: 'c', action: 'waiting' }, 0)
     expect(stillToActOn(items())).toBe(40)
   })
 
   it('a status can be cleared, which counts it as still to act on again', () => {
     let s = run({ type: 'createPileAndFile', pile: SKI })
-    s = reviewReducer(s, { type: 'setAction', txnId: 'a', action: 'done' })
+    s = reviewReducer(s, { type: 'setAction', txnId: 'a', action: 'done' }, 0)
     expect(stillToActOn(pileItems(s.session.txns, 'ski'))).toBe(0)
-    s = reviewReducer(s, { type: 'setAction', txnId: 'a', action: null })
+    s = reviewReducer(s, { type: 'setAction', txnId: 'a', action: null }, 0)
     expect(s.session.txns[0].action).toBeNull()
     expect(stillToActOn(pileItems(s.session.txns, 'ski'))).toBe(10)
+  })
+})
+
+describe('task clock', () => {
+  it('records when a purchase is filed, flagged, or given a status', () => {
+    let s = newReview(TXNS)
+    s = reviewReducer(s, { type: 'flag' }, 100)
+    s = reviewReducer(s, { type: 'createPileAndFile', pile: SKI }, 200)
+    s = reviewReducer(s, { type: 'setAction', txnId: 'b', action: 'waiting' }, 300)
+    expect(s.session.txns.map((t) => t.actionAt)).toEqual([100, 300, undefined])
+  })
+
+  it('a card decided again starts with no status', () => {
+    let s = run({ type: 'createPileAndFile', pile: SKI })
+    s = reviewReducer(s, { type: 'setAction', txnId: 'a', action: 'done' }, 0)
+    s = reviewReducer(s, { type: 'undo' }, 0)
+    s = reviewReducer(s, { type: 'flag' }, 0)
+    expect(s.session.txns[0]).toMatchObject({ status: 'flagged', action: null })
   })
 })
 
@@ -168,7 +193,7 @@ describe('navigation', () => {
     expect(statuses(s)).toEqual(['unreviewed', 'unreviewed', 'unreviewed'])
     expect(s.session.piles).toEqual([])
     expect(s.session.txns[0].note).toBe('')
-    s = reviewReducer(s, { type: 'approve' })
+    s = reviewReducer(s, { type: 'approve' }, 0)
     expect(s.session.index).toBe(1)
   })
 
@@ -227,6 +252,16 @@ describe('ledgerSegments', () => {
 
   it('is one solid approved piece when nothing is left to do', () => {
     expect(ledgerSegments([t('a', 5, 'approved'), t('s', 4, 'piled', 'done')])).toEqual([{ key: 'approve', amount: 9 }])
+  })
+
+  it('counts a resolved flag as settled, and all clear once nothing else is left', () => {
+    const txns = [t('a', 5, 'approved'), t('r', 2, 'flagged', 'done'), t('f', 1, 'flagged', 'waiting')]
+    expect(ledgerSegments(txns)).toEqual([
+      { key: 'approve', amount: 5 },
+      { key: 'settled', amount: 2 },
+      { key: 'flag', amount: 1 },
+    ])
+    expect(ledgerSegments(txns.slice(0, 2))).toEqual([{ key: 'approve', amount: 7 }])
   })
 
   it('leaves out empty pieces', () => {

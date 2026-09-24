@@ -4,8 +4,10 @@ import { useAnimate } from '../hooks/useAnimate'
 import { useEscape } from '../hooks/useEscape'
 import { formatDate } from '../lib/dates'
 import { hasCategory, usd } from '../lib/format'
-import type { Transaction } from '../types'
+import type { Action, Transaction } from '../types'
 import { Sheet } from './Sheet'
+import { StatusSheet } from './StatusSheet'
+import { TaskControls } from './TaskControls'
 import './InvestigateView.css'
 
 interface Props {
@@ -15,18 +17,24 @@ interface Props {
   onBack: () => void
   onApprove: () => void
   onFlag: () => void
-  /** For a purchase flagged earlier (opened from the summary): the user recognizes it after all. */
+  /** For a purchase flagged earlier (opened from the summary or Tasks): the user recognizes it after all. */
   onRecognize: () => void
+  /** For a purchase flagged earlier: track resolving it, with a status and a note. */
+  onSetAction: (action: Action) => void
+  onSetNote: (note: string) => void
 }
 
 /** Full statement details for one purchase. "Back" leaves the card unresolved in the deck.
  *  Every way out slides the view away first, then reports back. */
-export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag, onRecognize }: Props) {
+export function InvestigateView(props: Props) {
+  const { txn, canDecide, onBack, onApprove, onFlag, onRecognize, onSetAction, onSetNote } = props
   const animate = useAnimate()
   const ref = useRef<HTMLDivElement>(null)
   const leaving = useRef(false)
   // Asking "are you sure?" before a flagged purchase is approved.
   const [confirming, setConfirming] = useState(false)
+  const [statusOpen, setStatusOpen] = useState(false)
+  const [noteOpen, setNoteOpen] = useState(false)
 
   const leave = (then: () => void) => {
     if (leaving.current) return
@@ -36,8 +44,8 @@ export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag, onR
       { opacity: 0 },
     ]).then(then)
   }
-  // While the confirmation is open, Escape closes only that.
-  useEscape(() => !confirming && leave(onBack))
+  // While a sheet or the note is open, Escape closes only that.
+  useEscape(() => !confirming && !statusOpen && !noteOpen && leave(onBack))
 
   return (
     <div ref={ref} className="overlay motion-fade" role="dialog" aria-modal="true" aria-labelledby="investigate-title">
@@ -84,6 +92,25 @@ export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag, onR
         )}
 
         {!canDecide && txn.status === 'flagged' && (
+          <section className="investigate-track" aria-labelledby="investigate-track-title">
+            <h3 id="investigate-track-title" className="investigate-question">
+              Where it stands
+            </h3>
+            <p className="muted investigate-hint">
+              If it still isn’t yours, call the number on the back of your card. A status and a note help you keep
+              track until it’s resolved.
+            </p>
+            <TaskControls
+              txn={txn}
+              noteOpen={noteOpen}
+              onNoteOpen={setNoteOpen}
+              onStatus={() => setStatusOpen(true)}
+              onSetNote={onSetNote}
+            />
+          </section>
+        )}
+
+        {!canDecide && txn.status === 'flagged' && (
           <div className="investigate-actions">
             <p className="investigate-question">Recognize it now?</p>
             <p className="muted investigate-hint">
@@ -93,6 +120,17 @@ export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag, onR
               <Check size={18} /> I recognize it, approve it
             </button>
           </div>
+        )}
+
+        {statusOpen && (
+          <StatusSheet
+            txn={txn}
+            onClose={() => setStatusOpen(false)}
+            onPick={(action) => {
+              setStatusOpen(false)
+              onSetAction(action)
+            }}
+          />
         )}
 
         {confirming && (

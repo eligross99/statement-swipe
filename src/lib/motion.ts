@@ -30,14 +30,17 @@ export const DURATION = {
 export type Enter = 'none' | 'fade' | 'push' | 'pop' | 'rise'
 
 /** Every place the app can show: the top-level screens, and a review's deck, summary, or folder. */
-export type Place = 'statements' | 'import' | 'settings' | Screen
+export type Place = 'statements' | 'tasks' | 'import' | 'settings' | Screen
 
-/** Picks a screen's entrance from where the user came from: forward slides in from the right,
- *  back from the left, starting or finishing a review rises up. */
+const isTab = (p: Place) => p === 'statements' || p === 'tasks'
+
+/** Picks a screen's entrance from where the user came from: switching tabs fades, forward slides
+ *  in from the right, back from the left, starting or finishing a review rises up. */
 export function screenEnter(from: Place, to: Place): Enter {
   if (from === to) return 'none'
-  if (to === 'statements') return 'pop'
-  if (from === 'statements') return 'push'
+  if (isTab(from) && isTab(to)) return 'fade'
+  if (isTab(to)) return 'pop'
+  if (isTab(from)) return 'push'
   if (from === 'import' && to === 'deck') return 'rise'
   if (from === 'deck' && to === 'summary') return 'rise'
   if (from === 'summary' && to === 'pile') return 'push'

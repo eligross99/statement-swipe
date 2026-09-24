@@ -74,6 +74,10 @@
   margin: 16px 0 0;
 }
 
+.investigate-track {
+  margin-top: 24px;
+}
+
 .investigate-actions {
   display: flex;
   flex-direction: column;

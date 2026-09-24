@@ -5,17 +5,20 @@
 import { Dexie, type Table } from 'dexie'
 import { del, get } from 'idb-keyval'
 import type { Session, Statement, UndoEntry } from '../types'
-import type { SavedUi, Settings, View } from './library'
+import type { SavedUi, Settings, Tab, View } from './library'
 import { reviewScreen } from './review'
 import { SAMPLE_LABEL } from './sample'
 import { defaultName, statementPeriod, type StatementFilter } from './statements'
+import { REMIND_CHOICES } from './tasks'
 
 // ---------- shape checks, so a stale or corrupt save can't crash the app ----------
 
 const STATUSES = new Set(['unreviewed', 'approved', 'piled', 'flagged'])
 const SCREENS = new Set(['deck', 'summary', 'pile'])
 const ACTIONS = new Set([null, 'todo', 'waiting', 'done'])
-const VIEWS = new Set<View>(['statements', 'import', 'settings', 'review'])
+const VIEWS = new Set<View>(['statements', 'tasks', 'import', 'settings', 'review'])
+const TABS = new Set<Tab | undefined>(['statements', 'tasks', undefined])
+const REMIND_DAYS = new Set(REMIND_CHOICES.map((c) => c.days))
 const FILTERS = new Set<StatementFilter>(['all', 'action', 'archived'])
 
 function isObject(v: unknown): v is Record<string, unknown> {
@@ -82,6 +85,7 @@ function isSavedUi(v: unknown): v is SavedUi {
     isObject(v) &&
     VIEWS.has(v.view as View) &&
     FILTERS.has(v.filter as StatementFilter) &&
+    TABS.has(v.home as Tab | undefined) &&
     (v.openId === null || typeof v.openId === 'string')
   )
 }
@@ -89,7 +93,10 @@ function isSavedUi(v: unknown): v is SavedUi {
 /** Saved settings, keeping only fields we recognize with the right type (missing ones use defaults). */
 export function readSettings(v: unknown): Partial<Settings> | null {
   if (!isObject(v)) return null
-  return typeof v.suggestFolders === 'boolean' ? { suggestFolders: v.suggestFolders } : {}
+  const out: Partial<Settings> = {}
+  if (typeof v.suggestFolders === 'boolean') out.suggestFolders = v.suggestFolders
+  if (REMIND_DAYS.has(v.remindAfterDays as number | null)) out.remindAfterDays = v.remindAfterDays as number | null
+  return out
 }
 
 // ---------- moving the single review saved before Phase 6b ----------

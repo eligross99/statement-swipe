@@ -122,6 +122,9 @@ describe('readSettings', () => {
   it('keeps recognized settings and drops junk, so defaults fill the gaps', () => {
     expect(readSettings({ suggestFolders: false })).toEqual({ suggestFolders: false })
     expect(readSettings({ suggestFolders: 'no', other: 1 })).toEqual({})
+    expect(readSettings({ remindAfterDays: 30 })).toEqual({ remindAfterDays: 30 })
+    expect(readSettings({ remindAfterDays: null })).toEqual({ remindAfterDays: null })
+    expect(readSettings({ remindAfterDays: 5 })).toEqual({})
     expect(readSettings(undefined)).toBeNull()
   })
 })

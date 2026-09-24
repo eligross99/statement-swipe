@@ -13,14 +13,26 @@ interface Props {
 
 type SetAction = Exclude<Action, null>
 
-const OPTIONS: { action: SetAction; hint: string }[] = [
-  { action: 'todo', hint: 'You still need to do something' },
-  { action: 'waiting', hint: 'Waiting on someone else' },
-  { action: 'done', hint: 'Settled, nothing left to do' },
-]
+const ORDER: SetAction[] = ['todo', 'waiting', 'done']
 
-/** Bottom sheet for setting a folder item's status: To do, Waiting, Done, or cleared. */
+/** What each status means, for a filed purchase and for one flagged as possible fraud. */
+const HINTS: Record<'folder' | 'fraud', Record<SetAction, string>> = {
+  folder: {
+    todo: 'You still need to do something',
+    waiting: 'Waiting on someone else',
+    done: 'Settled, nothing left to do',
+  },
+  fraud: {
+    todo: 'You still need to look into it',
+    waiting: 'Waiting to hear back from your bank',
+    done: 'Resolved, nothing left to do',
+  },
+}
+
+/** Bottom sheet for setting a task's status: To do, Waiting, Done, or cleared. Flagged purchases
+ *  use the same statuses, explained in terms of resolving a possible fraud charge. */
 export function StatusSheet({ txn, onPick, onClose }: Props) {
+  const hints = HINTS[txn.status === 'flagged' ? 'fraud' : 'folder']
   return (
     <Sheet id="status-sheet-title" title="Set status" onDismiss={onClose}>
       {(close) => (
@@ -31,7 +43,7 @@ export function StatusSheet({ txn, onPick, onClose }: Props) {
           </p>
 
           <div className="status-options">
-            {OPTIONS.map(({ action, hint }, i) => {
+            {ORDER.map((action, i) => {
               const selected = txn.action === action
               return (
                 <button
@@ -46,7 +58,7 @@ export function StatusSheet({ txn, onPick, onClose }: Props) {
                   <span className="status-option-dot" aria-hidden />
                   <span className="status-option-text">
                     <span className="status-option-label">{ACTION_LABELS[action]}</span>
-                    <span className="status-option-hint">{hint}</span>
+                    <span className="status-option-hint">{hints[action]}</span>
                   </span>
                   {selected && <Check size={20} className="status-option-check" aria-hidden />}
                 </button>

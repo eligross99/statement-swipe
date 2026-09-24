@@ -1,11 +1,12 @@
-import { ChevronDown, Folder, FolderOpen, Pencil } from 'lucide-react'
+import { Folder, FolderOpen } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
 import { formatDate } from '../lib/dates'
 import { hasCategory, plural, usd } from '../lib/format'
-import { ACTION_LABELS, openItems, pileItems, stillToActOn, sumAmounts } from '../lib/review'
+import { openItems, pileItems, stillToActOn, sumAmounts } from '../lib/review'
 import type { Action, Pile, Transaction } from '../types'
 import { StatusSheet } from './StatusSheet'
+import { TaskControls } from './TaskControls'
 import './FolderDetail.css'
 
 interface Props {
@@ -13,15 +14,29 @@ interface Props {
   txns: Transaction[]
   onSetAction: (txnId: string, action: Action) => void
   onSetNote: (txnId: string, note: string) => void
+  /** A purchase to bring into view and highlight once (when opened from Tasks). */
+  focusId?: string | null
 }
+
+/** A gentle pulse on a row, so it's clear which purchase changed. */
+const PULSE: Keyframe[] = [{ transform: 'scale(1)' }, { transform: 'scale(1.025)' }, { transform: 'scale(1)' }]
 
 /** One folder's purchases, each with a status and a note. The header's back button returns
  *  to all folders. */
-export function FolderDetail({ pile, txns, onSetAction, onSetNote }: Props) {
+export function FolderDetail({ pile, txns, onSetAction, onSetNote, focusId }: Props) {
   const [noteOpenId, setNoteOpenId] = useState<string | null>(null)
   const [statusForId, setStatusForId] = useState<string | null>(null)
   const rows = useRef(new Map<string, HTMLLIElement>())
   const animate = useAnimate()
+
+  // Arriving from Tasks: scroll to that purchase, then pulse it once the screen has slid in.
+  useEffect(() => {
+    const el = (focusId && rows.current.get(focusId)) || null
+    el?.scrollIntoView?.({ block: 'center' }) // missing in the test environment
+    void animate(el, [{ transform: 'scale(1)' }, { transform: 'scale(1)', offset: 0.45 }, ...PULSE.slice(1)], {
+      duration: 800,
+    })
+  }, [focusId, animate])
   if (!pile) return null
 
   const items = pileItems(txns, pile.id)
@@ -70,72 +85,35 @@ export function FolderDetail({ pile, txns, onSetAction, onSetNote }: Props) {
           {!settled && <p className="muted fd-hint">Set a status to track what’s left. Add a note for the details.</p>}
 
           <ul className="fd-list">
-            {items.map((t) => {
-              const noteOpen = noteOpenId === t.id
-              return (
-                <li
-                  key={t.id}
-                  className="panel fd-item"
-                  ref={(el) => {
-                    if (el) rows.current.set(t.id, el)
-                    else rows.current.delete(t.id)
-                  }}
-                >
-                  <div className="fd-item-top">
-                    <div className="fd-item-main">
-                      <span className="fd-item-desc">{t.desc}</span>
-                      <span className="fd-item-meta">
-                        <span>{formatDate(t.date)}</span>
-                        {hasCategory(t.cat) && <span className="fd-item-cat">{t.cat}</span>}
-                      </span>
-                    </div>
-                    <span className="fd-item-amount num">${usd(t.amount)}</span>
+            {items.map((t) => (
+              <li
+                key={t.id}
+                className="panel fd-item"
+                ref={(el) => {
+                  if (el) rows.current.set(t.id, el)
+                  else rows.current.delete(t.id)
+                }}
+              >
+                <div className="fd-item-top">
+                  <div className="fd-item-main">
+                    <span className="fd-item-desc">{t.desc}</span>
+                    <span className="fd-item-meta">
+                      <span>{formatDate(t.date)}</span>
+                      {hasCategory(t.cat) && <span className="fd-item-cat">{t.cat}</span>}
+                    </span>
                   </div>
+                  <span className="fd-item-amount num">${usd(t.amount)}</span>
+                </div>
 
-                  <div className="fd-item-controls">
-                    <button
-                      type="button"
-                      className={`status-pill${t.action ? ` status-pill--${t.action}` : ''}`}
-                      onClick={() => setStatusForId(t.id)}
-                      aria-haspopup="dialog"
-                      aria-label={`Status: ${t.action ? ACTION_LABELS[t.action] : 'not set'}. Change status for ${t.desc}`}
-                    >
-                      <span className="status-dot" aria-hidden />
-                      {t.action ? ACTION_LABELS[t.action] : 'Set status'}
-                      <ChevronDown size={16} aria-hidden />
-                    </button>
-                    {!noteOpen && (
-                      <button
-                        type="button"
-                        className={`note-pill${t.note ? ' has-note' : ''}`}
-                        onClick={() => setNoteOpenId(t.id)}
-                      >
-                        <Pencil size={14} /> {t.note ? 'Edit note' : 'Add note'}
-                      </button>
-                    )}
-                  </div>
-
-                  {noteOpen ? (
-                    <NoteEditor
-                      value={t.note}
-                      label={`Note for ${t.desc}`}
-                      onChange={(note) => onSetNote(t.id, note)}
-                      onDone={() => {
-                        // Tidy stray spaces/blank lines so an "empty" note really is empty.
-                        if (t.note.trim() !== t.note) onSetNote(t.id, t.note.trim())
-                        setNoteOpenId(null)
-                      }}
-                    />
-                  ) : (
-                    t.note && (
-                      <button type="button" className="fd-note" onClick={() => setNoteOpenId(t.id)} aria-label={`Edit note: ${t.note}`}>
-                        {t.note}
-                      </button>
-                    )
-                  )}
-                </li>
-              )
-            })}
+                <TaskControls
+                  txn={t}
+                  noteOpen={noteOpenId === t.id}
+                  onNoteOpen={(open) => setNoteOpenId(open ? t.id : null)}
+                  onStatus={() => setStatusForId(t.id)}
+                  onSetNote={(note) => onSetNote(t.id, note)}
+                />
+              </li>
+            ))}
           </ul>
         </>
       )}
@@ -147,70 +125,10 @@ export function FolderDetail({ pile, txns, onSetAction, onSetNote }: Props) {
           onPick={(action) => {
             onSetAction(statusFor.id, action)
             setStatusForId(null)
-            // A gentle pulse on the row, so it's clear which purchase changed.
-            void animate(rows.current.get(statusFor.id) ?? null, [
-              { transform: 'scale(1)' },
-              { transform: 'scale(1.025)' },
-              { transform: 'scale(1)' },
-            ])
+            void animate(rows.current.get(statusFor.id) ?? null, PULSE)
           }}
         />
       )}
-    </div>
-  )
-}
-
-interface NoteEditorProps {
-  value: string
-  label: string
-  onChange: (note: string) => void
-  onDone: () => void
-}
-
-/** Sets a textarea's height to fit its text, so the whole note is always visible while typing. */
-function fitHeight(el: HTMLTextAreaElement) {
-  el.style.height = 'auto'
-  // scrollHeight leaves out the borders; add them back or a scrollbar appears.
-  el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`
-}
-
-/** A note field that grows with its text and opens with the cursor at the end. */
-function NoteEditor({ value, label, onChange, onDone }: NoteEditorProps) {
-  const ref = useRef<HTMLTextAreaElement>(null)
-
-  // Once, when the editor opens: focus it, put the cursor after the existing text, and size it.
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    el.focus()
-    el.setSelectionRange(el.value.length, el.value.length)
-    fitHeight(el)
-  }, [])
-
-  return (
-    <div className="fd-note-edit">
-      <textarea
-        ref={ref}
-        className="text-input fd-textarea"
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value)
-          fitHeight(e.target)
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') {
-            e.stopPropagation()
-            onDone()
-          }
-        }}
-        rows={2}
-        maxLength={500}
-        aria-label={label}
-        placeholder="e.g. ask the ski trip group to Venmo their share"
-      />
-      <button type="button" className="btn btn--pile btn--auto fd-note-done" onClick={onDone}>
-        Save
-      </button>
     </div>
   )
 }

@@ -296,7 +296,7 @@ describe('App', () => {
     await user.click(toggle)
     expect(toggle).not.toBeChecked()
     await waitFor(() =>
-      expect(saveLibrary).toHaveBeenLastCalledWith([], [], expect.anything(), { suggestFolders: false }),
+      expect(saveLibrary).toHaveBeenLastCalledWith([], [], expect.anything(), expect.objectContaining({ suggestFolders: false })),
     )
 
     await user.click(screen.getByRole('button', { name: 'Back to statements' }))
@@ -414,7 +414,7 @@ describe('App', () => {
         [expect.objectContaining({ session: expect.objectContaining({ index: 1 }) })],
         [],
         expect.objectContaining({ view: 'review' }),
-        { suggestFolders: true },
+        { suggestFolders: true, remindAfterDays: 14 },
       ),
     )
     const [put] = vi.mocked(saveLibrary).mock.lastCall!
@@ -436,5 +436,106 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: 'Undo last action' }))
     expect(within(topCard()).getByText('FIRST SHOP')).toBeInTheDocument()
     expect(screen.getByText('0 of 2 reviewed')).toBeInTheDocument()
+  })
+
+  describe('Tasks', () => {
+    const DAY = 24 * 60 * 60 * 1000
+
+    /** A finished statement: FLAGGED SHOP flagged 20 days ago, FILED SHOP in "Split" since yesterday. */
+    function withTasks(): Statement {
+      const st = savedStatement({ name: 'April' })
+      st.session = {
+        ...st.session,
+        index: 2,
+        screen: 'summary',
+        piles: [{ id: 'f_split', name: 'Split' }],
+        txns: [
+          { ...purchase('a', 'FLAGGED SHOP', 'flagged'), actionAt: Date.now() - 20 * DAY },
+          { ...purchase('b', 'FILED SHOP', 'piled'), pileId: 'f_split', actionAt: Date.now() - DAY },
+        ],
+      }
+      return st
+    }
+
+    async function openTasks() {
+      vi.mocked(loadLibrary).mockResolvedValue({ statements: [withTasks()], ui: null, settings: null })
+      const user = userEvent.setup()
+      render(<App />)
+      await user.click(await screen.findByRole('button', { name: 'Tasks, 1 overdue' }))
+      return user
+    }
+
+    it('lists flagged and filed purchases from every statement, marking old ones overdue', async () => {
+      await openTasks()
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Tasks')
+      const fraud = screen.getByRole('region', { name: /Possible fraud/ })
+      expect(within(fraud).getByText('FLAGGED SHOP')).toBeInTheDocument()
+      expect(within(fraud).getByText('Overdue')).toBeInTheDocument()
+      const todo = screen.getByRole('region', { name: /To do/ })
+      expect(within(todo).getByText('FILED SHOP')).toBeInTheDocument()
+      expect(within(todo).getByText('Split')).toBeInTheDocument()
+      expect(within(todo).queryByText('Overdue')).not.toBeInTheDocument()
+    })
+
+    it('resolving a flag moves it to Done and clears the statement', async () => {
+      const user = await openTasks()
+      await user.click(screen.getByRole('button', { name: /Change status for FLAGGED SHOP/ }))
+      const menu = screen.getByRole('dialog', { name: 'Set status' })
+      expect(within(menu).getByText('Waiting to hear back from your bank')).toBeInTheDocument()
+      await user.click(within(menu).getByRole('button', { name: /^Done/ }))
+
+      const done = await screen.findByRole('region', { name: /Done/ })
+      expect(within(done).getByText('FLAGGED SHOP')).toBeInTheDocument()
+      expect(within(done).getByText('Flagged')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Tasks' })).toBeInTheDocument() // no overdue left
+
+      // Finish the filed one too: the statement has nothing left to do.
+      await user.click(screen.getByRole('button', { name: /Change status for FILED SHOP/ }))
+      await user.click(within(screen.getByRole('dialog', { name: 'Set status' })).getByRole('button', { name: /^Done/ }))
+      expect(await screen.findByText('You’re all caught up')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Statements' }))
+      expect(screen.getByText('Clear')).toBeInTheDocument()
+    })
+
+    it('opens a filed purchase in its folder, and Back returns to Tasks', async () => {
+      const user = await openTasks()
+      await user.click(screen.getByText('FILED SHOP'))
+      expect(screen.getByRole('heading', { level: 2, name: 'Split' })).toBeInTheDocument()
+      expect(screen.queryByRole('navigation', { name: 'Main' })).not.toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Back to tasks' }))
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Tasks')
+    })
+
+    it('opens a flagged purchase in Look closer, to track it with a status and note', async () => {
+      const user = await openTasks()
+      await user.click(screen.getByText('FLAGGED SHOP'))
+      const view = screen.getByRole('dialog', { name: 'FLAGGED SHOP' })
+      expect(within(view).getByRole('heading', { name: 'Where it stands' })).toBeInTheDocument()
+      await user.click(within(view).getByRole('button', { name: 'Add note' }))
+      await user.type(within(view).getByRole('textbox', { name: 'Note for FLAGGED SHOP' }), 'Claim 4471')
+      await user.click(within(view).getByRole('button', { name: 'Save' }))
+      await user.click(within(view).getByRole('button', { name: 'Back' }))
+      expect(screen.getByText('Claim 4471')).toBeInTheDocument()
+    })
+
+    it('says what to do when there are no tasks', async () => {
+      const user = userEvent.setup()
+      render(<App />)
+      await user.click(await screen.findByRole('button', { name: 'Tasks' }))
+      expect(screen.getByRole('heading', { name: 'Nothing to follow up on' })).toBeInTheDocument()
+    })
+  })
+
+  it('changes when tasks count as overdue, in Settings', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(await screen.findByRole('button', { name: 'Settings' }))
+    const select = screen.getByRole('combobox', { name: 'Remind me after' })
+    expect(select).toHaveValue('14')
+    await user.selectOptions(select, 'Off')
+    expect(screen.getByText('Tasks are never marked Overdue.')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(saveLibrary).toHaveBeenLastCalledWith([], [], expect.anything(), expect.objectContaining({ remindAfterDays: null })),
+    )
   })
 })

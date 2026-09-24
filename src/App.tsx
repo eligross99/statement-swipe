@@ -9,12 +9,16 @@ import { InvestigateView } from './components/InvestigateView'
 import { SettingsScreen } from './components/SettingsScreen'
 import { StatementsScreen } from './components/StatementsScreen'
 import { Summary } from './components/Summary'
+import { TabBar } from './components/TabBar'
+import { TasksScreen } from './components/TasksScreen'
 import { useLibrary } from './hooks/useLibrary'
+import { useNow } from './hooks/useNow'
 import { makeId } from './lib/format'
-import { openStatement, type LibraryAction } from './lib/library'
+import { openStatement, type LibraryAction, type Tab } from './lib/library'
 import { DURATION, pause, screenEnter, type Enter, type Place } from './lib/motion'
 import { currentTxn, type ReviewEvent } from './lib/review'
 import { defaultName, pastFolderNames, statementPeriod, uniqueName } from './lib/statements'
+import { allTasks, overdueCount, type Task } from './lib/tasks'
 import type { Screen, Session, Status, Transaction } from './types'
 
 const CENTER: Offset = { x: 0, y: 0 }
@@ -30,7 +34,7 @@ const NO_SESSION: Session = { txns: [], index: 0, piles: [], screen: 'deck', ope
 
 export default function App() {
   const library = useLibrary()
-  const { statements, view, filter, settings, ready, dispatch: send } = library
+  const { statements, view, home, filter, settings, ready, dispatch: send } = library
   const statement = openStatement(library)
   const session = statement?.session ?? NO_SESSION
   const history = statement?.history ?? []
@@ -46,13 +50,17 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   // Bumped by every jump, so a delayed step from before the jump knows to stop.
   const generation = useRef(0)
+  // The purchase a folder was opened for from Tasks: highlighted there, and Back returns to Tasks.
+  const [taskFocus, setTaskFocus] = useState<string | null>(null)
+  const now = useNow()
+  const overdue = overdueCount(allTasks(statements, now, settings.remindAfterDays))
 
   const current = currentTxn(session)
   const investigating = session.txns.find((t) => t.id === investigatingId) ?? null
 
   // Keep showing the deck until the last card has flown off; then the summary rises in.
   const screen: Screen = session.screen === 'summary' && leaving ? 'deck' : session.screen
-  const place: Place = statement ? screen : view === 'review' ? 'statements' : view
+  const place: Place = statement ? screen : view === 'review' ? home : view
   // How the current screen entered. Worked out while rendering, from the screen shown before.
   const [shown, setShown] = useState<{ place: Place | null; enter: Enter }>({ place: null, enter: 'fade' })
   if (ready && shown.place !== place) {
@@ -88,6 +96,7 @@ export default function App() {
     setReturning(null)
     setLean(null)
     setBusy(false)
+    setTaskFocus(null)
   }
 
   const jump = (event: ReviewEvent) => {
@@ -95,7 +104,7 @@ export default function App() {
     dispatch(event)
   }
 
-  /** Moves between the app's places (Statements, a review, import, settings). */
+  /** Moves between the app's places (Statements, Tasks, a review, import, settings). */
   const go = (event: LibraryAction) => {
     settle()
     send(event)
@@ -116,25 +125,40 @@ export default function App() {
     if (txn) setReturning({ txnId: txn.id, dir: flewTo(txn.status) })
   }
 
-  const home = () => go({ type: 'go', view: 'statements' })
+  const goTab = (tab: Tab) => go({ type: 'go', view: tab })
+  /** Back to the tab the user came from. */
+  const back: HeaderButton = {
+    kind: 'back',
+    label: home === 'tasks' ? 'Back to tasks' : 'Back to statements',
+    onClick: () => goTab(home),
+  }
+  const settingsButton: HeaderButton = { kind: 'settings', onClick: () => go({ type: 'go', view: 'settings' }) }
+
+  /** A change to a task's purchase, in whichever statement it belongs to. */
+  const changeTask = (task: Task, event: ReviewEvent) => send({ type: 'review', id: task.statement.id, event })
 
   let header: { title: string; left: HeaderButton; right: HeaderButton }
   if (place === 'statements') {
-    header = { title: 'Statements', left: null, right: { kind: 'settings', onClick: () => go({ type: 'go', view: 'settings' }) } }
+    header = { title: 'Statements', left: null, right: settingsButton }
+  } else if (place === 'tasks') {
+    header = { title: 'Tasks', left: null, right: settingsButton }
   } else if (place === 'import') {
-    header = { title: 'New statement', left: { kind: 'back', label: 'Back to statements', onClick: home }, right: null }
+    header = { title: 'New statement', left: back, right: null }
   } else if (place === 'settings') {
-    header = { title: 'Settings', left: { kind: 'back', label: 'Back to statements', onClick: home }, right: null }
+    header = { title: 'Settings', left: back, right: null }
   } else if (place === 'pile') {
     header = {
       title: session.piles.find((pl) => pl.id === session.openPile)?.name ?? '',
-      left: { kind: 'back', label: 'Back to all folders', onClick: () => dispatch({ type: 'closePile' }) },
+      // Opened from Tasks: straight back there. Otherwise back to the statement's summary.
+      left: taskFocus
+        ? back
+        : { kind: 'back', label: 'Back to all folders', onClick: () => dispatch({ type: 'closePile' }) },
       right: null,
     }
   } else {
     header = {
       title: statement?.name ?? '',
-      left: { kind: 'back', label: 'Back to statements', onClick: home },
+      left: back,
       right: { kind: 'undo', enabled: history.length > 0, onClick: undo },
     }
   }
@@ -158,6 +182,22 @@ export default function App() {
               onRename={(id, name) => send({ type: 'rename', id, name })}
               onArchive={(id, archived) => send({ type: 'archive', id, archived })}
               onDelete={(id) => send({ type: 'delete', id })}
+            />
+          )}
+
+          {place === 'tasks' && (
+            <TasksScreen
+              statements={statements}
+              now={now}
+              remindAfterDays={settings.remindAfterDays}
+              onOpenFolder={(task) => {
+                if (!task.pile) return
+                go({ type: 'openFolder', id: task.statement.id, pileId: task.pile.id })
+                setTaskFocus(task.txn.id)
+              }}
+              onSetAction={(task, action) => changeTask(task, { type: 'setAction', txnId: task.txn.id, action })}
+              onSetNote={(task, note) => changeTask(task, { type: 'setNote', txnId: task.txn.id, note })}
+              onRecognize={(task) => changeTask(task, { type: 'approveFlagged', txnId: task.txn.id })}
             />
           )}
 
@@ -210,9 +250,14 @@ export default function App() {
               txns={session.txns}
               onSetAction={(txnId, action) => dispatch({ type: 'setAction', txnId, action })}
               onSetNote={(txnId, note) => dispatch({ type: 'setNote', txnId, note })}
+              focusId={taskFocus}
             />
           )}
         </div>
+      )}
+
+      {ready && (place === 'statements' || place === 'tasks') && (
+        <TabBar tab={place} overdue={overdue} onGo={goTab} />
       )}
 
       {investigating && (
@@ -230,6 +275,8 @@ export default function App() {
             setInvestigatingId(null)
             dispatch({ type: 'approveFlagged', txnId: investigating.id })
           }}
+          onSetAction={(action) => dispatch({ type: 'setAction', txnId: investigating.id, action })}
+          onSetNote={(note) => dispatch({ type: 'setNote', txnId: investigating.id, note })}
         />
       )}
 

@@ -20,6 +20,12 @@ describe('screenEnter', () => {
     expect(screenEnter('summary', 'deck')).toBe('fade')
   })
 
+  it('fades between tabs, and treats Tasks like Statements as a starting point', () => {
+    expect(screenEnter('statements', 'tasks')).toBe('fade')
+    expect(screenEnter('tasks', 'pile')).toBe('push')
+    expect(screenEnter('pile', 'tasks')).toBe('pop')
+  })
+
   it('does nothing when the screen stays the same', () => {
     expect(screenEnter('deck', 'deck')).toBe('none')
   })

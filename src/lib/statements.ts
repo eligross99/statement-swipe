@@ -2,7 +2,7 @@
 // sorting for the Statements screen. Plain functions with no React, so they're easy to test.
 
 import type { Statement, Transaction } from '../types'
-import { pileItems, reviewedCount } from './review'
+import { isOpenFlag, pileItems, reviewedCount } from './review'
 
 const MONTHS = [
   'January',
@@ -55,6 +55,7 @@ export interface Progress {
   total: number
   /** Purchases not yet reviewed. */
   left: number
+  /** Flagged purchases not yet resolved. */
   flagged: number
   /** Filed purchases marked To do, or with no status yet. */
   todo: number
@@ -70,7 +71,7 @@ export function progress(st: Statement): Progress {
     stage: reviewed === 0 ? 'new' : reviewed < txns.length ? 'progress' : 'done',
     total: txns.length,
     left: txns.length - reviewed,
-    flagged: txns.filter((t) => t.status === 'flagged').length,
+    flagged: txns.filter(isOpenFlag).length,
     todo: filed.filter((t) => t.action === null || t.action === 'todo').length,
     waiting: filed.filter((t) => t.action === 'waiting').length,
   }

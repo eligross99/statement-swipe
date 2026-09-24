@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { plural } from '../lib/format'
 import type { Settings } from '../lib/library'
 import { isStoragePersisted } from '../lib/storage'
+import { REMIND_CHOICES } from '../lib/tasks'
 import { ConfirmSheet } from './ConfirmSheet'
 import './SettingsScreen.css'
 
@@ -13,7 +14,7 @@ interface Props {
   onEraseAll: () => void
 }
 
-/** Filing preferences, About & privacy, and erasing everything this app has saved. */
+/** Filing and Tasks preferences, About & privacy, and erasing everything this app has saved. */
 export function SettingsScreen({ statementCount, settings, onChange, onEraseAll }: Props) {
   const [confirming, setConfirming] = useState(false)
   // Whether the browser promised to keep our data. Checked once; null until known or if it can't say.
@@ -49,6 +50,35 @@ export function SettingsScreen({ statementCount, settings, onChange, onEraseAll 
           <p id="suggest-folders-help" className="muted">
             When you file a purchase, names like “Taxes” that you’ve used before are one tap away. Each statement
             still starts with no folders, and folders are never shared between statements.
+          </p>
+        </div>
+      </section>
+
+      <section className="settings-section">
+        <h2 className="section-label">Tasks</h2>
+        <div className="panel settings-panel">
+          <div className="settings-row">
+            <label htmlFor="remind-after">Remind me after</label>
+            <select
+              id="remind-after"
+              className="settings-select"
+              aria-describedby="remind-after-help"
+              value={settings.remindAfterDays ?? 'off'}
+              onChange={(e) =>
+                onChange({ remindAfterDays: e.target.value === 'off' ? null : Number(e.target.value) })
+              }
+            >
+              {REMIND_CHOICES.map(({ days, label }) => (
+                <option key={label} value={days ?? 'off'}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p id="remind-after-help" className="muted">
+            {settings.remindAfterDays === null
+              ? 'Tasks are never marked Overdue.'
+              : 'Open tasks you haven’t touched for this long are marked Overdue, and the Tasks tab shows how many.'}
           </p>
         </div>
       </section>
