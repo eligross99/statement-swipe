@@ -139,6 +139,24 @@ p {
   width: auto;
 }
 
+/* A quiet text button for small extras, like "Show all". */
+.btn--quiet {
+  min-height: var(--tap-min);
+  background: transparent;
+  color: var(--brand);
+}
+
+/* A loading spinner. Stays still for people who ask for less motion (see index.css). */
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .btn-row {
   display: flex;
   flex-wrap: wrap; /* side by side normally; stacked when large text can't fit */

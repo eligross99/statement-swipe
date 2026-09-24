@@ -3,7 +3,7 @@ import { useRef, useState } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
 import { useEscape } from '../hooks/useEscape'
 import { formatDate } from '../lib/dates'
-import { usd } from '../lib/format'
+import { hasCategory, usd } from '../lib/format'
 import type { Transaction } from '../types'
 import { Sheet } from './Sheet'
 import './InvestigateView.css'
@@ -61,7 +61,7 @@ export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag, onR
 
         <dl className="panel investigate-fields">
           <Field label="Transaction date" value={formatDate(txn.date, 'long')} />
-          <Field label="Category" value={txn.cat} />
+          <Field label="Category" value={hasCategory(txn.cat) ? txn.cat : 'Not in statement'} />
           <Field label="Location" value={txn.loc || 'Not in statement'} />
           <Field label="Statement text" value={txn.desc} mono />
         </dl>

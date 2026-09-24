@@ -12,10 +12,12 @@ export const EASE_TRAVEL = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
 export const EASE_FLY = 'cubic-bezier(0.35, 0.2, 0.3, 1)'
 
 export const DURATION = {
-  /** A card flying off the deck. */
-  fly: 600,
+  /** A card flying off the deck. Eli's phone tests: 400 flew off too fast, 600 still a bit fast. */
+  fly: 700,
   /** A card flying back in on undo. */
   flyBack: 400,
+  /** A list growing or shrinking to show more or fewer rows (e.g. "Show all"). */
+  reveal: 400,
   /** A full-screen view or sheet sliding away. */
   exit: 280,
   /** Quick fade used instead of movement when Reduce Motion is on. */

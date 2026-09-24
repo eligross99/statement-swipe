@@ -2,7 +2,7 @@ import { ChevronDown, Folder, FolderOpen, Pencil } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
 import { formatDate } from '../lib/dates'
-import { plural, usd } from '../lib/format'
+import { hasCategory, plural, usd } from '../lib/format'
 import { ACTION_LABELS, openItems, pileItems, stillToActOn, sumAmounts } from '../lib/review'
 import type { Action, Pile, Transaction } from '../types'
 import { StatusSheet } from './StatusSheet'
@@ -86,7 +86,7 @@ export function FolderDetail({ pile, txns, onSetAction, onSetNote }: Props) {
                       <span className="fd-item-desc">{t.desc}</span>
                       <span className="fd-item-meta">
                         <span>{formatDate(t.date)}</span>
-                        {t.cat && t.cat !== '—' && <span className="fd-item-cat">{t.cat}</span>}
+                        {hasCategory(t.cat) && <span className="fd-item-cat">{t.cat}</span>}
                       </span>
                     </div>
                     <span className="fd-item-amount num">${usd(t.amount)}</span>

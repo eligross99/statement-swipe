@@ -2,7 +2,7 @@ import { Check, Layers, Search } from 'lucide-react'
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
 import { formatDate } from '../lib/dates'
-import { usd } from '../lib/format'
+import { hasCategory, usd } from '../lib/format'
 import { DURATION, EASE_FLY, EASE_OUT } from '../lib/motion'
 import { reviewedCount, sumAmounts } from '../lib/review'
 import type { Transaction } from '../types'
@@ -227,7 +227,7 @@ function CardFace({ txn }: { txn: Transaction }) {
   return (
     <div className="card-face">
       <div className="card-face-top">
-        <span className="card-face-cat">{txn.cat}</span>
+        {hasCategory(txn.cat) && <span className="card-face-cat">{txn.cat}</span>}
         <span className="card-face-date num">{formatDate(txn.date)}</span>
       </div>
       <div className="card-face-body">
@@ -235,7 +235,10 @@ function CardFace({ txn }: { txn: Transaction }) {
         <p className="card-face-desc">{txn.desc}</p>
         {txn.loc && <p className="card-face-loc">{txn.loc}</p>}
       </div>
-      <p className="card-face-hint">Swipe right to approve, up to file, left to look closer</p>
+      {/* Lines only break between the three instructions, never inside one. */}
+      <p className="card-face-hint">
+        <span>Swipe right to approve,</span> <span>up to file,</span> <span>left to look closer</span>
+      </p>
     </div>
   )
 }

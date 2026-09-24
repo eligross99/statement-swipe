@@ -3,6 +3,11 @@ export function usd(n: number): string {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
+/** False for the "—" placeholder used when a statement has no categories (every PDF, many CSVs). */
+export function hasCategory(cat: string): boolean {
+  return !!cat && cat !== '—'
+}
+
 /** "1 item", "3 items". */
 export function plural(n: number, word: string): string {
   return `${n} ${word}${n === 1 ? '' : 's'}`

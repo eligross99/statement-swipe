@@ -25,8 +25,8 @@ Local-first: **the user's statement never leaves their device.**
 - React + Vite + **TypeScript** (strict mode)
 - `vite-plugin-pwa`: installable, works offline
 - `idb-keyval`: IndexedDB persistence (switch to Dexie only if we add statement history)
-- `papaparse`: CSV parsing · `lucide-react`: icons
-- Vitest + Testing Library for unit/component tests; Playwright for end-to-end tests later
+- `papaparse`: CSV parsing · `pdfjs-dist`: PDF statements, loaded only when a PDF is picked · `lucide-react`: icons
+- Vitest + Testing Library for unit/component tests; Playwright (WebKit, iPhone-sized) for end-to-end tests in `e2e/`
 - Hosting: Vercel (auto-deploys from GitHub; set up in the PWA-finish phase)
 
 ## Commands
@@ -34,10 +34,17 @@ Local-first: **the user's statement never leaves their device.**
 - `npm run dev`: local dev server
 - `npm run build`: typecheck + production build
 - `npm test`: unit tests (Vitest, once) · `npm run test:watch`: re-run on save
+- `npm run test:e2e`: end-to-end tests of the production build in WebKit (run `npm run build` first;
+  first time on a new machine: `npx playwright install webkit`). Also runs on CI
 - `npm run typecheck`: TypeScript only
 - `npm run preview`: serve the production build (the only mode where the PWA/service worker is active)
 - `npm run lint`: lint (oxlint; `docs/` is excluded)
 - `sh scripts/make-icons.sh`: regenerate the PNG app icons from the SVGs in `public/` (macOS)
+- `node scripts/make-pdf-fixtures.ts`: regenerate the synthetic PDF statements in `tests/fixtures/`
+- `node scripts/pdf-layout.ts private/statement.pdf`: print a real statement's layout with names and
+  numbers masked, for tuning the PDF reader. Real statements go in `private/` (git-ignored), never in `tests/`.
+  `npm test` also checks every PDF in `private/` adds up to its printed total, reporting counts only
+  (`src/sources/pdfSource.private.test.ts`; skipped on CI)
 
 Deploys, CI, security headers, and the phone test checklist: `docs/deploy.md`.
 
@@ -99,6 +106,11 @@ direction: calm, clear, efficient, and signaling financial well-being.
 ## Workflow
 
 - One roadmap phase per branch (`phase-1-scaffold`, `phase-2-port`, …), merged to `main` via a PR.
+  A phase too big to phone-test in one go is split into parts (Phase 6 → `phase-6a-pdf-import`, 6b, 6c),
+  each with its own branch, PR, and phone test.
+- Before asking Eli to phone-test a PR, try it in the iPhone simulator's Safari (see Gotchas). When
+  sending the preview link, remind Eli to pull down to refresh once or twice: the service worker
+  keeps serving the previous version until the new one has downloaded.
 - Small commits with clear messages. Before each commit: `npm run build`, `npm test`, and `npm run lint` pass.
 - Verify UI changes by running the app in the browser at phone width, not just by reading code.
 - At the end of each phase, update the Roadmap status below, then start a fresh Claude session.
@@ -118,11 +130,16 @@ See `docs/handoff.md` §11 for details.
   states, overscroll bounce, larger text that follows the phone's text size, clearer header buttons,
   confirm before replacing a review (see `docs/ideas.md`). Motion helpers: `src/lib/motion.ts`,
   `src/hooks/useAnimate.ts`; bottom sheets share `src/components/Sheet.tsx`
-- [ ] 6. Multiple statements: Dexie storage (migrate the saved session), Statements screen, bottom
-  navigation, Tasks dashboard, light Settings, rename statements + smart default names; easier import:
-  **on-device PDF statements (priority)**, remembered bank setups, OFX/QFX files, Android "Share to"
-  (see `docs/ideas.md`)  ← **next**
-- [ ] 7. Dark mode (follows the phone, override in Settings) and Android haptics first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
+- [ ] 6. Split into three parts, each with its own branch, PR, and phone test (see `docs/ideas.md`):
+  - [x] 6a. **On-device PDF statements** (`PDFSource`, `src/lib/statementPdf.ts`), tuned on Eli's
+    Bank of America PDF via the masked-layout script (totals match to the cent), phone-tested on Eli's
+    iPhone. Also added: Playwright WebKit e2e tests on CI, iPhone-simulator testing, `npm run preview`
+    with the live CSP, "Show all/Show fewer" in the import preview, no "—" category chip
+  - [ ] 6b. Multiple statements: Dexie storage (migrate the saved session), Statements screen, bottom
+    navigation, rename statements + smart default names, light Settings  ← **next.** Start with
+    "Starting Phase 6b" in `docs/ideas.md` (handoff notes and an open question for Eli)
+  - [ ] 6c. Tasks dashboard; remembered bank setups; OFX/QFX files
+- [ ] 7. Dark mode (follows the phone, override in Settings), Android haptics and Android "Share to" first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
   Settings; the standalone "Try the sample statement" button goes away; per-bank download guides
   (see `docs/ideas.md`)
 - [ ] 8. On-device smarts: familiar/new merchant tags, merchant-code decoder, web-search link,
@@ -134,16 +151,25 @@ See `docs/handoff.md` §11 for details.
 
 ## Gotchas
 
-- The Claude desktop app's built-in browser can't register service workers. Verify offline/install
-  behavior in real Chrome or on the phone, not the preview pane.
-- The Content-Security-Policy in `vercel.json` blocks all requests to other servers. It only applies
-  on Vercel (not `npm run dev`/`preview`), so check a PR preview link after adding anything that loads
-  from outside the app.
+- The Claude desktop app's built-in browser pane may or may not register the service worker; when it
+  does, it keeps serving the old build after a rebuild (unregister it and clear caches from the page, then
+  reload). While the pane is hidden its animation clock is frozen, so measure motion in Playwright
+  WebKit instead. Verify offline/install behavior in real Chrome or on the phone.
+- The Content-Security-Policy in `vercel.json` blocks all requests to other servers. `npm run preview`
+  (and so the e2e tests) sends the same headers, read from `vercel.json`; `npm run dev` doesn't.
+- **iPhone Safari lags desktop engines**, even Playwright's WebKit. Example: iOS 26 Safari can't
+  `for await` over a `ReadableStream`, which broke pdfjs's `getTextContent` (we read the stream by hand
+  in `pdfSource.ts`). Before a phone test, try new browser-facing code in the iPhone simulator's Safari
+  (Xcode's iOS 26.5 runtime is installed): serve `npm run preview` and open it with the simulator tool.
 - The prototype has setState-inside-useEffect patterns (flagged by oxlint when it scanned `docs/`).
   Don't copy them; derive values during render or set state from the triggering event.
 - Bank CSVs vary: column names/order, sign conventions (purchases negative vs positive, or split
   debit/credit columns), and preamble rows above the header.
 - Cryptic merchant names (`SQ *DD BAR`) can't be decoded from CSV. Don't fake enrichment.
-- PDF statements are now in scope (Phase 6, on-device), reversing `docs/handoff.md` §12.
+- PDF statements are now in scope (Phase 6a, on-device), reversing `docs/handoff.md` §12. The PDF reader's
+  worker is an `.mjs` file; `vite.config.ts` precaches `mjs` so PDF import works offline.
+- PDF import can't be tested in jsdom (the reader needs a worker). Reader tests run in Vitest's Node
+  environment (`// @vitest-environment node`); screen tests stub `PDFSource.fromData`; `e2e/` runs the
+  real thing in WebKit, and `e2e/private-statement.spec.ts` tries PDFs in `private/` (counts only).
 - Out of scope for now: custom per-folder statuses. Native apps wait for the
   App Store step at the start of Phase 9 (via Capacitor, not a rewrite; ask Eli first).

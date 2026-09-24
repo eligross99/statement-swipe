@@ -105,6 +105,7 @@
 }
 
 .card-face-date {
+  margin-left: auto; /* stays on the right when there's no category chip */
   font-size: min(var(--text-sm), 20px);
   color: var(--text-mute);
 }
@@ -139,11 +140,17 @@
 
 .card-face-hint {
   margin: 0;
-  text-wrap: balance; /* even line lengths: no single word left alone on the last line */
   padding-top: 12px;
   border-top: 1px solid var(--border);
   font-size: min(var(--text-xs), 18px);
   color: var(--text-mute);
+  text-align: center; /* centered, so two balanced lines sit evenly on the card */
+  text-wrap: balance; /* even line lengths: no single word left alone on the last line */
+}
+
+/* Each instruction stays whole: lines only break between them. */
+.card-face-hint span {
+  white-space: nowrap;
 }
 
 /* Directional stamps that fade in while dragging */

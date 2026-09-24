@@ -10,6 +10,7 @@ dev-dist/
 coverage/
 playwright-report/
 test-results/
+playwright/.cache/
 
 # Environment / secrets
 .env
@@ -39,3 +40,6 @@ npm-debug.log*
 *.qfx
 *.pdf
 !tests/fixtures/**/*.csv
+!tests/fixtures/**/*.pdf
+# Real statements for local testing only. Never committed.
+private/
