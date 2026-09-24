@@ -76,7 +76,7 @@ button:not(:disabled):active {
   animation: enter-pop var(--dur-enter) var(--ease-out) backwards;
 }
 .enter-rise {
-  animation: enter-rise 380ms var(--ease-out) backwards;
+  animation: enter-rise 460ms var(--ease-out) backwards;
 }
 
 @keyframes enter-fade {

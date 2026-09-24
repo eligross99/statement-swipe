@@ -11,12 +11,11 @@ interface Props {
   onInspect: (t: Transaction) => void
   onOpenPile: (pileId: string) => void
   onRestart: () => void
-  onNew: () => void
 }
 
 type Tone = 'approve' | 'pile' | 'flag'
 
-export function Summary({ txns, piles, onInspect, onOpenPile, onRestart, onNew }: Props) {
+export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props) {
   const [confirmRestart, setConfirmRestart] = useState(false)
   const total = sumAmounts(txns)
   const flagged = txns.filter((t) => t.status === 'flagged')
@@ -62,7 +61,9 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart, onNew }
           <h3 className="summary-flag-title">
             <ShieldAlert size={16} /> Flagged as possible fraud
           </h3>
-          <p className="muted summary-flag-help">Call the number on the back of your card to dispute these.</p>
+          <p className="muted summary-flag-help">
+            Tap one to look into it. If it still isn’t yours, call the number on the back of your card.
+          </p>
           <div className="panel">
             {flagged.map((t) => (
               <button key={t.id} type="button" className="summary-flag-row" onClick={() => onInspect(t)}>
@@ -118,14 +119,10 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart, onNew }
           </div>
         </div>
       ) : (
-        <div className="btn-row summary-actions">
-          <button type="button" className="btn btn--secondary" onClick={() => setConfirmRestart(true)}>
-            Start over
-          </button>
-          <button type="button" className="btn btn--primary" onClick={onNew}>
-            New statement
-          </button>
-        </div>
+        // A new statement starts from the button at the top right.
+        <button type="button" className="btn btn--secondary summary-actions" onClick={() => setConfirmRestart(true)}>
+          Start over
+        </button>
       )}
     </div>
   )

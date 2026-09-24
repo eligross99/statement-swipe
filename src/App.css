@@ -46,6 +46,11 @@
   color: var(--text-mute);
 }
 
+/* No single word stranded alone on the last line of a paragraph. */
+p {
+  text-wrap: pretty;
+}
+
 .section-label {
   margin: 0 0 10px;
   font-size: var(--text-md);
@@ -143,6 +148,7 @@
 .btn-row > .btn {
   flex: 1 1 9rem;
   width: auto;
+  white-space: nowrap; /* a label never breaks mid-button; the buttons stack instead */
 }
 
 .back-link {
@@ -197,6 +203,7 @@
   z-index: 40;
   background: var(--bg);
   overflow-y: auto;
+  overscroll-behavior-y: contain;
   box-shadow: var(--shadow-sheet);
   animation: overlay-in 360ms var(--ease-out) backwards;
 }
@@ -210,7 +217,8 @@
 .overlay-inner {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  /* One pixel taller than the screen, so it always scrolls and gets the iPhone bounce. */
+  min-height: calc(100% + 1px);
   max-width: var(--app-max-width);
   margin: 0 auto;
   /* Clear the notch/status bar and the home indicator when installed on a phone. */

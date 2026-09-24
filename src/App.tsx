@@ -16,7 +16,7 @@ import type { Screen, Status } from './types'
 const CENTER: Offset = { x: 0, y: 0 }
 /** Where the top card rests while Look closer is open (leaning left) or the folder sheet is (lifted). */
 const LEAN_LEFT: Offset = { x: -26, y: 0 }
-const LEAN_UP: Offset = { x: 0, y: -34 }
+const LEAN_UP: Offset = { x: 0, y: -64 }
 
 /** Which way a card flew off the deck, from the status it was given. */
 const flewTo = (status: Status): Direction => (status === 'approved' ? 'right' : status === 'flagged' ? 'left' : 'up')
@@ -98,7 +98,13 @@ export default function App() {
   return (
     <div className="app">
       <Header
-        title={session.screen === 'import' ? 'New statement' : session.label}
+        title={
+          session.screen === 'import'
+            ? 'New statement'
+            : session.screen === 'pile'
+              ? (session.piles.find((pl) => pl.id === session.openPile)?.name ?? session.label)
+              : session.label
+        }
         left={left}
         onNew={session.screen === 'import' ? null : goImport}
       />
@@ -149,7 +155,6 @@ export default function App() {
               onInspect={(t) => setInvestigatingId(t.id)}
               onOpenPile={(pileId) => dispatch({ type: 'openPile', pileId })}
               onRestart={() => jump({ type: 'restart' })}
-              onNew={goImport}
             />
           )}
 

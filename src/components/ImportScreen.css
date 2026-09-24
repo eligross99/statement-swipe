@@ -236,16 +236,39 @@
   text-align: center;
 }
 
-/* The saved review, shown above the file picker with a clear way back to it. */
+/* A quiet note that the review is saved, with a way back to it (the header's back arrow also works). */
 .import-current {
-  margin: 4px 0 20px;
-  padding: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 8px;
+  margin: 4px 0 16px;
+  padding: 2px 4px 2px 14px;
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
 }
 
-.import-current p {
-  margin: 0 0 12px;
+.import-current-text {
+  min-width: 0;
+  color: var(--text-mute);
   font-size: var(--text-sm);
-  line-height: 1.45;
+}
+
+.import-current-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: var(--tap-min);
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--brand-strong);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .import-confirm-text {

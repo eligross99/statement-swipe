@@ -27,6 +27,10 @@
 }
 
 .fd-progress {
+  /* Stays at the top while scrolling a long folder, so what's left is always in view. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
   margin-bottom: 14px;
   padding: 16px;
 }

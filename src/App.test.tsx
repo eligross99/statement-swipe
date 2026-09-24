@@ -110,7 +110,7 @@ describe('App', () => {
 
     expect(screen.getByRole('heading', { name: 'Review complete' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /Ski trip/ }))
-    expect(screen.getByRole('heading', { name: 'Ski trip' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Ski trip' })).toBeInTheDocument()
 
     expect(screen.getByText('Still to act on')).toBeInTheDocument()
 

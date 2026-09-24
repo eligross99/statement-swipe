@@ -1,3 +1,9 @@
+/* Rise a beat after the tap, so the card lifting behind it is seen first. */
+.sheet-scrim:has(.folder-sheet-sub),
+.sheet:has(.folder-sheet-sub) {
+  animation-delay: 90ms;
+}
+
 .folder-sheet-sub {
   margin: 0 0 14px;
   font-size: var(--text-sm);

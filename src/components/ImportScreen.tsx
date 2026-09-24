@@ -118,19 +118,10 @@ export function ImportScreen({ current, onResume, onStart }: Props) {
     return (
       <div className={`screen${cameBack ? ' enter-pop' : ''}`} key="choose">
         {current && (
-          <div className="panel import-current">
-            <p>
-              Your review of <strong>“{current.label}”</strong> is saved
-              {current.reviewed < current.total && (
-                <>
-                  {' '}
-                  (<span className="num">{current.reviewed}</span> of {plural(current.total, 'purchase')} reviewed)
-                </>
-              )}
-              .
-            </p>
-            <button type="button" className="btn btn--secondary" onClick={onResume}>
-              <ChevronLeft size={18} /> Back to my review
+          <div className="import-current">
+            <span className="import-current-text">“{current.label}” is saved</span>
+            <button type="button" className="import-current-back" onClick={onResume}>
+              <ChevronLeft size={16} aria-hidden /> Back to it
             </button>
           </div>
         )}

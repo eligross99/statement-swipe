@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from '
 import { useAnimate } from '../hooks/useAnimate'
 import { formatDate } from '../lib/dates'
 import { usd } from '../lib/format'
-import { DURATION, EASE_OUT } from '../lib/motion'
+import { DURATION, EASE_FLY, EASE_OUT } from '../lib/motion'
 import { reviewedCount, sumAmounts } from '../lib/review'
 import type { Transaction } from '../types'
 import './Deck.css'
@@ -83,7 +83,7 @@ export function Deck(props: Props) {
         { transform: cardTransform(CENTER), opacity: 1 },
       ],
       // Lands firmly: most of the travel happens early, then it settles into place.
-      { duration: DURATION.fly, easing: EASE_OUT },
+      { duration: DURATION.flyBack, easing: EASE_OUT },
       [{ opacity: 0 }, { opacity: 1 }],
     )
   }, [returning, topId, animate])
@@ -274,10 +274,10 @@ function FlyingCard({ card, onDone }: { card: LeavingCard; onDone: () => void })
       ref.current,
       [
         { transform: from, opacity: 1 },
-        { opacity: 1, offset: 0.7 },
+        { opacity: 1, offset: 0.75 },
         { transform: offscreen(card.dir, card.from), opacity: 0 },
       ],
-      { duration: DURATION.fly, hold: true },
+      { duration: DURATION.fly, easing: EASE_FLY, hold: true },
       [
         { transform: from, opacity: 1 },
         { transform: from, opacity: 0 },

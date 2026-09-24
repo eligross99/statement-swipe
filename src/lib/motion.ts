@@ -8,10 +8,14 @@ export const EASE_OUT = 'cubic-bezier(0.22, 0.8, 0.36, 1)'
 /** A softer decelerating curve for things that travel off screen (flying cards, sheets and views
  *  sliding away). Spreads the movement out so the eye can follow where things went. */
 export const EASE_TRAVEL = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+/** A card flying off the deck: a gentle start, so it doesn't vanish the moment the finger lifts. */
+export const EASE_FLY = 'cubic-bezier(0.35, 0.2, 0.3, 1)'
 
 export const DURATION = {
-  /** A card flying off the deck, or flying back in on undo. */
-  fly: 400,
+  /** A card flying off the deck. */
+  fly: 600,
+  /** A card flying back in on undo. */
+  flyBack: 400,
   /** A full-screen view or sheet sliding away. */
   exit: 280,
   /** Quick fade used instead of movement when Reduce Motion is on. */

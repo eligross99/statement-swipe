@@ -139,6 +139,7 @@
 
 .card-face-hint {
   margin: 0;
+  text-wrap: balance; /* even line lengths: no single word left alone on the last line */
   padding-top: 12px;
   border-top: 1px solid var(--border);
   font-size: min(var(--text-xs), 18px);
@@ -188,16 +189,19 @@
 .deck-actions {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  gap: 28px;
+  gap: 8px;
   padding: 0 0 max(20px, env(safe-area-inset-bottom));
 }
 
+/* Equal-width columns keep the middle button centered whatever the label lengths, and a
+   fixed-height button row keeps all three labels on one line. */
 .action-btn-wrap {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 68px auto;
+  justify-items: center;
   align-items: center;
-  gap: 6px;
+  row-gap: 6px;
+  width: 104px;
 }
 
 .action-btn {
@@ -208,19 +212,18 @@
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  /* Pressing shows instantly (below); letting go eases back, so even a quick tap is visible. */
+  /* Letting go eases back slowly, so even a quick tap is visible. */
   transition:
-    transform 0.25s var(--ease-out),
-    background-color 0.3s ease,
-    color 0.3s ease,
-    box-shadow 0.3s ease;
+    transform 0.3s var(--ease-out),
+    background-color 0.35s ease,
+    box-shadow 0.35s ease;
 }
 
-/* A firm press: the button sinks, and the light tints fill with their color. */
+/* A firm press: the button sinks and its color deepens, quickly but not instantly. */
 .action-btn:active:not(:disabled) {
   transform: scale(0.88);
   filter: none;
-  transition-duration: 0s;
+  transition-duration: 0.1s;
 }
 
 .action-btn:disabled {
@@ -239,8 +242,7 @@
 }
 
 .action-btn--investigate:active:not(:disabled) {
-  background: var(--investigate);
-  color: var(--on-brand);
+  background: color-mix(in srgb, var(--investigate) 30%, var(--investigate-tint));
 }
 
 .action-btn--pile {
@@ -249,8 +251,7 @@
 }
 
 .action-btn--pile:active:not(:disabled) {
-  background: var(--pile);
-  color: var(--on-brand);
+  background: color-mix(in srgb, var(--pile) 30%, var(--pile-tint));
 }
 
 /* Approve is the one solid action: the healthy default. */
@@ -266,6 +267,7 @@
 }
 
 .action-btn-label {
+  white-space: nowrap;
   font-size: min(var(--text-xs), 18px);
   font-weight: 500;
   color: var(--text-mute);

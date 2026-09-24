@@ -33,11 +33,15 @@ export function Header({ title, left, onNew }: Props) {
           <ChevronLeft size={22} />
         </button>
       )}
+      {/* Always a slot on each side, so the title stays centered. */}
+      {!left && <span className="header-spacer" aria-hidden />}
       <h1 className="header-name">{title}</h1>
-      {onNew && (
-        <button type="button" className="header-new" onClick={onNew}>
-          <FilePlus2 size={17} aria-hidden /> New statement
+      {onNew ? (
+        <button type="button" className="icon-btn" onClick={onNew} aria-label="New statement" title="New statement">
+          <FilePlus2 size={19} />
         </button>
+      ) : (
+        <span className="header-spacer" aria-hidden />
       )}
     </header>
   )

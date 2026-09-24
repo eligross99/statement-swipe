@@ -56,9 +56,11 @@
   color: var(--text-mute);
 }
 
+/* The value sits beside its label and wraps there; it only drops below at very large text sizes. */
 .investigate-field dd {
-  max-width: 100%;
-  margin: 0 0 0 auto;
+  flex: 1 1 7em;
+  min-width: 0;
+  margin: 0;
   text-align: right;
   overflow-wrap: anywhere;
 }

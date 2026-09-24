@@ -20,7 +20,7 @@
 /* The bar grows in from the left just after the summary rises in. */
 .ledger-bar > * {
   transform-origin: left;
-  animation: ledger-grow 600ms var(--ease-out) 250ms backwards;
+  animation: ledger-grow 900ms var(--ease-out) 300ms backwards;
 }
 
 @keyframes ledger-grow {
