@@ -41,12 +41,8 @@
 .ledger-seg--pile {
   background: var(--pile);
 }
-.ledger-seg--pile-settled {
-  /* Filed and settled: the folder color, faded, to read as "nothing left to do". */
-  background: color-mix(in srgb, var(--pile) 28%, var(--surface));
-}
-.ledger-seg--filed-done {
-  /* Filed, and every folder settled: a pale approve green, so a finished review reads all green. */
+.ledger-seg--settled {
+  /* Filed and settled: a pale approve green, so it reads as done while something else is left. */
   background: color-mix(in srgb, var(--approve) 32%, var(--surface));
 }
 .ledger-seg--flag {

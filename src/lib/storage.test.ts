@@ -1,25 +1,31 @@
-import { get, set } from 'idb-keyval'
-import type { Session } from '../types'
-import { isSession, isUndoHistory, loadSession, loadUndo, saveSession } from './storage'
+import type { Session, Statement } from '../types'
+import { SAMPLE_LABEL } from './sample'
+import { isSession, isStatement, isUndoHistory, migrateLegacy, MIGRATED_ID, readSettings } from './storage'
 
-// Stand-in for IndexedDB: tests check what we store and how we read it back.
-vi.mock('idb-keyval', () => ({ get: vi.fn(), set: vi.fn() }))
+// Reading and writing the real database runs in a browser, in e2e/statements.spec.ts. These tests
+// cover the checks that keep a corrupt save from crashing the app, and moving the old saved review.
 
 const session: Session = {
   txns: [
-    { id: 't1', desc: 'SHOP', amount: 5, date: '', cat: '—', status: 'approved', pileId: null, action: null, note: '' },
+    { id: 't1', desc: 'SHOP', amount: 5, date: '2026-07-02', cat: '—', status: 'approved', pileId: null, action: null, note: '' },
+    { id: 't2', desc: 'CAFE', amount: 3, date: '2026-07-11', cat: '—', status: 'unreviewed', pileId: null, action: null, note: '' },
   ],
   index: 1,
   piles: [{ id: 'f1', name: 'Ski trip' }],
-  screen: 'summary',
-  label: 'March',
+  screen: 'deck',
   openPile: null,
 }
 
-beforeEach(() => {
-  vi.mocked(get).mockReset()
-  vi.mocked(set).mockReset()
-})
+const statement: Statement = {
+  id: 'st_1',
+  name: 'July 2026',
+  addedAt: 1,
+  updatedAt: 2,
+  period: '2026-07-11',
+  archived: false,
+  session,
+  history: [{ txnId: 't1', index: 0, status: 'unreviewed', pileId: null }],
+}
 
 describe('isSession', () => {
   it('accepts a well-formed session', () => {
@@ -29,43 +35,94 @@ describe('isSession', () => {
   it('rejects junk and partial shapes', () => {
     expect(isSession(null)).toBe(false)
     expect(isSession({ ...session, txns: 'nope' })).toBe(false)
-    expect(isSession({ ...session, screen: 'elsewhere' })).toBe(false)
+    expect(isSession({ ...session, screen: 'import' })).toBe(false)
     expect(isSession({ ...session, txns: [{ ...session.txns[0], amount: '5' }] })).toBe(false)
     expect(isSession({ ...session, txns: [{ ...session.txns[0], status: 'maybe' }] })).toBe(false)
   })
 })
 
-describe('loadSession', () => {
-  it('returns the saved session', async () => {
-    vi.mocked(get).mockResolvedValue(session)
-    await expect(loadSession()).resolves.toEqual(session)
+describe('isStatement', () => {
+  it('accepts a well-formed statement', () => {
+    expect(isStatement(statement)).toBe(true)
+    expect(isStatement({ ...statement, period: null })).toBe(true)
   })
 
-  it('returns null when nothing is saved, the save is corrupt, or it has no purchases', async () => {
-    vi.mocked(get).mockResolvedValueOnce(undefined)
-    await expect(loadSession()).resolves.toBeNull()
-    vi.mocked(get).mockResolvedValueOnce({ garbage: true })
-    await expect(loadSession()).resolves.toBeNull()
-    vi.mocked(get).mockResolvedValueOnce({ ...session, txns: [] })
-    await expect(loadSession()).resolves.toBeNull()
-  })
-
-  it('returns null if IndexedDB is unavailable', async () => {
-    vi.mocked(get).mockRejectedValue(new Error('blocked'))
-    await expect(loadSession()).resolves.toBeNull()
+  it('rejects missing fields, empty statements, and undo steps from another review', () => {
+    expect(isStatement({ ...statement, name: undefined })).toBe(false)
+    expect(isStatement({ ...statement, archived: 'no' })).toBe(false)
+    expect(isStatement({ ...statement, session: { ...session, txns: [] } })).toBe(false)
+    expect(isStatement({ ...statement, history: [{ txnId: 'other', index: 0, status: 'unreviewed', pileId: null }] })).toBe(
+      false,
+    )
   })
 })
 
-describe('saveSession', () => {
-  it('stores the whole session blob', async () => {
-    vi.mocked(set).mockResolvedValue(undefined)
-    await saveSession(session)
-    expect(set).toHaveBeenCalledWith('statement-swipe-session-v1', session)
+describe('undo history', () => {
+  const step = { txnId: 't1', index: 0, status: 'unreviewed', pileId: null }
+
+  it('accepts steps that point at purchases in this session', () => {
+    expect(isUndoHistory([step], session)).toBe(true)
+    expect(isUndoHistory([], session)).toBe(true)
   })
 
-  it('swallows storage errors so the app keeps working', async () => {
-    vi.mocked(set).mockRejectedValue(new Error('quota'))
-    await expect(saveSession(session)).resolves.toBeUndefined()
+  it('rejects junk and steps from another review', () => {
+    expect(isUndoHistory(null, session)).toBe(false)
+    expect(isUndoHistory([{ ...step, txnId: 'other' }], session)).toBe(false)
+    expect(isUndoHistory([{ ...step, index: 5 }], session)).toBe(false)
+    expect(isUndoHistory([{ ...step, status: 'maybe' }], session)).toBe(false)
+  })
+})
+
+describe('migrateLegacy', () => {
+  // The single review saved before Phase 6b: a session with the file name as its label.
+  const legacy = { ...session, label: 'eStmt_2026-07-13' }
+  const undo = [{ txnId: 't1', index: 0, status: 'unreviewed', pileId: null }]
+
+  it('turns the old saved review into a statement named for its month, keeping undo', () => {
+    const st = migrateLegacy(legacy, undo, 1000)
+    expect(st).toEqual({
+      id: MIGRATED_ID,
+      name: 'July 2026',
+      addedAt: 1000,
+      updatedAt: 1000,
+      period: '2026-07-11',
+      archived: false,
+      session,
+      history: undo,
+    })
+    expect(isStatement(st)).toBe(true)
+  })
+
+  it('keeps the sample’s name, and the file name when there are no dates', () => {
+    expect(migrateLegacy({ ...legacy, label: SAMPLE_LABEL }, undo, 0)?.name).toBe(SAMPLE_LABEL)
+    const undated = { ...legacy, txns: legacy.txns.map((t) => ({ ...t, date: '' })) }
+    expect(migrateLegacy(undated, undo, 0)?.name).toBe('eStmt_2026-07-13')
+  })
+
+  it('reopens a review that was saved on the import screen', () => {
+    expect(migrateLegacy({ ...legacy, screen: 'import' }, undo, 0)?.session.screen).toBe('deck')
+    const finished = { ...legacy, index: 2, screen: 'import' }
+    expect(migrateLegacy(finished, [], 0)?.session.screen).toBe('summary')
+  })
+
+  it('drops unusable undo steps but keeps the review', () => {
+    expect(migrateLegacy(legacy, [{ txnId: 'gone' }], 0)?.history).toEqual([])
+    expect(migrateLegacy(legacy, undefined, 0)?.history).toEqual([])
+  })
+
+  it('moves nothing when the old save is missing, corrupt, or empty', () => {
+    expect(migrateLegacy(undefined, undefined, 0)).toBeNull()
+    expect(migrateLegacy({ garbage: true }, undefined, 0)).toBeNull()
+    expect(migrateLegacy({ ...legacy, txns: [] }, undefined, 0)).toBeNull()
+    expect(migrateLegacy({ ...legacy, label: undefined }, undefined, 0)).toBeNull()
+  })
+})
+
+describe('readSettings', () => {
+  it('keeps recognized settings and drops junk, so defaults fill the gaps', () => {
+    expect(readSettings({ suggestFolders: false })).toEqual({ suggestFolders: false })
+    expect(readSettings({ suggestFolders: 'no', other: 1 })).toEqual({})
+    expect(readSettings(undefined)).toBeNull()
   })
 })
 
@@ -89,30 +146,5 @@ describe('requestPersistentStorage', () => {
     vi.stubGlobal('navigator', {})
     expect(await requestPersistentStorage()).toBe(false)
     vi.unstubAllGlobals()
-  })
-})
-
-describe('undo history', () => {
-  const step = { txnId: 't1', index: 0, status: 'unreviewed', pileId: null }
-
-  it('accepts steps that point at purchases in this session', () => {
-    expect(isUndoHistory([step], session)).toBe(true)
-    expect(isUndoHistory([], session)).toBe(true)
-  })
-
-  it('rejects junk and steps from another review', () => {
-    expect(isUndoHistory(null, session)).toBe(false)
-    expect(isUndoHistory([{ ...step, txnId: 'other' }], session)).toBe(false)
-    expect(isUndoHistory([{ ...step, index: 5 }], session)).toBe(false)
-    expect(isUndoHistory([{ ...step, status: 'maybe' }], session)).toBe(false)
-  })
-
-  it('loads an empty history when the saved one is unusable or storage fails', async () => {
-    vi.mocked(get).mockResolvedValueOnce([{ ...step, txnId: 'other' }])
-    await expect(loadUndo(session)).resolves.toEqual([])
-    vi.mocked(get).mockRejectedValueOnce(new Error('blocked'))
-    await expect(loadUndo(session)).resolves.toEqual([])
-    vi.mocked(get).mockResolvedValueOnce([step])
-    await expect(loadUndo(session)).resolves.toEqual([step])
   })
 })

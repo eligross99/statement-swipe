@@ -1,0 +1,233 @@
+/* The Statements (home) screen. */
+
+.st-screen {
+  padding-bottom: 16px; /* the import button below has its own bottom spacing */
+}
+
+/* Filters: a segmented control, three equal parts. */
+.st-filters {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+  padding: 4px;
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
+}
+
+.st-filter {
+  flex: 1;
+  min-height: 40px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-mute);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.st-filter.is-on {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-card);
+}
+
+.st-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Rows use a margin (not a gap) so a removed row can fold its space away smoothly. */
+.st-row {
+  position: relative;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.st-open {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 14px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* The row itself presses in, not the whole panel. */
+.st-open:not(:disabled):active {
+  transform: none;
+  filter: none;
+  background: var(--surface-sunken);
+}
+
+/* In the top-right corner, so the rest of the row (and its bar) spans the full width. */
+.st-more {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
+.st-name {
+  padding-right: 36px; /* clear of the ⋯ button */
+  font-size: var(--text-lg);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.st-meta {
+  color: var(--text-mute);
+  font-size: var(--text-sm);
+}
+
+/* Mini breakdown bar, same colors as the summary's. The track shows through for what's left. */
+.st-ledger {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+  margin: 6px 0 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface-sunken);
+}
+
+.st-seg {
+  flex-basis: 0;
+  min-width: 4px;
+}
+
+.st-seg--approve {
+  background: var(--approve);
+}
+.st-seg--pile {
+  background: var(--pile);
+}
+.st-seg--settled {
+  background: color-mix(in srgb, var(--approve) 32%, var(--surface));
+}
+.st-seg--flag {
+  background: var(--flag);
+}
+.st-seg--left {
+  background: transparent;
+}
+
+.st-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: var(--text-sm);
+}
+
+.st-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.st-tag--flag {
+  background: var(--flag-tint);
+  color: var(--flag);
+}
+.st-tag--todo {
+  background: var(--investigate-tint);
+  color: var(--investigate);
+}
+.st-tag--wait {
+  background: var(--wait-tint);
+  color: var(--wait);
+}
+.st-tag--clear {
+  background: var(--approve-tint);
+  color: var(--approve);
+}
+
+/* Empty states: centered, with a line saying what to do next. */
+.st-empty {
+  padding: 32px 16px;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.st-empty--first {
+  padding-top: 18dvh;
+}
+
+.st-empty-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--brand);
+  box-shadow: var(--shadow-card);
+}
+
+.st-empty-icon--clear {
+  background: var(--approve-tint);
+  box-shadow: none;
+}
+
+.st-empty-title {
+  margin: 0 0 6px;
+  font-size: var(--text-lg);
+  font-weight: 650;
+}
+
+.st-empty p {
+  max-width: 300px;
+  margin: 0 auto;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+/* The import button stays in reach at the bottom, however long the list gets. */
+.st-footer {
+  padding: 10px 16px max(16px, env(safe-area-inset-bottom));
+  background: var(--bg);
+}
+
+/* The "⋯" menu: a short list of actions. */
+.st-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.st-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.st-menu-item--flag {
+  background: var(--flag-tint);
+  color: var(--flag);
+}

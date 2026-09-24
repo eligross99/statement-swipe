@@ -1,15 +1,9 @@
 // The review state machine. Every change to the session goes through `reviewReducer`, a plain
 // function (old state + event → new state) with no React in it, so it's easy to unit test.
 
-import type { Action, Pile, Screen, Session, Status, Transaction } from '../types'
+import type { Action, Pile, Screen, Session, Status, Transaction, UndoEntry } from '../types'
 
-/** What undo needs to put one resolved card back. Kept in memory only, not persisted. */
-export interface UndoEntry {
-  txnId: string
-  index: number
-  status: Status
-  pileId: string | null
-}
+export type { UndoEntry }
 
 export interface ReviewState {
   session: Session
@@ -17,8 +11,6 @@ export interface ReviewState {
 }
 
 export type ReviewEvent =
-  | { type: 'restore'; session: Session; history?: UndoEntry[] }
-  | { type: 'start'; txns: Transaction[]; label: string }
   | { type: 'approve' }
   | { type: 'flag' }
   | { type: 'approveFlagged'; txnId: string }
@@ -27,31 +19,26 @@ export type ReviewEvent =
   | { type: 'deletePile'; pileId: string }
   | { type: 'undo' }
   | { type: 'restart' }
-  | { type: 'goImport' }
-  | { type: 'resume' }
   | { type: 'openPile'; pileId: string }
   | { type: 'closePile' }
   | { type: 'setAction'; txnId: string; action: Action }
   | { type: 'setNote'; txnId: string; note: string }
-
-export const emptySession: Session = {
-  txns: [],
-  index: 0,
-  piles: [],
-  screen: 'import',
-  label: '',
-  openPile: null,
-}
-
-export const initialReviewState: ReviewState = { session: emptySession, history: [] }
 
 /** Fresh, unreviewed copies of transactions: used when starting or restarting a review. */
 function resetTxns(txns: Transaction[]): Transaction[] {
   return txns.map((t) => ({ ...t, status: 'unreviewed', pileId: null, action: null, note: '' }))
 }
 
-/** Where the user lands when returning to a session: the deck if cards remain, else the summary. */
-function reviewScreen(s: Session): Screen {
+/** A new review of `txns`, on the first card with no folders. */
+export function newReview(txns: Transaction[]): ReviewState {
+  return {
+    session: { txns: resetTxns(txns), index: 0, piles: [], screen: 'deck', openPile: null },
+    history: [],
+  }
+}
+
+/** Where the user lands when opening a statement: the deck if cards remain, else the summary. */
+export function reviewScreen(s: Session): Screen {
   return s.index >= s.txns.length ? 'summary' : 'deck'
 }
 
@@ -83,19 +70,6 @@ function patchTxn(state: ReviewState, id: string, patch: Partial<Transaction>): 
 export function reviewReducer(state: ReviewState, event: ReviewEvent): ReviewState {
   const s = state.session
   switch (event.type) {
-    case 'restore':
-      // A saved session never reopens on the import screen; send the user back to their review.
-      return {
-        session: { ...event.session, screen: event.session.screen === 'import' ? reviewScreen(event.session) : event.session.screen },
-        history: event.history ?? [],
-      }
-
-    case 'start':
-      return {
-        session: { txns: resetTxns(event.txns), index: 0, piles: [], screen: 'deck', label: event.label, openPile: null },
-        history: [],
-      }
-
     case 'approve':
       return resolveCurrent(state, 'approved', null)
 
@@ -162,13 +136,6 @@ export function reviewReducer(state: ReviewState, event: ReviewEvent): ReviewSta
         history: [],
       }
 
-    case 'goImport':
-      return { ...state, session: { ...s, screen: 'import', openPile: null } }
-
-    case 'resume':
-      if (!s.txns.length) return state
-      return { ...state, session: { ...s, screen: reviewScreen(s) } }
-
     case 'openPile':
       if (!s.piles.some((p) => p.id === event.pileId)) return state
       return { ...state, session: { ...s, screen: 'pile', openPile: event.pileId } }
@@ -231,6 +198,41 @@ export function folderGroups(txns: Transaction[], piles: Pile[]): FolderGroup[] 
     .filter((g) => g.items.length > 0)
   // A stable sort keeps creation order within each half.
   return groups.sort((a, b) => Number(a.open === 0) - Number(b.open === 0))
+}
+
+/** A piece of a breakdown bar: approved, settled in a folder, still open in a folder, flagged, or
+ *  not reviewed yet. */
+export type LedgerKey = 'approve' | 'settled' | 'pile' | 'flag' | 'left'
+
+export interface LedgerSegment {
+  key: LedgerKey
+  amount: number
+}
+
+/**
+ * A statement's dollars by where they stand, for the breakdown bars (Statements list and summary).
+ * Read left to right like a progress bar: what's done (approved, then settled in folders), then
+ * what still needs doing (open folder items, flagged), then what's not reviewed yet. When nothing
+ * is left to do at all, the whole bar is one solid "approved" green. Empty pieces are left out.
+ */
+export function ledgerSegments(txns: Transaction[]): LedgerSegment[] {
+  const filed = txns.filter((t) => t.status === 'piled')
+  const open = stillToActOn(filed)
+  const settled = sumAmounts(filed) - open
+  const approved = sumAmounts(txns.filter((t) => t.status === 'approved'))
+  const flagged = sumAmounts(txns.filter((t) => t.status === 'flagged'))
+  const left = sumAmounts(txns.filter((t) => t.status === 'unreviewed'))
+  const segments: LedgerSegment[] =
+    open + flagged + left === 0
+      ? [{ key: 'approve', amount: approved + settled }]
+      : [
+          { key: 'approve', amount: approved },
+          { key: 'settled', amount: settled },
+          { key: 'pile', amount: open },
+          { key: 'flag', amount: flagged },
+          { key: 'left', amount: left },
+        ]
+  return segments.filter((s) => s.amount > 0)
 }
 
 /** The triage statuses, in the order the "Set status" menu lists them. */

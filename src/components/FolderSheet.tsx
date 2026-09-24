@@ -9,6 +9,8 @@ import './FolderSheet.css'
 interface Props {
   piles: Pile[]
   txns: Transaction[]
+  /** Folder names used in past statements, offered as one-tap choices (empty when turned off in Settings). */
+  suggestions: string[]
   /** Closed without filing. */
   onClose: () => void
   onFile: (pileId: string) => void
@@ -17,7 +19,7 @@ interface Props {
 }
 
 /** Bottom sheet for filing the current purchase: pick a folder, make a new one, or delete one. */
-export function FolderSheet({ piles, txns, onClose, onFile, onCreate, onDelete }: Props) {
+export function FolderSheet({ piles, txns, suggestions, onClose, onFile, onCreate, onDelete }: Props) {
   const [name, setName] = useState('')
   // The folder waiting for "are you sure?" before it's deleted.
   const [confirmId, setConfirmId] = useState<string | null>(null)
@@ -36,12 +38,12 @@ export function FolderSheet({ piles, txns, onClose, onFile, onCreate, onDelete }
           <>
             <p className="muted folder-sheet-sub">Tap a folder to file it into, or make a new one.</p>
 
-            {piles.length === 0 ? (
+            {piles.length === 0 && suggestions.length === 0 ? (
               <div className="folder-sheet-empty">
                 <Folder size={26} />
                 <p>No folders yet. Name one below and this purchase goes straight into it.</p>
               </div>
-            ) : (
+            ) : piles.length === 0 ? null : (
               <ul className="folder-list">
                 {piles.map((p) => {
                   const n = pileItems(txns, p.id).length
@@ -67,6 +69,24 @@ export function FolderSheet({ piles, txns, onClose, onFile, onCreate, onDelete }
               </ul>
             )}
 
+            {suggestions.length > 0 && (
+              <>
+                <p className="folder-past-label">Names you’ve used before</p>
+                <div className="folder-past">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      className="folder-past-chip"
+                      onClick={() => close(() => onCreate(s))}
+                    >
+                      <FolderPlus size={15} aria-hidden /> {s}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
             <form
               className="folder-new"
               onSubmit={(e) => {
@@ -89,7 +109,7 @@ export function FolderSheet({ piles, txns, onClose, onFile, onCreate, onDelete }
                 aria-label="New folder name"
                 maxLength={40}
                 // Only pop the keyboard straight away when there's nothing to tap instead.
-                autoFocus={piles.length === 0}
+                autoFocus={piles.length === 0 && suggestions.length === 0}
               />
               <button type="submit" className="btn btn--pile btn--auto" disabled={!trimmed}>
                 <FolderPlus size={18} /> File

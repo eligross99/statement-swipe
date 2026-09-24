@@ -1,7 +1,7 @@
 import { Check, ChevronRight, Folder, FolderCheck, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
 import { plural, usd } from '../lib/format'
-import { folderGroups, openItems, stillToActOn, sumAmounts, type FolderGroup } from '../lib/review'
+import { folderGroups, ledgerSegments, stillToActOn, sumAmounts, type FolderGroup } from '../lib/review'
 import type { Pile, Transaction } from '../types'
 import './Summary.css'
 
@@ -26,15 +26,10 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
   // Filed purchases stay filed as a record; this says whether any of them still need doing.
   const toActOn = stillToActOn(filed)
 
-  // The bar splits Filed in two: still to act on (solid) and settled (pale), so a fully settled
-  // review reads as done while still showing how much was filed.
-  const bar: { key: string; amount: number }[] = [
-    { key: 'approve', amount: sumAmounts(txns.filter((t) => t.status === 'approved')) },
-    { key: 'pile', amount: toActOn },
-    // Pale indigo while anything is left; pale green once every folder is settled ("all green").
-    { key: toActOn > 0 ? 'pile-settled' : 'filed-done', amount: sumAmounts(filed) - sumAmounts(openItems(filed)) },
-    { key: 'flag', amount: sumAmounts(flagged) },
-  ]
+  // Same rule as the Statements list: done on the left, still to do on the right, and one solid
+  // green once nothing is left to do.
+  const bar = ledgerSegments(txns)
+  const clear = toActOn === 0 && flagged.length === 0
 
   const rows: { tone: Tone; label: string; items: Transaction[] }[] = [
     { tone: 'approve', label: 'Approved', items: txns.filter((t) => t.status === 'approved') },
@@ -53,16 +48,16 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
       <section className="panel ledger" aria-label="Breakdown">
         <div className="ledger-bar" aria-hidden>
           {bar.map(({ key, amount }) =>
-            amount > 0 ? <span key={key} className={`ledger-seg ledger-seg--${key}`} style={{ flexGrow: amount }} /> : null,
+            <span key={key} className={`ledger-seg ledger-seg--${key}`} style={{ flexGrow: amount }} />
           )}
         </div>
         <dl className="ledger-rows">
           {rows.map(({ tone, label, items }) => (
             <div key={tone} className="ledger-row">
               <dt>
-                {/* When every filed purchase is settled, the dot turns pale green to match the bar. */}
+                {/* Filed's dot matches its part of the bar: pale green once settled, solid when all clear. */}
                 <span
-                  className={`ledger-dot ledger-seg--${tone === 'pile' && items.length > 0 && toActOn === 0 ? 'filed-done' : tone}`}
+                  className={`ledger-dot ledger-seg--${tone === 'pile' && items.length > 0 && toActOn === 0 ? (clear ? 'approve' : 'settled') : tone}`}
                   aria-hidden
                 />
                 {label}
@@ -137,7 +132,7 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
           </div>
         </div>
       ) : (
-        // A new statement starts from the button at the top right.
+        // New statements are imported from the Statements screen (the back arrow at the top left).
         <button type="button" className="btn btn--secondary summary-actions" onClick={() => setConfirmRestart(true)}>
           Start over
         </button>

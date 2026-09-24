@@ -1,17 +1,53 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { get, set } from 'idb-keyval'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import App from './App'
-import type { Session } from './types'
+import { makeStatement } from './lib/library'
+import { loadLibrary, saveLibrary } from './lib/storage'
+import type { Statement, Transaction } from './types'
 
-vi.mock('idb-keyval', () => ({ get: vi.fn(), set: vi.fn() }))
+// Stand-in for the on-device database: tests choose what's "saved" and check what gets written.
+// e2e/statements.spec.ts covers the real database in a browser.
+vi.mock('./lib/storage', async (original) => ({
+  ...(await original<typeof import('./lib/storage')>()),
+  loadLibrary: vi.fn(),
+  saveLibrary: vi.fn(),
+}))
 
 beforeEach(() => {
-  vi.mocked(get).mockReset().mockResolvedValue(undefined)
-  vi.mocked(set).mockReset().mockResolvedValue(undefined)
+  vi.mocked(loadLibrary).mockReset().mockResolvedValue({ statements: [], ui: null, settings: null })
+  vi.mocked(saveLibrary).mockReset().mockResolvedValue(undefined)
 })
+
+const purchase = (id: string, desc: string, status: Transaction['status'] = 'unreviewed'): Transaction => ({
+  id,
+  desc,
+  amount: 5,
+  date: '',
+  cat: '—',
+  status,
+  pileId: null,
+  action: null,
+  note: '',
+})
+
+/** A saved statement: "Saved March", with FIRST SHOP approved and SECOND SHOP still to review. */
+function savedStatement(extra: Partial<Statement> = {}): Statement {
+  const st = makeStatement([purchase('a', 'FIRST SHOP'), purchase('b', 'SECOND SHOP')], {
+    id: 'st_saved',
+    name: 'Saved March',
+    period: '2026-03-20',
+    now: 0,
+  })
+  const txns = st.session.txns.map((t, i) => (i === 0 ? { ...t, status: 'approved' as const } : t))
+  return {
+    ...st,
+    session: { ...st.session, txns, index: 1 },
+    history: [{ txnId: 'a', index: 0, status: 'unreviewed', pileId: null }],
+    ...extra,
+  }
+}
 
 /** The description on the top card of the deck. */
 function topCard() {
@@ -21,20 +57,24 @@ function topCard() {
 async function startSample() {
   const user = userEvent.setup()
   render(<App />)
-  await user.click(await screen.findByRole('button', { name: /Try the sample statement/ }))
+  await user.click(await screen.findByRole('button', { name: 'Import a statement' }))
+  await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
   return user
 }
 
 describe('App', () => {
-  it('starts on the import screen when nothing is saved', async () => {
+  it('starts on an empty Statements screen that says how to begin', async () => {
+    const user = userEvent.setup()
     render(<App />)
-    expect(await screen.findByRole('heading', { name: 'Import your statement' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'No statements yet' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Import a statement' }))
+    expect(screen.getByRole('heading', { name: 'Import your statement' })).toBeInTheDocument()
   })
 
-  it('imports a CSV with intro lines above the header and starts the review', async () => {
+  it('imports a CSV with intro lines above the header, names it by month, and starts the review', async () => {
     const user = userEvent.setup()
     const { container } = render(<App />)
-    await screen.findByRole('heading', { name: 'Import your statement' })
+    await user.click(await screen.findByRole('button', { name: 'Import a statement' }))
     const text = readFileSync(resolve(process.cwd(), 'tests/fixtures/preamble.csv'), 'utf8')
     const input = container.querySelector<HTMLInputElement>('input[type=file]')!
     await user.upload(input, new File([text], 'march.csv', { type: 'text/csv' }))
@@ -46,6 +86,7 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: /Review 2 purchases/ }))
     expect(within(await screen.findByRole('group', { name: /^Purchase:/ })).getByText('FAKE COFFEE CO #1')).toBeInTheDocument()
     expect(screen.getByText('Dining')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^March 2026$/)
   })
 
   it('approving advances the deck and updates progress', async () => {
@@ -135,36 +176,135 @@ describe('App', () => {
     expect(screen.getByRole('textbox', { name: /Note for/ })).toHaveValue('Venmo Sam')
   })
 
-  it('asks before a new statement replaces a review in progress, and can go back to it', async () => {
+  it('keeps every statement: importing another adds it, and the list opens each where it was left', async () => {
     const user = await startSample()
     await user.click(screen.getByRole('button', { name: 'Approve' }))
-    await user.click(screen.getByRole('button', { name: 'New statement' }))
-    expect(screen.getByText(/is saved/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Back to statements' }))
 
-    // Keeping the review closes the question and changes nothing.
+    expect(screen.getByText('In progress, 15 of 16 left')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Import a statement' }))
     await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
-    const confirm = screen.getByRole('dialog', { name: 'Replace your review?' })
-    expect(within(confirm).getByText(/1 of 16 purchases/)).toBeInTheDocument()
-    await user.click(within(confirm).getByRole('button', { name: 'Keep my review' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-
-    // The header's back button returns to the review where it was left.
-    await user.click(screen.getByRole('button', { name: 'Back to your review' }))
-    expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
-
-    // Replacing it starts fresh.
-    await user.click(screen.getByRole('button', { name: 'New statement' }))
-    await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
-    await user.click(screen.getByRole('button', { name: 'Replace it' }))
     expect(screen.getByText('0 of 16 reviewed')).toBeInTheDocument()
+    // A second statement with the same name gets a number.
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('March 2026 sample (2)')
+
+    await user.click(screen.getByRole('button', { name: 'Back to statements' }))
+    expect(screen.getAllByRole('button', { name: /^March 2026 sample/ })).toHaveLength(2)
+    expect(screen.getByText('Needs review')).toBeInTheDocument()
+    // Tapping the one in progress opens it where it was left.
+    await user.click(screen.getByRole('button', { name: /^March 2026 sample\d/ }))
+    expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
   })
 
-  it('starts a new statement without asking when nothing has been reviewed yet', async () => {
-    const user = await startSample()
-    await user.click(screen.getByRole('button', { name: 'New statement' }))
+  it('renames, archives, and deletes from a statement’s ⋯ menu, asking before deleting', async () => {
+    vi.mocked(loadLibrary).mockResolvedValue({ statements: [savedStatement()], ui: null, settings: null })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(await screen.findByRole('button', { name: 'More for Saved March' }))
+    await user.click(screen.getByRole('button', { name: 'Rename' }))
+    const field = screen.getByRole('textbox', { name: 'Statement name' })
+    await user.clear(field)
+    await user.type(field, 'March card')
+    await user.click(screen.getByRole('button', { name: 'Save name' }))
+    expect(screen.getAllByText('March card').length).toBeGreaterThan(0)
+
+    // Archiving moves it under Archived.
+    await user.click(screen.getByRole('button', { name: 'More for March card' }))
+    await user.click(screen.getByRole('button', { name: 'Archive' }))
+    expect(screen.getByRole('heading', { name: 'Every statement is archived' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Archived' }))
+    expect(screen.getByRole('button', { name: 'More for March card' })).toBeInTheDocument()
+
+    // Deleting asks first; Cancel keeps it.
+    await user.click(screen.getByRole('button', { name: 'More for March card' }))
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    const confirm = screen.getByRole('dialog', { name: 'Delete “March card”?' })
+    await user.click(within(confirm).getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByRole('button', { name: 'More for March card' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'More for March card' }))
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    await user.click(screen.getByRole('button', { name: 'Delete statement' }))
+    expect(screen.getByRole('heading', { name: 'No statements yet' })).toBeInTheDocument()
+    await waitFor(() => expect(saveLibrary).toHaveBeenLastCalledWith([], ['st_saved'], expect.anything(), expect.anything()))
+  })
+
+  it('remembers the chosen filter and says when nothing needs action', async () => {
+    const done = savedStatement({ session: { ...savedStatement().session, index: 2, screen: 'summary' } })
+    done.session.txns = done.session.txns.map((t) => ({ ...t, status: 'approved' }))
+    vi.mocked(loadLibrary).mockResolvedValue({ statements: [done], ui: null, settings: null })
+    const user = userEvent.setup()
+    render(<App />)
+
+    expect(await screen.findByText('Clear')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Needs action' }))
+    expect(screen.getByRole('heading', { name: 'Nothing needs action' })).toBeInTheDocument()
+    await waitFor(() =>
+      expect(saveLibrary).toHaveBeenLastCalledWith([], [], expect.objectContaining({ filter: 'action' }), expect.anything()),
+    )
+  })
+
+  it('erases everything from Settings, after asking, then shows the empty Statements screen', async () => {
+    vi.mocked(loadLibrary).mockResolvedValue({ statements: [savedStatement()], ui: null, settings: null })
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(await screen.findByRole('button', { name: 'Settings' }))
+    expect(screen.getByText(/1 statement saved on this device/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Erase everything on this device' }))
+    expect(screen.getByRole('dialog', { name: 'Erase everything?' })).toHaveTextContent('Your statement, with its folders')
+    await user.click(screen.getByRole('button', { name: 'Erase everything' }))
+    // Back to an empty Statements screen.
+    expect(await screen.findByRole('heading', { name: 'No statements yet' })).toBeInTheDocument()
+    await waitFor(() => expect(saveLibrary).toHaveBeenLastCalledWith([], ['st_saved'], expect.anything(), expect.anything()))
+  })
+
+  it('offers folder names from past statements when filing', async () => {
+    const past = savedStatement({ id: 'st_past', name: 'February' })
+    past.session.piles = [{ id: 'f_old', name: 'Taxes' }]
+    past.session.txns = past.session.txns.map((t, i) => (i === 0 ? { ...t, status: 'piled', pileId: 'f_old' } : t))
+    vi.mocked(loadLibrary).mockResolvedValue({ statements: [past], ui: null, settings: null })
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(await screen.findByRole('button', { name: 'Import a statement' }))
     await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.getByText('0 of 16 reviewed')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'File' }))
+    expect(screen.getByText('Names you’ve used before')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Taxes' }))
+    expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
+    // Now it's one of this statement's folders.
+    await user.click(screen.getByRole('button', { name: 'File' }))
+    expect(screen.getByRole('button', { name: /^Taxes/ })).toBeInTheDocument()
+    expect(screen.queryByText('Names you’ve used before')).not.toBeInTheDocument()
+  })
+
+  it('stops suggesting past folder names when that’s turned off in Settings, and remembers it', async () => {
+    const past = savedStatement({ id: 'st_past', name: 'February' })
+    past.session.piles = [{ id: 'f_old', name: 'Taxes' }]
+    past.session.txns = past.session.txns.map((t, i) => (i === 0 ? { ...t, status: 'piled', pileId: 'f_old' } : t))
+    vi.mocked(loadLibrary).mockResolvedValue({ statements: [past], ui: null, settings: null })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(await screen.findByRole('button', { name: 'Settings' }))
+    const toggle = screen.getByRole('switch', { name: 'Suggest past folder names' })
+    expect(toggle).toBeChecked()
+    await user.click(toggle)
+    expect(toggle).not.toBeChecked()
+    await waitFor(() =>
+      expect(saveLibrary).toHaveBeenLastCalledWith([], [], expect.anything(), { suggestFolders: false }),
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Back to statements' }))
+    await user.click(screen.getByRole('button', { name: 'Import a statement' }))
+    await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
+    await user.click(screen.getByRole('button', { name: 'File' }))
+    expect(screen.queryByText('Names you’ve used before')).not.toBeInTheDocument()
+    expect(screen.getByText(/No folders yet/)).toBeInTheDocument()
   })
 
   it('uses the top-left button to go back from a folder to all folders', async () => {
@@ -266,54 +406,35 @@ describe('App', () => {
     expect(screen.getByText('Tue, Mar 3, 2026')).toBeInTheDocument()
   })
 
-  it('saves the session to IndexedDB after a change', async () => {
+  it('saves the changed statement after a change', async () => {
     const user = await startSample()
     await user.click(screen.getByRole('button', { name: 'Approve' }))
-    await waitFor(() => expect(set).toHaveBeenCalled())
-    const saved = vi.mocked(set).mock.calls.findLast(([key]) => key === 'statement-swipe-session-v1')?.[1] as Session
-    expect(saved.index).toBe(1)
-    expect(saved.txns[0].status).toBe('approved')
+    await waitFor(() =>
+      expect(saveLibrary).toHaveBeenLastCalledWith(
+        [expect.objectContaining({ session: expect.objectContaining({ index: 1 }) })],
+        [],
+        expect.objectContaining({ view: 'review' }),
+        { suggestFolders: true },
+      ),
+    )
+    const [put] = vi.mocked(saveLibrary).mock.lastCall!
+    expect(put[0].session.txns[0].status).toBe('approved')
   })
 
-  it('keeps undo working after the app is closed and reopened', async () => {
-    const saved: Session = {
-      txns: [
-        { id: 'a', desc: 'FIRST SHOP', amount: 5, date: '', cat: '—', status: 'approved', pileId: null, action: null, note: '' },
-        { id: 'b', desc: 'SECOND SHOP', amount: 7, date: '', cat: '—', status: 'unreviewed', pileId: null, action: null, note: '' },
-      ],
-      index: 1,
-      piles: [],
-      screen: 'deck',
-      label: 'Saved March',
-      openPile: null,
-    }
-    const undo = [{ txnId: 'a', index: 0, status: 'unreviewed', pileId: null }]
-    vi.mocked(get).mockImplementation(async (key) => (key === 'statement-swipe-undo-v1' ? undo : saved))
+  it('reopens the review the user was in, with undo still working', async () => {
+    vi.mocked(loadLibrary).mockResolvedValue({
+      statements: [savedStatement()],
+      ui: { openId: 'st_saved', view: 'review', filter: 'all' },
+      settings: null,
+    })
     const user = userEvent.setup()
     render(<App />)
-    const undoButton = await screen.findByRole('button', { name: 'Undo last action' })
-    await waitFor(() => expect(undoButton).toBeEnabled())
-    await user.click(undoButton)
+    expect(await screen.findByText('SECOND SHOP')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Saved March')
+    expect(screen.getByText('1 of 2 reviewed')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Undo last action' }))
     expect(within(topCard()).getByText('FIRST SHOP')).toBeInTheDocument()
     expect(screen.getByText('0 of 2 reviewed')).toBeInTheDocument()
-  })
-
-  it('restores a saved session on load', async () => {
-    const saved: Session = {
-      txns: [
-        { id: 'a', desc: 'FIRST SHOP', amount: 5, date: '', cat: '—', status: 'approved', pileId: null, action: null, note: '' },
-        { id: 'b', desc: 'SECOND SHOP', amount: 7, date: '', cat: '—', status: 'unreviewed', pileId: null, action: null, note: '' },
-      ],
-      index: 1,
-      piles: [],
-      screen: 'deck',
-      label: 'Saved March',
-      openPile: null,
-    }
-    vi.mocked(get).mockResolvedValue(saved)
-    render(<App />)
-    expect(await screen.findByText('SECOND SHOP')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Saved March' })).toBeInTheDocument()
-    expect(screen.getByText('1 of 2 reviewed')).toBeInTheDocument()
   })
 })

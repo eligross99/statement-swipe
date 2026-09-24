@@ -2,9 +2,11 @@ import type { Transaction } from '../types'
 import {
   currentTxn,
   folderGroups,
-  initialReviewState,
+  ledgerSegments,
+  newReview,
   pileItems,
   reviewReducer,
+  reviewScreen,
   stillToActOn,
   type ReviewEvent,
   type ReviewState,
@@ -19,7 +21,7 @@ const SKI = { id: 'ski', name: 'Ski trip' }
 
 /** Applies events in order, starting from a fresh review of TXNS. */
 function run(...events: ReviewEvent[]): ReviewState {
-  return [{ type: 'start', txns: TXNS, label: 'Test' } as ReviewEvent, ...events].reduce(reviewReducer, initialReviewState)
+  return events.reduce(reviewReducer, newReview(TXNS))
 }
 
 const statuses = (s: ReviewState) => s.session.txns.map((t) => t.status)
@@ -35,7 +37,7 @@ describe('starting a review', () => {
 
   it('resets any review state carried on the incoming transactions', () => {
     const dirty = [{ ...txn('x', 5), status: 'approved' as const, note: 'old' }]
-    const s = reviewReducer(initialReviewState, { type: 'start', txns: dirty, label: '' })
+    const s = newReview(dirty)
     expect(s.session.txns[0]).toMatchObject({ status: 'unreviewed', note: '' })
   })
 })
@@ -170,20 +172,9 @@ describe('navigation', () => {
     expect(s.session.index).toBe(1)
   })
 
-  it('going to import and resuming returns to where the user was', () => {
-    const mid = run({ type: 'approve' }, { type: 'goImport' })
-    expect(mid.session.screen).toBe('import')
-    expect(reviewReducer(mid, { type: 'resume' }).session.screen).toBe('deck')
-
-    const finished = run({ type: 'approve' }, { type: 'approve' }, { type: 'approve' }, { type: 'goImport' })
-    expect(reviewReducer(finished, { type: 'resume' }).session.screen).toBe('summary')
-  })
-
-  it('restoring a session saved on the import screen reopens the review', () => {
-    const saved = run({ type: 'approve' }, { type: 'goImport' }).session
-    const s = reviewReducer(initialReviewState, { type: 'restore', session: saved })
-    expect(s.session.screen).toBe('deck')
-    expect(s.session.index).toBe(1)
+  it('reopening a statement lands on the deck if cards remain, else the summary', () => {
+    expect(reviewScreen(run({ type: 'approve' }).session)).toBe('deck')
+    expect(reviewScreen(run({ type: 'approve' }, { type: 'approve' }, { type: 'approve' }).session)).toBe('summary')
   })
 })
 
@@ -206,5 +197,39 @@ describe('folderGroups', () => {
     const groups = folderGroups(txns, piles)
     expect(groups.map((g) => g.pile.name)).toEqual(['Open', 'Also open', 'Settled'])
     expect(groups.map((g) => g.open)).toEqual([1, 1, 0])
+  })
+})
+
+describe('ledgerSegments', () => {
+  const t = (id: string, amount: number, status: Transaction['status'], action: Transaction['action'] = null) => ({
+    ...txn(id, amount),
+    status,
+    action,
+    pileId: status === 'piled' ? 'f' : null,
+  })
+
+  it('reads left to right: done, then still to do, then not reviewed', () => {
+    const txns = [
+      t('u', 1, 'unreviewed'),
+      t('f', 2, 'flagged'),
+      t('o', 3, 'piled', 'waiting'),
+      t('s', 4, 'piled', 'done'),
+      t('a', 5, 'approved'),
+    ]
+    expect(ledgerSegments(txns)).toEqual([
+      { key: 'approve', amount: 5 },
+      { key: 'settled', amount: 4 },
+      { key: 'pile', amount: 3 },
+      { key: 'flag', amount: 2 },
+      { key: 'left', amount: 1 },
+    ])
+  })
+
+  it('is one solid approved piece when nothing is left to do', () => {
+    expect(ledgerSegments([t('a', 5, 'approved'), t('s', 4, 'piled', 'done')])).toEqual([{ key: 'approve', amount: 9 }])
+  })
+
+  it('leaves out empty pieces', () => {
+    expect(ledgerSegments([t('a', 5, 'approved'), t('f', 2, 'flagged')]).map((s) => s.key)).toEqual(['approve', 'flag'])
   })
 })

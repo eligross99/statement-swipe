@@ -3,15 +3,19 @@ import './App.css'
 import { Deck, type Direction, type LeavingCard, type Offset, type ReturningCard } from './components/Deck'
 import { FolderDetail } from './components/FolderDetail'
 import { FolderSheet } from './components/FolderSheet'
-import { Header, type HeaderLeft } from './components/Header'
-import { ImportScreen } from './components/ImportScreen'
+import { Header, type HeaderButton } from './components/Header'
+import { ImportScreen, type Naming } from './components/ImportScreen'
 import { InvestigateView } from './components/InvestigateView'
+import { SettingsScreen } from './components/SettingsScreen'
+import { StatementsScreen } from './components/StatementsScreen'
 import { Summary } from './components/Summary'
-import { useReview } from './hooks/useReview'
+import { useLibrary } from './hooks/useLibrary'
 import { makeId } from './lib/format'
-import { DURATION, pause, screenEnter, type Enter } from './lib/motion'
-import { currentTxn, reviewedCount, type ReviewEvent } from './lib/review'
-import type { Screen, Status } from './types'
+import { openStatement, type LibraryAction } from './lib/library'
+import { DURATION, pause, screenEnter, type Enter, type Place } from './lib/motion'
+import { currentTxn, type ReviewEvent } from './lib/review'
+import { defaultName, pastFolderNames, statementPeriod, uniqueName } from './lib/statements'
+import type { Screen, Session, Status, Transaction } from './types'
 
 const CENTER: Offset = { x: 0, y: 0 }
 /** Where the top card rests while Look closer is open (leaning left) or the folder sheet is (lifted). */
@@ -21,8 +25,17 @@ const LEAN_UP: Offset = { x: 0, y: -64 }
 /** Which way a card flew off the deck, from the status it was given. */
 const flewTo = (status: Status): Direction => (status === 'approved' ? 'right' : status === 'flagged' ? 'left' : 'up')
 
+/** Stands in for the review while no statement is open, so review code never has to check. */
+const NO_SESSION: Session = { txns: [], index: 0, piles: [], screen: 'deck', openPile: null }
+
 export default function App() {
-  const { session, history, ready, dispatch } = useReview()
+  const library = useLibrary()
+  const { statements, view, filter, settings, ready, dispatch: send } = library
+  const statement = openStatement(library)
+  const session = statement?.session ?? NO_SESSION
+  const history = statement?.history ?? []
+  /** Changes the open statement's review. */
+  const dispatch = (event: ReviewEvent) => send({ type: 'review', event })
   // Screen-level UI state that isn't part of the saved session.
   const [investigatingId, setInvestigatingId] = useState<string | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -39,10 +52,11 @@ export default function App() {
 
   // Keep showing the deck until the last card has flown off; then the summary rises in.
   const screen: Screen = session.screen === 'summary' && leaving ? 'deck' : session.screen
+  const place: Place = statement ? screen : view === 'review' ? 'statements' : view
   // How the current screen entered. Worked out while rendering, from the screen shown before.
-  const [shown, setShown] = useState<{ screen: Screen | null; enter: Enter }>({ screen: null, enter: 'fade' })
-  if (ready && shown.screen !== screen) {
-    setShown({ screen, enter: shown.screen ? screenEnter(shown.screen, screen) : 'fade' })
+  const [shown, setShown] = useState<{ place: Place | null; enter: Enter }>({ place: null, enter: 'fade' })
+  if (ready && shown.place !== place) {
+    setShown({ place, enter: shown.place ? screenEnter(shown.place, place) : 'fade' })
   }
 
   /** Resolves the top card and sends a copy of it flying off in `dir`. */
@@ -65,8 +79,8 @@ export default function App() {
     resolve(event, dir, LEAN_LEFT)
   }
 
-  /** For events that jump around (undo, restart, new import): drop overlays and any moving card. */
-  const jump = (event: ReviewEvent) => {
+  /** Drops overlays and any moving card, before jumping somewhere (undo, restart, another screen). */
+  const settle = () => {
     generation.current++
     setInvestigatingId(null)
     setSheetOpen(false)
@@ -74,7 +88,25 @@ export default function App() {
     setReturning(null)
     setLean(null)
     setBusy(false)
+  }
+
+  const jump = (event: ReviewEvent) => {
+    settle()
     dispatch(event)
+  }
+
+  /** Moves between the app's places (Statements, a review, import, settings). */
+  const go = (event: LibraryAction) => {
+    settle()
+    send(event)
+  }
+
+  /** Saves newly imported purchases as a statement and opens it. */
+  const addStatement = (txns: Transaction[], naming: Naming) => {
+    const taken = statements.map((st) => st.name)
+    const period = statementPeriod(txns, 'closing' in naming ? naming.closing : null)
+    const name = 'name' in naming ? uniqueName(naming.name, taken) : defaultName(period, naming.fallback, taken)
+    go({ type: 'add', id: makeId('st'), txns, name, period })
   }
 
   const undo = () => {
@@ -84,48 +116,63 @@ export default function App() {
     if (txn) setReturning({ txnId: txn.id, dir: flewTo(txn.status) })
   }
 
-  const goImport = () => jump({ type: 'goImport' })
+  const home = () => go({ type: 'go', view: 'statements' })
 
-  let left: HeaderLeft
-  if (session.screen === 'import') {
-    left = session.txns.length ? { kind: 'back', label: 'Back to your review', onClick: () => dispatch({ type: 'resume' }) } : null
-  } else if (session.screen === 'pile') {
-    left = { kind: 'back', label: 'Back to all folders', onClick: () => dispatch({ type: 'closePile' }) }
+  let header: { title: string; left: HeaderButton; right: HeaderButton }
+  if (place === 'statements') {
+    header = { title: 'Statements', left: null, right: { kind: 'settings', onClick: () => go({ type: 'go', view: 'settings' }) } }
+  } else if (place === 'import') {
+    header = { title: 'New statement', left: { kind: 'back', label: 'Back to statements', onClick: home }, right: null }
+  } else if (place === 'settings') {
+    header = { title: 'Settings', left: { kind: 'back', label: 'Back to statements', onClick: home }, right: null }
+  } else if (place === 'pile') {
+    header = {
+      title: session.piles.find((pl) => pl.id === session.openPile)?.name ?? '',
+      left: { kind: 'back', label: 'Back to all folders', onClick: () => dispatch({ type: 'closePile' }) },
+      right: null,
+    }
   } else {
-    left = { kind: 'undo', enabled: history.length > 0, onClick: undo }
+    header = {
+      title: statement?.name ?? '',
+      left: { kind: 'back', label: 'Back to statements', onClick: home },
+      right: { kind: 'undo', enabled: history.length > 0, onClick: undo },
+    }
   }
 
   return (
     <div className="app">
-      <Header
-        title={
-          session.screen === 'import'
-            ? 'New statement'
-            : session.screen === 'pile'
-              ? (session.piles.find((pl) => pl.id === session.openPile)?.name ?? session.label)
-              : session.label
-        }
-        left={left}
-        onNew={session.screen === 'import' ? null : goImport}
-      />
+      <Header {...header} />
 
       {!ready ? (
         <p className="app-loading">Loading…</p>
       ) : (
         // Keyed by screen, so each new screen mounts fresh and plays its entrance.
-        <div key={screen} className={`view enter-${shown.enter}`}>
-          {screen === 'import' && (
-            <ImportScreen
-              current={
-                session.txns.length
-                  ? { label: session.label, reviewed: reviewedCount(session.txns), total: session.txns.length }
-                  : null
-              }
-              onStart={(txns, label) => jump({ type: 'start', txns, label })}
+        <div key={place} className={`view enter-${shown.enter}`}>
+          {place === 'statements' && (
+            <StatementsScreen
+              statements={statements}
+              filter={filter}
+              onFilter={(f) => send({ type: 'setFilter', filter: f })}
+              onOpen={(id) => go({ type: 'open', id })}
+              onImport={() => go({ type: 'go', view: 'import' })}
+              onRename={(id, name) => send({ type: 'rename', id, name })}
+              onArchive={(id, archived) => send({ type: 'archive', id, archived })}
+              onDelete={(id) => send({ type: 'delete', id })}
             />
           )}
 
-          {screen === 'deck' && (
+          {place === 'import' && <ImportScreen onStart={addStatement} />}
+
+          {place === 'settings' && (
+            <SettingsScreen
+              statementCount={statements.length}
+              settings={settings}
+              onChange={(change) => send({ type: 'setSettings', settings: change })}
+              onEraseAll={() => send({ type: 'eraseAll' })}
+            />
+          )}
+
+          {place === 'deck' && (
             <Deck
               txns={session.txns}
               index={session.index}
@@ -147,7 +194,7 @@ export default function App() {
             />
           )}
 
-          {screen === 'summary' && (
+          {place === 'summary' && (
             <Summary
               txns={session.txns}
               piles={session.piles}
@@ -157,7 +204,7 @@ export default function App() {
             />
           )}
 
-          {screen === 'pile' && (
+          {place === 'pile' && (
             <FolderDetail
               pile={session.piles.find((p) => p.id === session.openPile) ?? null}
               txns={session.txns}
@@ -190,6 +237,7 @@ export default function App() {
         <FolderSheet
           piles={session.piles}
           txns={session.txns}
+          suggestions={statement && settings.suggestFolders ? pastFolderNames(statements, statement) : []}
           onClose={() => {
             setSheetOpen(false)
             setLean(null)

@@ -25,8 +25,22 @@ test. For tuning the PDF reader, Eli chose the **masked layout** approach (see "
 
 On 2026-09-24 Eli phone-tested and approved Phase 6a (PDF import); it's merged. Its feedback also set
 the card fly-out to 700ms, centered the swipe hint, and added "Show fewer" (see Eli's design notes in
-`CLAUDE.md` and `src/lib/motion.ts`). **Next: Phase 6b in a fresh session. Start with "Starting Phase
-6b" below.**
+`CLAUDE.md` and `src/lib/motion.ts`). Phase 6b followed and is merged too.
+
+On 2026-09-24, starting Phase 6b, Eli chose: **no tab bar until Tasks exists** (Statements is the home
+screen, gear for Settings; the Statements · Tasks bar arrives in 6c), **Settings starts with About &
+privacy plus "Erase everything on this device"** (reminder age moves to 6c with Tasks; no "default
+filter" setting, the screen remembers the last filter instead), and **filters All · Needs action ·
+Archived** ("Last 6 months" waits until people have years of statements).
+
+From Eli's 6b phone test (2026-09-24): no resume banner, rename only from the ⋯ menu, and one rule for
+every breakdown bar (`ledgerSegments` in `src/lib/review.ts`): it reads like a progress bar, done on the
+left (approved dark green, settled folder items pale green), still to do on the right (open folder items
+indigo, flagged red, then unreviewed as empty track), and **a statement with nothing left to do is one
+solid dark green**.
+
+**Phase 6b was phone-tested and approved by Eli on 2026-09-24. Next: Phase 6c in a fresh session. Start
+with "Starting Phase 6c" below.**
 
 ## Roadmap order
 
@@ -49,13 +63,34 @@ the card fly-out to 700ms, centered the swipe hint, and added "Show fewer" (see 
 Rename "Set next step" to "Set status"; tapping opens a menu with To do / Waiting / Done (plus a way
 to clear it). Agreed as-is.
 
+### Starting Phase 6c: handoff notes from 6b (2026-09-24)
+**Scope:** the Tasks dashboard (see "Tasks dashboard"), the **Statements · Tasks** bottom tab bar (held
+back from 6b so a one-tab bar never shipped), a way to **resolve flagged purchases** (Eli: "I'll
+definitely want a way to track flagged purchases to remediation"; see the gap under "Tasks dashboard"),
+the **reminder age** setting, remembered bank setups, and OFX/QFX files. That's a lot: consider
+splitting (e.g. 6c = Tasks + tab bar + flagged resolution, 6d = bank setups + OFX/QFX) and ask Eli.
+
+**Open with Eli:** they have feedback on the Settings page they held back until it grows; ask for it
+before adding reminder age there.
+
+**What 6b left in place:**
+- `libraryReducer` (`src/lib/library.ts`) holds every `Statement`; `useLibrary` saves changed ones to
+  Dexie (`src/lib/storage.ts`). A cross-statement Tasks view can derive everything from `statements`.
+- Settings live in `LibraryState.settings` (saved under the `settings` key; `readSettings` drops junk,
+  defaults fill gaps). Add new settings there.
+- `progress()` / `needsAction()` (`src/lib/statements.ts`) define "needs action"; a resolved-flag state
+  must update both, plus `ledgerSegments` (`src/lib/review.ts`) so a resolved flag counts as done.
+- Adding a field to `Transaction` (e.g. a resolved flag) needs `isReviewData` in `storage.ts` to
+  accept saves without it, since statements are already saved on Eli's phone.
+- `idb-keyval` only remains for the 6b migration; it can be removed once Eli's phone has migrated.
+
 ### Starting Phase 6b: handoff notes from 6a (2026-09-24)
 **Scope** (decided): Dexie storage with automatic migration of the saved review, the Statements
 screen (see "Statements repository"), navigation (see "Navigation"), rename statements and smart
 default names (see "Rename statements…"), and light Settings. Tasks dashboard, remembered bank
 setups, and OFX/QFX stay in 6c.
 
-**Open question: ask Eli before building.** The approved navigation is bottom tabs *Statements ·
+**Open question (answered 2026-09-24: option a).** The approved navigation is bottom tabs *Statements ·
 Tasks*, but the Tasks dashboard is scheduled for 6c. A tab bar with one tab looks unfinished. Options to
 put to Eli, with a recommendation: (a) in 6b, make Statements the home screen with the gear for Settings
 and no tab bar, then add the tab bar in 6c with Tasks (recommended: nothing half-built ships); (b) move
@@ -106,8 +141,9 @@ gives the cross-statement view), but offer your past folder names as one-tap cho
 **Proposed instead of Statements / Swipe / Settings tabs:**
 - **Bottom tabs: Statements · Tasks.** Tabs are for places you visit often.
 - **No "Swipe" tab.** Swiping belongs to one specific statement, so the tab would be empty or confusing
-  when nothing is in progress. Instead, a **"Resume: March 2026 · 8 left"** banner sits at the top of
-  Statements, and tapping any statement opens it (per the rules above).
+  when nothing is in progress. Instead, tapping any statement opens it (per the rules above). A
+  "Pick up where you left off" banner was built in 6b, then **removed after Eli's phone test**: it
+  repeated a row already on the screen.
 - **Swiping is full-screen with the tab bar hidden**, with a back arrow. That gives the cards more
   room, and the swipe-up gesture doesn't compete with the tab bar.
 - **Settings behind a gear icon in the top-right corner**, the common pattern for rarely visited
@@ -120,8 +156,20 @@ linking back to its statement and folder. "Remind me after X" is a preference; u
 notifications exist, open items past that age get an **Overdue** highlight and a count badge on the
 Tasks tab.
 
+**Gap found in 6b, to solve here:** a flagged purchase has no "resolved" state. The only way out is
+"I recognize it, approve it", so a statement with a real fraud charge (disputed, refunded) stays in
+**Needs action** forever. Tasks needs a way to mark a flagged purchase as handled (e.g. "Disputed with
+my bank"), which then counts as clear.
+
 ### Settings / preferences → Phase 6b (start light)
-Start with: reminder age (e.g. 1 month), default statement filter, and "About & privacy".
+**Built in 6b:** "About & privacy", "Erase everything on this device", and a "Suggest past folder names"
+switch (on by default; Eli, 2026-09-24). Folders stay per statement either way: the switch only controls
+whether names used before are offered as one-tap choices ("Names you've used before") when filing.
+Eli considered a "save folders across statements" setting; Claude recommended against shared folders
+(a data-model change that overlaps the 6c Tasks dashboard) and pre-made empty folders (clutter, no
+tap saved), and Eli chose the suggestion switch instead. Reminder age comes with Tasks
+(6c); the Statements filter is remembered instead of being a setting (Eli, 2026-09-24).
+Originally planned: reminder age (e.g. 1 month), default statement filter, and "About & privacy".
 **Proposed:** no Account or Plan sections until accounts and payments exist (Phase 9). Empty
 placeholder screens make an app feel unfinished.
 
@@ -347,8 +395,9 @@ This reverses the old "PDF is out of scope" decision (`docs/handoff.md` §12).
   cent. `src/sources/pdfSource.private.test.ts` re-checks it (counts only) whenever tests run on Eli's Mac.
 
 ### Rename statements and smart default names → Phase 6b
-- **Rename** from each statement's "⋯" menu on the Statements screen, and by tapping the title at the
-  top of a review. Any name, e.g. "July 2026 Bank of America Credit Card Statement".
+- **Rename** from each statement's "⋯" menu on the Statements screen. Any name, e.g. "July 2026 Bank of
+  America Credit Card Statement". (Renaming by tapping the review's title was built, then removed after
+  Eli's phone test: the pencil icon looked like an edit mode, and a tap-only title is a hidden feature.)
 - **Smart default names** instead of the file name: from the purchase dates, plus the bank name once
   bank setups are remembered, e.g. "July 2026 Bank of America". Likely enough for most people.
 - **Later (nice-to-have):** a custom naming pattern in Settings, so users never rename by hand.

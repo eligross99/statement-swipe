@@ -29,12 +29,16 @@ export const DURATION = {
 /** How a screen appears. The matching CSS classes (`.enter-push` etc.) live in `index.css`. */
 export type Enter = 'none' | 'fade' | 'push' | 'pop' | 'rise'
 
+/** Every place the app can show: the top-level screens, and a review's deck, summary, or folder. */
+export type Place = 'statements' | 'import' | 'settings' | Screen
+
 /** Picks a screen's entrance from where the user came from: forward slides in from the right,
- *  back from the left, finishing the review rises up. */
-export function screenEnter(from: Screen, to: Screen): Enter {
+ *  back from the left, starting or finishing a review rises up. */
+export function screenEnter(from: Place, to: Place): Enter {
   if (from === to) return 'none'
-  if (to === 'import') return 'push'
-  if (from === 'import') return 'rise'
+  if (to === 'statements') return 'pop'
+  if (from === 'statements') return 'push'
+  if (from === 'import' && to === 'deck') return 'rise'
   if (from === 'deck' && to === 'summary') return 'rise'
   if (from === 'summary' && to === 'pile') return 'push'
   if (from === 'pile' && to === 'summary') return 'pop'

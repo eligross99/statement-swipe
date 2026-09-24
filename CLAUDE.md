@@ -24,7 +24,8 @@ Local-first: **the user's statement never leaves their device.**
 
 - React + Vite + **TypeScript** (strict mode)
 - `vite-plugin-pwa`: installable, works offline
-- `idb-keyval`: IndexedDB persistence (switch to Dexie only if we add statement history)
+- `dexie`: IndexedDB persistence, one row per statement (`src/lib/storage.ts`). `idb-keyval` stays only to
+  move a review saved before Phase 6b; it can go once that's no longer needed
 - `papaparse`: CSV parsing · `pdfjs-dist`: PDF statements, loaded only when a PDF is picked · `lucide-react`: icons
 - Vitest + Testing Library for unit/component tests; Playwright (WebKit, iPhone-sized) for end-to-end tests in `e2e/`
 - Hosting: Vercel (auto-deploys from GitHub; set up in the PWA-finish phase)
@@ -53,9 +54,13 @@ Deploys, CI, security headers, and the phone test checklist: `docs/deploy.md`.
 - **Data source seam:** all ingestion goes through a `TransactionSource` interface that returns a
   normalized `Transaction[]` (`CSVSource` now; Teller/Plaid later). Nothing downstream (deck,
   folders, summary, triage) may know where transactions came from.
-- **Data model** lives in one types file and matches `docs/handoff.md` §7 (`Transaction`, `Pile`,
-  `Session`, `Status`, `Action`).
-- **Persistence:** save the whole `Session` blob to IndexedDB (debounced) and restore it on load.
+- **Data model** lives in one types file (`src/types.ts`) and matches `docs/handoff.md` §7 (`Transaction`,
+  `Pile`, `Session`, `Status`, `Action`), plus `Statement`: one imported statement wrapping its `Session`
+  (name, dates, archived, undo steps). A `Session` no longer has a `label`; the name lives on the `Statement`.
+- **State:** `libraryReducer` (`src/lib/library.ts`) holds every statement and which screen is showing, and
+  hands review events to `reviewReducer` (`src/lib/review.ts`) for the open statement.
+- **Persistence:** `useLibrary` saves changed statements to IndexedDB (debounced, flushed when the app is
+  hidden) and restores them, plus where the user was, on load.
   The prototype's `window.storage` only exists inside Claude artifacts and must not appear in this code.
 - **Keep logic out of components:** CSV parsing, column detection, and state transitions (approve,
   pile, flag, undo, delete folder) are plain TypeScript functions with unit tests. Components render.
@@ -63,7 +68,7 @@ Deploys, CI, security headers, and the phone test checklist: `docs/deploy.md`.
   - Every transaction reaches a terminal state (`approved | piled | flagged`) before the session completes.
   - Swipe left opens the investigation view. It never dismisses the card.
   - Deleting a folder reverts its items to `approved` with `pileId: null`. Never lose review state.
-  - Folders are session-scoped and start empty.
+  - Folders belong to one statement and start empty (past folder names are offered when filing).
   - "Still to act on" = sum of a folder's items whose action is not `done`.
 
 ## Privacy (non-negotiable)
@@ -135,10 +140,12 @@ See `docs/handoff.md` §11 for details.
     Bank of America PDF via the masked-layout script (totals match to the cent), phone-tested on Eli's
     iPhone. Also added: Playwright WebKit e2e tests on CI, iPhone-simulator testing, `npm run preview`
     with the live CSP, "Show all/Show fewer" in the import preview, no "—" category chip
-  - [ ] 6b. Multiple statements: Dexie storage (migrate the saved session), Statements screen, bottom
-    navigation, rename statements + smart default names, light Settings  ← **next.** Start with
-    "Starting Phase 6b" in `docs/ideas.md` (handoff notes and an open question for Eli)
-  - [ ] 6c. Tasks dashboard; remembered bank setups; OFX/QFX files
+  - [x] 6b. **Multiple statements:** Dexie storage (the old saved review migrates automatically),
+    Statements home screen (filters, ⋯ menu to rename/archive/delete, breakdown bars via
+    `ledgerSegments`), smart default names ("July 2026"), light Settings (suggest past folder names,
+    About & privacy, Erase everything), phone-tested by Eli. No tab bar yet (arrives with Tasks)
+  - [ ] 6c. Tasks dashboard + Statements · Tasks tab bar; resolving flagged purchases; remembered bank
+    setups; OFX/QFX files  ← **next.** Start with "Starting Phase 6c" in `docs/ideas.md`
 - [ ] 7. Dark mode (follows the phone, override in Settings), Android haptics and Android "Share to" first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
   Settings; the standalone "Try the sample statement" button goes away; per-bank download guides
   (see `docs/ideas.md`)
