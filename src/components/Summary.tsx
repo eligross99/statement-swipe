@@ -1,7 +1,7 @@
-import { ChevronRight, Folder, ShieldAlert } from 'lucide-react'
+import { ChevronRight, Folder, FolderCheck, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
 import { plural, usd } from '../lib/format'
-import { openItems, pileItems, sumAmounts } from '../lib/review'
+import { folderGroups, sumAmounts } from '../lib/review'
 import type { Pile, Transaction } from '../types'
 import './Summary.css'
 
@@ -19,7 +19,7 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
   const [confirmRestart, setConfirmRestart] = useState(false)
   const total = sumAmounts(txns)
   const flagged = txns.filter((t) => t.status === 'flagged')
-  const groups = piles.map((p) => ({ p, items: pileItems(txns, p.id) })).filter((g) => g.items.length)
+  const groups = folderGroups(txns, piles)
 
   const rows: { tone: Tone; label: string; items: Transaction[] }[] = [
     { tone: 'approve', label: 'Approved', items: txns.filter((t) => t.status === 'approved') },
@@ -79,21 +79,24 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
         <section className="summary-section">
           <h3 className="section-label">Your folders</h3>
           <div className="summary-folders">
-            {groups.map(({ p, items }) => {
-              const open = openItems(items).length
+            {groups.map(({ pile: p, items, open }) => {
+              const settled = open === 0
               return (
-                <button key={p.id} type="button" className="panel folder-card" onClick={() => onOpenPile(p.id)}>
-                  <span className="folder-card-icon">
-                    <Folder size={20} />
-                  </span>
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`panel folder-card${settled ? ' is-settled' : ''}`}
+                  onClick={() => onOpenPile(p.id)}
+                >
+                  <span className="folder-card-icon">{settled ? <FolderCheck size={20} /> : <Folder size={20} />}</span>
                   <span className="folder-card-main">
                     <span className="folder-card-name">{p.name}</span>
                     <span className="folder-card-meta">
                       {plural(items.length, 'purchase')},{' '}
-                      {open > 0 ? (
-                        <span className="tone-investigate">{open} to act on</span>
+                      {settled ? (
+                        <span className="tone-approve">all settled</span>
                       ) : (
-                        <span className="tone-approve">all done</span>
+                        <span className="tone-investigate">{open} to act on</span>
                       )}
                     </span>
                   </span>

@@ -94,3 +94,11 @@
   font-size: var(--text-sm);
   line-height: 1.45;
 }
+
+.investigate-confirm-text {
+  margin: 8px 0 18px;
+  color: var(--text-mute);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}

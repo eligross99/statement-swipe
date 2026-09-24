@@ -213,6 +213,26 @@ export function openItems(items: Transaction[]): Transaction[] {
   return items.filter((t) => t.action !== 'done')
 }
 
+export interface FolderGroup {
+  pile: Pile
+  items: Transaction[]
+  /** How many purchases still need action (status not Done). */
+  open: number
+}
+
+/** Folders that have purchases, for the summary. Folders still needing action come first, so none
+ *  get forgotten below the fold; settled ones sink to the bottom. Otherwise creation order. */
+export function folderGroups(txns: Transaction[], piles: Pile[]): FolderGroup[] {
+  const groups = piles
+    .map((pile) => {
+      const items = pileItems(txns, pile.id)
+      return { pile, items, open: openItems(items).length }
+    })
+    .filter((g) => g.items.length > 0)
+  // A stable sort keeps creation order within each half.
+  return groups.sort((a, b) => Number(a.open === 0) - Number(b.open === 0))
+}
+
 /** The triage statuses, in the order the "Set status" menu lists them. */
 export const ACTION_LABELS: Record<Exclude<Action, null>, string> = {
   todo: 'To do',

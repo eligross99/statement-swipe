@@ -187,9 +187,15 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: /Flagged as possible fraud/ })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /TRADER JOE'S/ }))
+    // It asks first; cancelling keeps the purchase flagged.
     await user.click(screen.getByRole('button', { name: 'I recognize it, approve it' }))
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('dialog', { name: 'Approve this purchase?' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'I recognize it, approve it' }))
+    await user.click(screen.getByRole('button', { name: 'Yes, approve it' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /Flagged as possible fraud/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Undo last action' })).toBeEnabled()
   })
 
   it('shows the same readable date on the card and in the investigation view', async () => {

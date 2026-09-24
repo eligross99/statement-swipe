@@ -182,6 +182,17 @@
   color: var(--text-mute);
 }
 
+/* A settled folder reads as finished at a glance: green check icon, quieter amount. */
+.folder-card.is-settled .folder-card-icon {
+  background: var(--approve-tint);
+  color: var(--approve);
+}
+
+.folder-card.is-settled .folder-card-total {
+  color: var(--text-mute);
+  font-weight: 500;
+}
+
 .folder-card-total {
   font-size: var(--text-md);
   font-weight: 650;

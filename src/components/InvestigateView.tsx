@@ -1,10 +1,11 @@
 import { Check, ChevronLeft, Flag, ShieldAlert } from 'lucide-react'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
 import { useEscape } from '../hooks/useEscape'
 import { formatDate } from '../lib/dates'
 import { usd } from '../lib/format'
 import type { Transaction } from '../types'
+import { Sheet } from './Sheet'
 import './InvestigateView.css'
 
 interface Props {
@@ -24,6 +25,8 @@ export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag, onR
   const animate = useAnimate()
   const ref = useRef<HTMLDivElement>(null)
   const leaving = useRef(false)
+  // Asking "are you sure?" before a flagged purchase is approved.
+  const [confirming, setConfirming] = useState(false)
 
   const leave = (then: () => void) => {
     if (leaving.current) return
@@ -33,7 +36,8 @@ export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag, onR
       { opacity: 0 },
     ]).then(then)
   }
-  useEscape(() => leave(onBack))
+  // While the confirmation is open, Escape closes only that.
+  useEscape(() => !confirming && leave(onBack))
 
   return (
     <div ref={ref} className="overlay motion-fade" role="dialog" aria-modal="true" aria-labelledby="investigate-title">
@@ -84,10 +88,31 @@ export function InvestigateView({ txn, canDecide, onBack, onApprove, onFlag, onR
             <p className="muted investigate-hint">
               If you’ve looked into it and it’s yours, move it to your approved purchases.
             </p>
-            <button type="button" className="btn btn--primary" onClick={() => leave(onRecognize)}>
+            <button type="button" className="btn btn--primary" onClick={() => setConfirming(true)}>
               <Check size={18} /> I recognize it, approve it
             </button>
           </div>
+        )}
+
+        {confirming && (
+          <Sheet id="recognize-title" title="Approve this purchase?" onDismiss={() => setConfirming(false)}>
+            {(close) => (
+              <>
+                <p className="investigate-confirm-text">
+                  {txn.desc}, <span className="num">${usd(txn.amount)}</span>, moves from Flagged to Approved.
+                </p>
+                <div className="btn-row">
+                  <button type="button" className="btn btn--secondary" onClick={() => close()} autoFocus>
+                    Cancel
+                  </button>
+                  {/* The sheet slides away, then the whole page does, back to the summary. */}
+                  <button type="button" className="btn btn--primary" onClick={() => close(() => leave(onRecognize))}>
+                    Yes, approve it
+                  </button>
+                </div>
+              </>
+            )}
+          </Sheet>
         )}
       </div>
     </div>

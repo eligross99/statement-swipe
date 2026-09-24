@@ -205,7 +205,8 @@ p {
   overflow-y: auto;
   overscroll-behavior-y: contain;
   box-shadow: var(--shadow-sheet);
-  animation: overlay-in 360ms var(--ease-out) backwards;
+  /* Starts a beat after the tap (like the folder sheet), so the pressed button is seen easing back. */
+  animation: overlay-in 360ms var(--ease-out) 90ms backwards;
 }
 
 @keyframes overlay-in {
