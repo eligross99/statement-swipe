@@ -16,6 +16,8 @@ export const DURATION = {
   fly: 700,
   /** A card flying back in on undo. */
   flyBack: 400,
+  /** A list growing or shrinking to show more or fewer rows (e.g. "Show all"). */
+  reveal: 400,
   /** A full-screen view or sheet sliding away. */
   exit: 280,
   /** Quick fade used instead of movement when Reduce Motion is on. */

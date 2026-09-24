@@ -1,10 +1,11 @@
 import { CircleAlert, CircleCheck, FileText, LoaderCircle, Sparkles, X } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { useAnimate } from '../hooks/useAnimate'
 import { parseGrid, type ColumnMap, type Grid, type Purchase } from '../lib/csv'
 import { formatDate } from '../lib/dates'
 import { plural, usd } from '../lib/format'
-import { reducedMotion, token } from '../lib/motion'
+import { canAnimate, DURATION, EASE_OUT, reducedMotion, token } from '../lib/motion'
 import { SAMPLE_LABEL, sampleTransactions } from '../lib/sample'
 import { CSVSource, guessSettings, type CsvSettings } from '../sources/csvSource'
 import { isPdf, PdfImportError, PDFSource, type PdfProblem } from '../sources/pdfSource'
@@ -389,21 +390,58 @@ const PREVIEW_ROWS = 5
 /** The first few purchases found, with a button to show them all and to show fewer again. */
 function PreviewList({ purchases }: { purchases: Purchase[] }) {
   const [all, setAll] = useState(false)
+  const list = useRef<HTMLDivElement>(null)
   const toggle = useRef<HTMLButtonElement>(null)
+  // True while the list is shrinking, so a second tap can't start another change mid-way.
+  const moving = useRef(false)
   const shown = all ? purchases : purchases.slice(0, PREVIEW_ROWS)
+  const smooth = () => canAnimate() && !reducedMotion()
 
-  const showFewer = () => {
-    setAll(false)
-    // The list just got much shorter, so bring the button back into view instead of leaving
-    // the user looking at empty space below it.
+  /** The list grows smoothly to its full height while the new rows fade in (`.enter-fade`). */
+  const showAll = () => {
+    const el = list.current
+    if (!el || !smooth()) return setAll(true)
+    const from = el.offsetHeight
+    flushSync(() => setAll(true))
+    el.animate([{ height: `${from}px` }, { height: `${el.offsetHeight}px` }], {
+      duration: DURATION.reveal,
+      easing: EASE_OUT,
+    })
+  }
+
+  /** The extra rows fade out while the list shrinks smoothly back to the first few. */
+  const showFewer = async () => {
+    const el = list.current
+    const rows = el ? ([...el.children] as HTMLElement[]) : []
+    if (el && smooth() && rows[PREVIEW_ROWS] && !moving.current) {
+      moving.current = true
+      // Height of the first rows: from the list's top edge to the first extra row, plus the bottom border.
+      const to = rows[PREVIEW_ROWS].getBoundingClientRect().top - el.getBoundingClientRect().top + 1
+      for (const row of rows.slice(PREVIEW_ROWS)) {
+        row.animate([{ opacity: 1 }, { opacity: 0 }], { duration: DURATION.reveal * 0.6, fill: 'forwards' })
+      }
+      const shrink = el.animate([{ height: `${el.offsetHeight}px` }, { height: `${to}px` }], {
+        duration: DURATION.reveal,
+        easing: EASE_OUT,
+        fill: 'forwards',
+      })
+      await shrink.finished.catch(() => undefined)
+      flushSync(() => setAll(false))
+      shrink.cancel() // the list is now this height on its own
+      moving.current = false
+    } else if (!moving.current) {
+      setAll(false)
+    }
+    // The page just got shorter, so bring the button back into view instead of leaving the user
+    // looking at empty space below it.
     requestAnimationFrame(() =>
-      toggle.current?.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' }),
+      toggle.current?.scrollIntoView({ block: 'nearest', behavior: smooth() ? 'smooth' : 'auto' }),
     )
   }
 
   return (
     <>
-      <div className="panel preview-list enter-fade">
+      <div className="panel preview-list enter-fade" ref={list}>
         {shown.map((p, i) => (
           // Rows revealed by "Show all" fade in.
           <div key={i} className={`preview-row${i >= PREVIEW_ROWS ? ' enter-fade' : ''}`}>
@@ -421,7 +459,7 @@ function PreviewList({ purchases }: { purchases: Purchase[] }) {
           type="button"
           className="btn btn--quiet import-more"
           aria-expanded={all}
-          onClick={all ? showFewer : () => setAll(true)}
+          onClick={all ? () => void showFewer() : showAll}
         >
           {all ? 'Show fewer' : `Show all ${purchases.length}`}
         </button>
