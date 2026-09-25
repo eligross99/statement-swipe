@@ -19,6 +19,18 @@ interface Props {
   focusId?: string | null
 }
 
+/**
+ * Scrolls the nearest scrolling box so `el` sits in its middle. Only up and down: unlike
+ * `scrollIntoView`, it can't nudge the app sideways while a screen is still sliding in.
+ */
+function scrollToMiddle(el: HTMLElement) {
+  let box = el.parentElement
+  while (box && !/(auto|scroll)/.test(getComputedStyle(box).overflowY)) box = box.parentElement
+  if (!box) return
+  const offset = el.getBoundingClientRect().top - box.getBoundingClientRect().top
+  box.scrollTop += offset - (box.clientHeight - el.offsetHeight) / 2
+}
+
 /** A gentle pulse on a row, so it's clear which purchase changed. */
 const PULSE: Keyframe[] = [{ transform: 'scale(1)' }, { transform: 'scale(1.025)' }, { transform: 'scale(1)' }]
 
@@ -35,9 +47,10 @@ export function FolderDetail({ pile, txns, onSetAction, onSetNote, focusId }: Pr
   // Reduce Motion on.
   useEffect(() => {
     const el = (focusId && rows.current.get(focusId)) || null
-    if (!el || !canAnimate()) return
-    el.scrollIntoView?.({ block: 'center' }) // missing in the test environment
-    const [tint, ring, surface, shadow] = ['--pile-tint', '--pile', '--surface', '--shadow-card'].map(token)
+    if (!el) return
+    scrollToMiddle(el)
+    if (!canAnimate()) return
+    const [tint, ring, surface, shadow] = ['--pile-tint', '--pile-soft', '--surface', '--shadow-card'].map(token)
     const lit = { backgroundColor: tint, boxShadow: `0 0 0 2px ${ring}, ${shadow}` }
     const highlight = el.animate(
       [lit, { ...lit, offset: 0.6 }, { backgroundColor: surface, boxShadow: `0 0 0 0 transparent, ${shadow}` }],

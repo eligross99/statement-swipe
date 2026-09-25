@@ -151,7 +151,8 @@ See `docs/handoff.md` §11 for details.
     About & privacy, Erase everything), phone-tested by Eli. No tab bar yet (arrives with Tasks)
   - [ ] 6c. **Tasks** (`TasksScreen`, `src/lib/tasks.ts`): the Statements and Tasks tab bar, resolving
     flagged purchases with the same statuses as folders, and "Remind me after" (default 2 weeks) for
-    Overdue tags plus a count on the Tasks tab  ← **built, waiting on Eli's phone test.** Remembered bank
+    Overdue tags plus a count on the Tasks tab. Pages that slide over a screen (Look closer, a folder
+    opened from Tasks) share `SlideOver`  ← **built, waiting on Eli's second phone test.** Remembered bank
     setups and OFX/QFX files moved to Phase 7 (Eli, 2026-09-24)
 - [ ] 7. Dark mode (follows the phone, override in Settings), Android haptics and Android "Share to" first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
   Settings; the standalone "Try the sample statement" button goes away; per-bank download guides,

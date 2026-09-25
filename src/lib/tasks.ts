@@ -66,10 +66,15 @@ export function allTasks(statements: Statement[], now: number, remindAfterDays: 
   return tasks
 }
 
-const isFlag = (t: Task) => t.txn.status === 'flagged'
+/** How urgent an open task is, most urgent first: possible fraud nobody has looked at yet (no
+ *  status), other possible fraud, filed purchases with no status yet, the rest. */
+function urgency({ txn }: Task): number {
+  const flag = txn.status === 'flagged'
+  return (flag ? 0 : 2) + (txn.action === null ? 0 : 1)
+}
 
 /**
- * Tasks by group. In To do and Waiting, possible fraud comes first (the most urgent), then the
+ * Tasks by group. In To do and Waiting, the most urgent come first (see `urgency`), then the
  * longest-waiting. Done lists the most recently finished first.
  */
 export function groupTasks(tasks: Task[]): Record<TaskGroup, Task[]> {
@@ -77,7 +82,7 @@ export function groupTasks(tasks: Task[]): Record<TaskGroup, Task[]> {
   for (const task of tasks) groups[task.group].push(task)
   for (const g of TASK_GROUPS) {
     groups[g].sort((a, b) =>
-      g === 'done' ? b.since - a.since : Number(isFlag(b)) - Number(isFlag(a)) || a.since - b.since,
+      g === 'done' ? b.since - a.since : urgency(a) - urgency(b) || a.since - b.since,
     )
   }
   return groups

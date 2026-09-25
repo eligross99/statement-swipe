@@ -146,15 +146,6 @@ describe('tabs and tasks', () => {
     expect(run({ type: 'go', view: 'tasks' }, { type: 'go', view: 'statements' }).home).toBe('statements')
   })
 
-  it('opens a statement straight to one of its folders', () => {
-    const pile = { id: 'f', name: 'Split' }
-    const s = run(add('one'), review({ type: 'createPileAndFile', pile }), { type: 'go', view: 'tasks' })
-    const opened = step(s, { type: 'openFolder', id: 'one', pileId: 'f' })
-    expect(opened).toMatchObject({ view: 'review', openId: 'one' })
-    expect(openStatement(opened)!.session).toMatchObject({ screen: 'pile', openPile: 'f' })
-    expect(step(s, { type: 'openFolder', id: 'one', pileId: 'gone' })).toBe(s)
-  })
-
   it('changes a statement that isn’t open, when given its id', () => {
     const s = run(add('one'), review({ type: 'flag' }), add('two'), { type: 'go', view: 'tasks' })
     const after = step(s, { type: 'review', id: 'one', event: { type: 'setAction', txnId: 'a', action: 'done' }, now: 9 })

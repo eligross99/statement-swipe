@@ -47,8 +47,6 @@ export type LibraryAction =
   | { type: 'loaded'; statements: Statement[]; ui: SavedUi | null; settings: Partial<Settings> | null }
   | { type: 'add'; id: string; txns: Transaction[]; name: string; period: string | null }
   | { type: 'open'; id: string }
-  /** Opens a statement straight to one of its folders (from Tasks). */
-  | { type: 'openFolder'; id: string; pileId: string }
   | { type: 'go'; view: Exclude<View, 'review'> }
   | { type: 'rename'; id: string; name: string }
   | { type: 'archive'; id: string; archived: boolean }
@@ -116,13 +114,6 @@ export function libraryReducer(state: LibraryState, event: LibraryEvent): Librar
       if (!st) return state
       // Opens at the first card (new), where the user left off (in progress), or the summary (done).
       const opened = { ...st, session: { ...st.session, screen: reviewScreen(st.session), openPile: null } }
-      return { ...patch(state, st.id, () => opened), openId: st.id, view: 'review' }
-    }
-
-    case 'openFolder': {
-      const st = state.statements.find((s) => s.id === event.id)
-      if (!st?.session.piles.some((p) => p.id === event.pileId)) return state
-      const opened = { ...st, session: { ...st.session, screen: 'pile' as const, openPile: event.pileId } }
       return { ...patch(state, st.id, () => opened), openId: st.id, view: 'review' }
     }
 

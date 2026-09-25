@@ -498,13 +498,17 @@ describe('App', () => {
       expect(screen.getByText('Clear')).toBeInTheDocument()
     })
 
-    it('opens a filed purchase in its folder, and Back returns to Tasks', async () => {
+    it('opens a filed purchase in its folder, sliding over Tasks, where statuses work too', async () => {
       const user = await openTasks()
       await user.click(screen.getByText('FILED SHOP'))
-      expect(screen.getByRole('heading', { level: 2, name: 'Split' })).toBeInTheDocument()
-      expect(screen.queryByRole('navigation', { name: 'Main' })).not.toBeInTheDocument()
-      await user.click(screen.getByRole('button', { name: 'Back to tasks' }))
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Tasks')
+      const folder = screen.getByRole('dialog', { name: 'Split' })
+      expect(within(folder).getByRole('heading', { level: 2, name: 'Split' })).toBeInTheDocument()
+      await user.click(within(folder).getByRole('button', { name: /Change status for FILED SHOP/ }))
+      await user.click(within(screen.getByRole('dialog', { name: 'Set status' })).getByRole('button', { name: /^Waiting/ }))
+
+      await user.click(within(folder).getByRole('button', { name: 'Back to tasks' }))
+      expect(screen.queryByRole('dialog', { name: 'Split' })).not.toBeInTheDocument()
+      expect(within(screen.getByRole('region', { name: /Waiting/ })).getByText('FILED SHOP')).toBeInTheDocument()
     })
 
     it('opens a flagged purchase in Look closer, to track it with a status and note', async () => {

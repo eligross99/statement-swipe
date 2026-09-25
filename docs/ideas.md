@@ -57,7 +57,11 @@ tasks together ("2 to do", "1 waiting") plus a count-free red "Possible fraud" t
 tab bar** with a sliding green pill; the whole task card is tappable and presses in; notes always sit in
 a grey note box; Look closer pins its back button and words the approve confirmation by status; a task
 opened from Tasks gets a fading indigo highlight in its folder. The **"Unusual" tag was removed**: only
-the sample set it, by hand. A real, explained version comes with Phase 8's new-merchant tag.
+the sample set it, by hand. A real, explained version comes with Phase 8's new-merchant tag. Second round
+(same day): a **dark, deep-green frosted tab bar** hovering higher (a light one blended into the white
+cards), a slower pill slide and task fold/grow, a softer highlight outline, a flag with no status sorts to
+the very top, and a filed task opens its folder **sliding over Tasks like Look closer** (`SlideOver`)
+instead of switching screens.
 
 ## Roadmap order
 

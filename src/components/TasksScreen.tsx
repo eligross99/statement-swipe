@@ -7,7 +7,9 @@ import { DURATION, EASE_OUT } from '../lib/motion'
 import { isOpenFlag } from '../lib/review'
 import { allTasks, GROUP_LABELS, groupTasks, taskGroup, TASK_GROUPS, type Task, type TaskGroup } from '../lib/tasks'
 import type { Action, Statement } from '../types'
+import { FolderDetail } from './FolderDetail'
 import { InvestigateView } from './InvestigateView'
+import { SlideOver } from './SlideOver'
 import { StatusSheet } from './StatusSheet'
 import { StatusPill } from './TaskControls'
 import './TasksScreen.css'
@@ -17,12 +19,11 @@ interface Props {
   /** The current time, for Overdue. */
   now: number
   remindAfterDays: number | null
-  /** Opens a filed purchase in its folder. */
-  onOpenFolder: (task: Task) => void
-  onSetAction: (task: Task, action: Action) => void
-  onSetNote: (task: Task, note: string) => void
+  /** Changes to a purchase in statement `statementId` (from a task, or its folder opened here). */
+  onSetAction: (statementId: string, txnId: string, action: Action) => void
+  onSetNote: (statementId: string, txnId: string, note: string) => void
   /** A flagged purchase the user recognizes after all. */
-  onRecognize: (task: Task) => void
+  onRecognize: (statementId: string, txnId: string) => void
 }
 
 /** How many finished tasks show before "Show all". */
@@ -32,7 +33,9 @@ const DONE_ROWS = 5
 export function TasksScreen(props: Props) {
   const { statements, now, remindAfterDays } = props
   const [statusFor, setStatusFor] = useState<string | null>(null)
+  // The task opened on its own page: Look closer for a flag, its folder for a filed purchase.
   const [inspecting, setInspecting] = useState<string | null>(null)
+  const [inFolder, setInFolder] = useState<string | null>(null)
   // The task that just moved to another group, so it grows into place where it landed.
   const [moved, setMoved] = useState<string | null>(null)
   const rows = useRef(new Map<string, HTMLLIElement>())
@@ -43,6 +46,8 @@ export function TasksScreen(props: Props) {
   const find = (key: string | null) => tasks.find((t) => t.key === key) ?? null
   const statusTask = find(statusFor)
   const inspected = find(inspecting)
+  // Kept while a status change moves it to another group (its key stays the same).
+  const folderTask = find(inFolder)
   const open = tasks.length - groups.done.length
 
   const rowRef = (key: string) => (el: HTMLLIElement | null) => {
@@ -54,8 +59,9 @@ export function TasksScreen(props: Props) {
    *  into its new place; otherwise the row pulses where it is. */
   const setStatus = (task: Task, action: Action) => {
     const el = rows.current.get(task.key) ?? null
+    const setAction = () => props.onSetAction(task.statement.id, task.txn.id, action)
     if (taskGroup({ ...task.txn, action }) === task.group) {
-      props.onSetAction(task, action)
+      setAction()
       void animate(el, [{ transform: 'scale(1)' }, { transform: 'scale(1.025)' }, { transform: 'scale(1)' }])
       return
     }
@@ -66,11 +72,11 @@ export function TasksScreen(props: Props) {
         { opacity: 1, height: `${h}px`, marginBottom: '10px' },
         { opacity: 0, height: '0px', marginBottom: '0px' },
       ],
-      { duration: 320, hold: true },
+      { duration: DURATION.move, easing: EASE_OUT, hold: true },
       [{ opacity: 1 }, { opacity: 0 }],
     ).then(() => {
       setMoved(task.key)
-      props.onSetAction(task, action)
+      setAction()
     })
   }
 
@@ -81,7 +87,7 @@ export function TasksScreen(props: Props) {
       rowRef={rowRef(task.key)}
       entering={task.key === moved}
       onEntered={() => setMoved(null)}
-      onOpen={() => (task.pile ? props.onOpenFolder(task) : setInspecting(task.key))}
+      onOpen={() => (task.pile ? setInFolder(task.key) : setInspecting(task.key))}
       onStatus={() => setStatusFor(task.key)}
     />
   )
@@ -138,11 +144,26 @@ export function TasksScreen(props: Props) {
           onFlag={() => undefined}
           onRecognize={() => {
             setInspecting(null)
-            props.onRecognize(inspected)
+            props.onRecognize(inspected.statement.id, inspected.txn.id)
           }}
-          onSetAction={(action) => props.onSetAction(inspected, action)}
-          onSetNote={(note) => props.onSetNote(inspected, note)}
+          onSetAction={(action) => props.onSetAction(inspected.statement.id, inspected.txn.id, action)}
+          onSetNote={(note) => props.onSetNote(inspected.statement.id, inspected.txn.id, note)}
         />
+      )}
+
+      {/* A filed purchase opens its folder the same way Look closer opens: sliding over Tasks. */}
+      {folderTask?.pile && (
+        <SlideOver label={folderTask.pile.name} backLabel="Back to tasks" onBack={() => setInFolder(null)}>
+          {() => (
+            <FolderDetail
+              pile={folderTask.pile}
+              txns={folderTask.statement.session.txns}
+              onSetAction={(txnId, action) => props.onSetAction(folderTask.statement.id, txnId, action)}
+              onSetNote={(txnId, note) => props.onSetNote(folderTask.statement.id, txnId, note)}
+              focusId={folderTask.txn.id}
+            />
+          )}
+        </SlideOver>
       )}
     </>
   )
@@ -209,7 +230,7 @@ function TaskRow({ task, rowRef, entering, onEntered, onOpen, onStatus }: RowPro
         { opacity: 0, height: '0px', marginBottom: '0px' },
         { opacity: 1, height: `${el.offsetHeight}px`, marginBottom: ROW_GAP },
       ],
-      { duration: DURATION.reveal, easing: EASE_OUT },
+      { duration: DURATION.move, easing: EASE_OUT },
       [{ opacity: 0 }, { opacity: 1 }],
     ).then(onEntered)
     // Only when the row first appears.

@@ -1,19 +1,20 @@
-/* The bottom tab bar: a frosted capsule floating above the bottom edge. Screens scroll underneath it
-   (they leave --tabbar-space at the bottom so their last row can scroll clear of it). */
+/* The bottom tab bar: a dark frosted capsule hovering above the bottom edge. Screens scroll underneath
+   it (they leave --tabbar-space at the bottom so their last row can scroll clear of it). */
 .tabbar {
   position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: max(12px, env(safe-area-inset-bottom));
+  left: 20px;
+  right: 20px;
+  bottom: max(20px, env(safe-area-inset-bottom));
   z-index: 30;
   display: flex;
   padding: 6px;
-  border: 1px solid var(--glass-edge);
   border-radius: 999px;
-  background: var(--glass);
-  -webkit-backdrop-filter: blur(20px) saturate(1.6);
-  backdrop-filter: blur(20px) saturate(1.6);
-  box-shadow: var(--shadow-lift);
+  background: var(--dock);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  backdrop-filter: blur(24px) saturate(1.8);
+  box-shadow:
+    inset 0 1px 0 var(--dock-edge),
+    var(--shadow-float);
   /* Rises into place when coming back from a review, where it's hidden. */
   animation: tabbar-in var(--dur-enter) var(--ease-out) backwards;
 }
@@ -34,7 +35,8 @@
   width: calc(50% - 6px);
   border-radius: 999px;
   background: var(--brand-tint);
-  transition: transform 380ms var(--ease-out);
+  /* Unhurried, with a soft landing (Eli: 380ms was a little fast). */
+  transition: transform 560ms cubic-bezier(0.3, 0.7, 0.2, 1);
 }
 
 .tab-indicator.is-right {
@@ -54,13 +56,14 @@
   border: none;
   border-radius: 999px;
   background: none;
-  color: var(--text-mute);
+  color: var(--dock-text);
   font: inherit;
   cursor: pointer;
+  transition: color 0.3s ease;
 }
 
 .tab.is-here {
-  color: var(--brand);
+  color: var(--brand-strong);
 }
 
 .tab-label {
@@ -84,7 +87,7 @@
   height: 20px;
   padding: 0 6px;
   border-radius: 999px;
-  border: 2px solid var(--surface);
+  border: 2px solid var(--text);
   background: var(--investigate);
   color: var(--on-brand);
   font-size: min(0.75rem, 13px); /* capped: the badge is a fixed size */

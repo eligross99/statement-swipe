@@ -18,7 +18,7 @@ import { openStatement, type LibraryAction, type Tab } from './lib/library'
 import { DURATION, pause, screenEnter, type Enter, type Place } from './lib/motion'
 import { currentTxn, type ReviewEvent } from './lib/review'
 import { defaultName, pastFolderNames, statementPeriod, uniqueName } from './lib/statements'
-import { allTasks, overdueCount, type Task } from './lib/tasks'
+import { allTasks, overdueCount } from './lib/tasks'
 import type { Screen, Session, Status, Transaction } from './types'
 
 const CENTER: Offset = { x: 0, y: 0 }
@@ -50,8 +50,6 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   // Bumped by every jump, so a delayed step from before the jump knows to stop.
   const generation = useRef(0)
-  // The purchase a folder was opened for from Tasks: highlighted there, and Back returns to Tasks.
-  const [taskFocus, setTaskFocus] = useState<string | null>(null)
   const now = useNow()
   const overdue = overdueCount(allTasks(statements, now, settings.remindAfterDays))
 
@@ -96,7 +94,6 @@ export default function App() {
     setReturning(null)
     setLean(null)
     setBusy(false)
-    setTaskFocus(null)
   }
 
   const jump = (event: ReviewEvent) => {
@@ -134,8 +131,8 @@ export default function App() {
   }
   const settingsButton: HeaderButton = { kind: 'settings', onClick: () => go({ type: 'go', view: 'settings' }) }
 
-  /** A change to a task's purchase, in whichever statement it belongs to. */
-  const changeTask = (task: Task, event: ReviewEvent) => send({ type: 'review', id: task.statement.id, event })
+  /** A change to a purchase in any statement, open or not (from Tasks). */
+  const changeIn = (id: string, event: ReviewEvent) => send({ type: 'review', id, event })
 
   let header: { title: string; left: HeaderButton; right: HeaderButton }
   if (place === 'statements') {
@@ -149,10 +146,7 @@ export default function App() {
   } else if (place === 'pile') {
     header = {
       title: session.piles.find((pl) => pl.id === session.openPile)?.name ?? '',
-      // Opened from Tasks: straight back there. Otherwise back to the statement's summary.
-      left: taskFocus
-        ? back
-        : { kind: 'back', label: 'Back to all folders', onClick: () => dispatch({ type: 'closePile' }) },
+      left: { kind: 'back', label: 'Back to all folders', onClick: () => dispatch({ type: 'closePile' }) },
       right: null,
     }
   } else {
@@ -190,14 +184,9 @@ export default function App() {
               statements={statements}
               now={now}
               remindAfterDays={settings.remindAfterDays}
-              onOpenFolder={(task) => {
-                if (!task.pile) return
-                go({ type: 'openFolder', id: task.statement.id, pileId: task.pile.id })
-                setTaskFocus(task.txn.id)
-              }}
-              onSetAction={(task, action) => changeTask(task, { type: 'setAction', txnId: task.txn.id, action })}
-              onSetNote={(task, note) => changeTask(task, { type: 'setNote', txnId: task.txn.id, note })}
-              onRecognize={(task) => changeTask(task, { type: 'approveFlagged', txnId: task.txn.id })}
+              onSetAction={(id, txnId, action) => changeIn(id, { type: 'setAction', txnId, action })}
+              onSetNote={(id, txnId, note) => changeIn(id, { type: 'setNote', txnId, note })}
+              onRecognize={(id, txnId) => changeIn(id, { type: 'approveFlagged', txnId })}
             />
           )}
 
@@ -250,7 +239,6 @@ export default function App() {
               txns={session.txns}
               onSetAction={(txnId, action) => dispatch({ type: 'setAction', txnId, action })}
               onSetNote={(txnId, note) => dispatch({ type: 'setNote', txnId, note })}
-              focusId={taskFocus}
             />
           )}
         </div>

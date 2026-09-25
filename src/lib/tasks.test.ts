@@ -85,6 +85,19 @@ describe('groupTasks', () => {
     expect(groups.done.map((t) => t.txn.id)).toEqual(['c', 'a'])
   })
 
+  it('puts possible fraud with no status at the very top, then other fraud, then untouched filed ones', () => {
+    const s = st('x', [
+      [{ type: 'flag' }, 1 * DAY_MS],
+      [{ type: 'flag' }, 2 * DAY_MS],
+      [{ type: 'createPileAndFile', pile: SPLIT }, 3 * DAY_MS],
+      [{ type: 'file', pileId: 'f' }, 4 * DAY_MS],
+      [{ type: 'setAction', txnId: 'a', action: 'todo' }, 5 * DAY_MS],
+      [{ type: 'setAction', txnId: 'c', action: 'todo' }, 6 * DAY_MS],
+      [{ type: 'setAction', txnId: 'b', action: null }, 7 * DAY_MS], // a status cleared just now
+    ])
+    expect(groupTasks(allTasks([s], 0, null)).todo.map((t) => t.txn.id)).toEqual(['b', 'a', 'd', 'c'])
+  })
+
   it('puts possible fraud first, even when it is newer', () => {
     const s = st('x', [
       [{ type: 'createPileAndFile', pile: SPLIT }, 1 * DAY_MS],

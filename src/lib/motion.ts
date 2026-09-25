@@ -18,6 +18,8 @@ export const DURATION = {
   flyBack: 400,
   /** A list growing or shrinking to show more or fewer rows (e.g. "Show all"). */
   reveal: 400,
+  /** A task folding away from one group and growing into another. Eli: 320/400 a bit fast. */
+  move: 520,
   /** A full-screen view or sheet sliding away. */
   exit: 280,
   /** Quick fade used instead of movement when Reduce Motion is on. */
