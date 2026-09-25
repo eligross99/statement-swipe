@@ -1,5 +1,5 @@
 import { ChevronLeft } from 'lucide-react'
-import { useRef, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
 import { useEscape } from '../hooks/useEscape'
 import './SlideOver.css'
@@ -26,13 +26,15 @@ interface Props {
  */
 export function SlideOver({ labelledBy, label, backLabel, onBack, escapable = true, children }: Props) {
   const animate = useAnimate()
-  const ref = useRef<HTMLDivElement>(null)
-  const leaving = useRef(false)
+  // Kept in state (via a callback ref), like Sheet, so `leave` can be handed to children while rendering.
+  const [page, setPage] = useState<HTMLDivElement | null>(null)
+  const [leaving, setLeaving] = useState(false)
 
   const leave: LeavePage = (after = onBack) => {
-    if (leaving.current) return
-    leaving.current = true
-    void animate(ref.current, [{ transform: 'translateX(0)' }, { transform: 'translateX(100%)' }], { hold: true }, [
+    // Ignore further taps while sliding away.
+    if (leaving) return
+    setLeaving(true)
+    void animate(page, [{ transform: 'translateX(0)' }, { transform: 'translateX(100%)' }], { hold: true }, [
       { opacity: 1 },
       { opacity: 0 },
     ]).then(after)
@@ -41,7 +43,7 @@ export function SlideOver({ labelledBy, label, backLabel, onBack, escapable = tr
 
   return (
     <div
-      ref={ref}
+      ref={setPage}
       className="overlay motion-fade"
       role="dialog"
       aria-modal="true"
