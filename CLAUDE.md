@@ -140,7 +140,7 @@ See `docs/handoff.md` §11 for details.
   states, overscroll bounce, larger text that follows the phone's text size, clearer header buttons,
   confirm before replacing a review (see `docs/ideas.md`). Motion helpers: `src/lib/motion.ts`,
   `src/hooks/useAnimate.ts`; bottom sheets share `src/components/Sheet.tsx`
-- [ ] 6. Split into three parts, each with its own branch, PR, and phone test (see `docs/ideas.md`):
+- [x] 6. Split into three parts, each with its own branch, PR, and phone test (see `docs/ideas.md`):
   - [x] 6a. **On-device PDF statements** (`PDFSource`, `src/lib/statementPdf.ts`), tuned on Eli's
     Bank of America PDF via the masked-layout script (totals match to the cent), phone-tested on Eli's
     iPhone. Also added: Playwright WebKit e2e tests on CI, iPhone-simulator testing, `npm run preview`
@@ -149,12 +149,12 @@ See `docs/handoff.md` §11 for details.
     Statements home screen (filters, ⋯ menu to rename/archive/delete, breakdown bars via
     `ledgerSegments`), smart default names ("July 2026"), light Settings (suggest past folder names,
     About & privacy, Erase everything), phone-tested by Eli. No tab bar yet (arrives with Tasks)
-  - [ ] 6c. **Tasks** (`TasksScreen`, `src/lib/tasks.ts`): the Statements and Tasks tab bar, resolving
-    flagged purchases with the same statuses as folders, and "Remind me after" (default 2 weeks) for
-    Overdue tags plus a count on the Tasks tab. Pages that slide over a screen (Look closer, a folder
-    opened from Tasks) share `SlideOver`  ← **built, waiting on Eli's second phone test.** Remembered bank
-    setups and OFX/QFX files moved to Phase 7 (Eli, 2026-09-24)
-- [ ] 7. Dark mode (follows the phone, override in Settings), Android haptics and Android "Share to" first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
+  - [x] 6c. **Tasks** (`TasksScreen`, `src/lib/tasks.ts`): a floating dark-green tab bar (Statements,
+    Tasks), tasks grouped by status with possible fraud first, resolving flagged purchases with the same
+    statuses as folders, and "Remind me after" (default 2 weeks) for Overdue tags plus a count on the
+    Tasks tab. Pages that slide over a screen (Look closer, a folder opened from Tasks) share `SlideOver`.
+    Phone-tested by Eli over three rounds. Remembered bank setups and OFX/QFX files moved to Phase 7
+- [ ] 7. ← **next.** Dark mode (follows the phone, override in Settings), Android haptics and Android "Share to" first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
   Settings; the standalone "Try the sample statement" button goes away; per-bank download guides,
   remembered bank setups, and OFX/QFX files (see `docs/ideas.md`)
 - [ ] 8. On-device smarts: familiar/new merchant tags, merchant-code decoder, web-search link,

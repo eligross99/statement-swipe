@@ -61,7 +61,13 @@ the sample set it, by hand. A real, explained version comes with Phase 8's new-m
 (same day): a **dark, deep-green frosted tab bar** hovering higher (a light one blended into the white
 cards), a slower pill slide and task fold/grow, a softer highlight outline, a flag with no status sorts to
 the very top, and a filed task opens its folder **sliding over Tasks like Look closer** (`SlideOver`)
-instead of switching screens.
+instead of switching screens. Third round: a compact centered tab bar, the import button floating over the list
+(no background band), and the Statements filters restyled to match the tab bar (white track, sliding mint
+pill).
+
+**Phase 6c was phone-tested and approved by Eli on 2026-09-24; Phase 6 is complete. Next: Phase 7 in a
+fresh session. Dark mode comes first: the new dark tab bar (`--dock` tokens) and the frosted surfaces
+will need a dark-theme pass.**
 
 ## Roadmap order
 
