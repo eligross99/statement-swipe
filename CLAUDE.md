@@ -164,9 +164,13 @@ See `docs/handoff.md` §11 for details.
     statuses as folders, and "Remind me after" (default 2 weeks) for Overdue tags plus a count on the
     Tasks tab. Pages that slide over a screen (Look closer, a folder opened from Tasks) share `SlideOver`.
     Phone-tested by Eli over three rounds. Remembered bank setups and OFX/QFX files moved to Phase 7
-- [ ] 7. ← **next.** Dark mode (follows the phone, override in Settings), Android haptics and Android "Share to" first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
-  Settings; the standalone "Try the sample statement" button goes away; per-bank download guides,
-  remembered bank setups, and OFX/QFX files (see `docs/ideas.md`)
+- [ ] 7. Split into three parts, each with its own branch, PR, and phone test (see `docs/ideas.md`):
+  - [ ] 7a. ← **in progress.** Dark mode (System · Light · Dark in Settings, `src/lib/theme.ts`,
+    `public/theme.js`), a swipe tick on Android (`src/lib/haptics.ts`), and "Share to Statement Swipe" on
+    Android (`src/lib/shareTarget.ts`, `public/share-target.js`). No Android phone: check on an emulator
+  - [ ] 7b. The onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable
+    from Settings; the standalone "Try the sample statement" button goes away; per-bank download guides
+  - [ ] 7c. Remembered bank setups and OFX/QFX files
 - [ ] 8. On-device smarts: familiar/new merchant tags, merchant-code decoder, web-search link,
   calendar reminders (see `docs/ideas.md`)
 - [ ] 9. App Store version with Capacitor (**ask Eli again before starting**), then accounts/backend + Stripe, then opt-in bank connection (Teller → Plaid) through a relay-only
