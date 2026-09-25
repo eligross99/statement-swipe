@@ -50,6 +50,15 @@ Done shows the 5 most recent with Show all / Show fewer; flagged purchases reuse
 changes status. **Eli changed the "Remind me after" default to 2 weeks.** Eli has no Settings feedback yet
 and will share some once Settings grows. See "Tasks dashboard" for what was built.
 
+From Eli's 6c phone test (2026-09-24), all approved: Tasks groups **by status only** (To do, Waiting,
+Done), with possible fraud first in each group and a red "Possible fraud" label (a separate fraud section
+made a flag marked To do look like it was missing from To do); statement tags count flagged and filed
+tasks together ("2 to do", "1 waiting") plus a count-free red "Possible fraud" tag; a **floating frosted
+tab bar** with a sliding green pill; the whole task card is tappable and presses in; notes always sit in
+a grey note box; Look closer pins its back button and words the approve confirmation by status; a task
+opened from Tasks gets a fading indigo highlight in its folder. The **"Unusual" tag was removed**: only
+the sample set it, by hand. A real, explained version comes with Phase 8's new-merchant tag.
+
 ## Roadmap order
 
 | Phase | What | Why here |
@@ -170,8 +179,9 @@ Tasks tab.
 my bank"), which then counts as clear.
 
 **Built in 6c (2026-09-24):** bottom tabs **Statements · Tasks** (hidden during a review; gear stays top
-right; Back from a review, import, or Settings returns to the last tab). Tasks groups **Possible fraud ·
-To do · Waiting · Done** across every non-archived statement, including ones still being reviewed. Each
+right; Back from a review, import, or Settings returns to the last tab). Tasks groups **To do · Waiting ·
+Done** (possible fraud first in each; a separate fraud group was dropped after the phone test) across
+every non-archived statement, including ones still being reviewed. Each
 row shows its folder (or "Flagged" once resolved), the statement's name, the note, and the status
 button; tapping a filed purchase opens its folder (Back returns to Tasks), tapping a flagged one opens
 Look closer, which now has **Where it stands** (status and note). Flagged purchases use the same
