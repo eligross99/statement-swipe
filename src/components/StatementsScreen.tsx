@@ -74,6 +74,12 @@ export function StatementsScreen(props: Props) {
         ) : (
           <>
             <div className="st-filters" role="group" aria-label="Show statements">
+              {/* The mint pill behind the chosen filter, sliding between them like the tab bar's. */}
+              <span
+                className="st-filter-pill"
+                style={{ transform: `translateX(calc(${FILTERS.indexOf(filter)} * (100% + 4px)))` }}
+                aria-hidden
+              />
               {FILTERS.map((f) => (
                 <button
                   key={f}
