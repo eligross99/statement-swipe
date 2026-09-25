@@ -6,6 +6,7 @@ triage folders (split with friends, reimburse, taxes) with a status and a note p
 Local-first: **the user's statement never leaves their device.**
 
 - Full product and engineering brief: `docs/handoff.md`. Read the relevant section before starting a phase.
+- Design techniques we've adopted, with the reasons behind them: `docs/design-notes.md`. Read it before any UI work.
 - Feature ideas beyond the handoff, with decisions and target phases: `docs/ideas.md`. Read it before phases 6 through 9.
 - Reference prototype (the UI/interaction source of truth): `docs/prototype/StatementSwipe.jsx`.
   It is a single-file Claude-artifact prototype. Port its behavior faithfully. Do not import from it.
@@ -91,6 +92,11 @@ Deploys, CI, security headers, and the phone test checklist: `docs/deploy.md`.
 **This supersedes the dark "ink deck" design in `docs/handoff.md` §9.** Eli chose a white-and-green
 direction: calm, clear, efficient, and signaling financial well-being.
 
+**Record design techniques (every session):** `docs/design-notes.md` is the running record of how the app
+is designed: patterns, motion values, and the phone-test feedback behind them. Whenever a UI change adds
+or changes a technique (a new animation, control style, layout pattern, or wording rule), add or update
+its entry there in the same commit, with what it is, why, and where it lives in the code.
+
 - All colors live in `src/styles/tokens.css` as CSS custom properties. Never hard-code hex values in components.
 - Text sizes are the `--text-*` tokens (rem, so they follow the phone's text-size setting). Never set
   font sizes in px; cap with `min()` only inside fixed-size areas like the swipe card.
@@ -123,6 +129,7 @@ direction: calm, clear, efficient, and signaling financial well-being.
   keeps serving the previous version until the new one has downloaded.
 - Small commits with clear messages. Before each commit: `npm run build`, `npm test`, and `npm run lint` pass.
 - Verify UI changes by running the app in the browser at phone width, not just by reading code.
+- After design feedback or a UI change, update `docs/design-notes.md` (see Design).
 - At the end of each phase, update the Roadmap status below, then start a fresh Claude session.
 
 ## Roadmap status
