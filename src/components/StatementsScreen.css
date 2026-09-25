@@ -1,7 +1,8 @@
 /* The Statements (home) screen. */
 
 .st-screen {
-  padding-bottom: 16px; /* the import button below has its own bottom spacing */
+  /* Room for the floating import button and tab bar, so the last statement can scroll clear of both. */
+  padding-bottom: calc(var(--tabbar-space) + 78px);
 }
 
 /* Filters: a segmented control, three equal parts. */
@@ -198,9 +199,21 @@
 }
 
 /* The import button stays in reach at the bottom, however long the list gets. */
+/* The import button floats just above the tab bar, with the list scrolling underneath both (no band
+   of background behind it). Only the button itself catches taps. */
 .st-footer {
-  padding: 10px 16px var(--tabbar-space); /* sits just above the floating tab bar */
-  background: var(--bg);
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--tabbar-space) - 4px); /* 12px above the tab bar's top edge */
+  z-index: 29; /* just under the tab bar */
+  padding: 0 16px;
+  pointer-events: none;
+}
+
+.st-footer .btn {
+  pointer-events: auto;
+  box-shadow: var(--shadow-float);
 }
 
 /* The "⋯" menu: a short list of actions. */
