@@ -83,3 +83,17 @@ describe('ImportScreen with a PDF', () => {
     expect(screen.getByRole('button', { name: 'Show all 7' })).toHaveAttribute('aria-expanded', 'false')
   })
 })
+
+describe('ImportScreen with a file shared from Android', () => {
+  it('reads the shared file as if it had been chosen, only once', async () => {
+    vi.spyOn(PDFSource, 'fromData').mockResolvedValue(new PDFSource(statement({ printed: 90.95, found: 90.95 })))
+    const onTakeShared = vi.fn()
+    const file = pdfFile()
+    const { rerender } = render(<ImportScreen onStart={vi.fn()} shared={file} onTakeShared={onTakeShared} />)
+
+    expect(await screen.findByText('2 purchases found in this statement.')).toBeInTheDocument()
+    rerender(<ImportScreen onStart={vi.fn()} shared={file} onTakeShared={onTakeShared} />)
+    expect(onTakeShared).toHaveBeenCalledTimes(1)
+    expect(PDFSource.fromData).toHaveBeenCalledTimes(1)
+  })
+})

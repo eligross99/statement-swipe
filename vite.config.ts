@@ -16,7 +16,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       // Precache the whole app shell so it works fully offline, including the PDF reader
       // (its worker is an .mjs file, about 1.3 MB, under Workbox's 2 MB per-file limit).
-      workbox: { globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,webmanifest}'] },
+      workbox: {
+        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,webmanifest}'],
+        // Receives statements shared to the installed app on Android (see share_target below).
+        importScripts: ['share-target.js'],
+      },
       // Files in public/ that aren't referenced by the built app but should still work offline.
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
@@ -31,6 +35,21 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         categories: ['finance', 'productivity'],
+        // Android lists the installed app in the Share menu for these files. The file goes to the
+        // service worker (public/share-target.js), never to a server. See src/lib/shareTarget.ts.
+        share_target: {
+          action: '/share-target',
+          method: 'POST',
+          enctype: 'multipart/form-data',
+          params: {
+            files: [
+              {
+                name: 'statement',
+                accept: ['application/pdf', '.pdf', 'text/csv', 'text/comma-separated-values', '.csv'],
+              },
+            ],
+          },
+        },
         // PNGs are generated from the SVGs by scripts/make-icons.sh.
         icons: [
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
