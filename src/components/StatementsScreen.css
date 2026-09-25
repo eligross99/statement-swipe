@@ -199,7 +199,7 @@
 
 /* The import button stays in reach at the bottom, however long the list gets. */
 .st-footer {
-  padding: 10px 16px max(16px, env(safe-area-inset-bottom));
+  padding: 10px 16px var(--tabbar-space); /* sits just above the floating tab bar */
   background: var(--bg);
 }
 

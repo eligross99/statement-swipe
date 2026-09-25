@@ -465,16 +465,17 @@ describe('App', () => {
       return user
     }
 
-    it('lists flagged and filed purchases from every statement, marking old ones overdue', async () => {
+    it('lists flagged and filed purchases by status, possible fraud first, marking old ones overdue', async () => {
       await openTasks()
       expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Tasks')
-      const fraud = screen.getByRole('region', { name: /Possible fraud/ })
-      expect(within(fraud).getByText('FLAGGED SHOP')).toBeInTheDocument()
-      expect(within(fraud).getByText('Overdue')).toBeInTheDocument()
       const todo = screen.getByRole('region', { name: /To do/ })
-      expect(within(todo).getByText('FILED SHOP')).toBeInTheDocument()
-      expect(within(todo).getByText('Split')).toBeInTheDocument()
-      expect(within(todo).queryByText('Overdue')).not.toBeInTheDocument()
+      const [flagged, filed] = within(todo).getAllByRole('listitem')
+      expect(within(flagged).getByText('FLAGGED SHOP')).toBeInTheDocument()
+      expect(within(flagged).getByText('Possible fraud')).toBeInTheDocument()
+      expect(within(flagged).getByText('Overdue')).toBeInTheDocument()
+      expect(within(filed).getByText('FILED SHOP')).toBeInTheDocument()
+      expect(within(filed).getByText('Split')).toBeInTheDocument()
+      expect(within(filed).queryByText('Overdue')).not.toBeInTheDocument()
     })
 
     it('resolving a flag moves it to Done and clears the statement', async () => {
@@ -486,7 +487,7 @@ describe('App', () => {
 
       const done = await screen.findByRole('region', { name: /Done/ })
       expect(within(done).getByText('FLAGGED SHOP')).toBeInTheDocument()
-      expect(within(done).getByText('Flagged')).toBeInTheDocument()
+      expect(within(done).getByText('Possible fraud')).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Tasks' })).toBeInTheDocument() // no overdue left
 
       // Finish the filed one too: the statement has nothing left to do.
@@ -516,6 +517,16 @@ describe('App', () => {
       await user.click(within(view).getByRole('button', { name: 'Save' }))
       await user.click(within(view).getByRole('button', { name: 'Back' }))
       expect(screen.getByText('Claim 4471')).toBeInTheDocument()
+    })
+
+    it('asks more carefully before approving a flag that is still being looked into', async () => {
+      const user = await openTasks()
+      await user.click(screen.getByText('FLAGGED SHOP'))
+      const view = screen.getByRole('dialog', { name: 'FLAGGED SHOP' })
+      await user.click(within(view).getByRole('button', { name: /Status: not set/ }))
+      await user.click(within(screen.getByRole('dialog', { name: 'Set status' })).getByRole('button', { name: /^Waiting/ }))
+      await user.click(within(view).getByRole('button', { name: /I recognize it/ }))
+      expect(screen.getByText(/you may still be hearing back from your bank/)).toBeInTheDocument()
     })
 
     it('says what to do when there are no tasks', async () => {

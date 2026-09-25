@@ -1,6 +1,7 @@
 import { Folder, FolderOpen } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
+import { canAnimate, token } from '../lib/motion'
 import { formatDate } from '../lib/dates'
 import { hasCategory, plural, usd } from '../lib/format'
 import { openItems, pileItems, stillToActOn, sumAmounts } from '../lib/review'
@@ -29,14 +30,21 @@ export function FolderDetail({ pile, txns, onSetAction, onSetNote, focusId }: Pr
   const rows = useRef(new Map<string, HTMLLIElement>())
   const animate = useAnimate()
 
-  // Arriving from Tasks: scroll to that purchase, then pulse it once the screen has slid in.
+  // Arriving from Tasks: scroll to that purchase and highlight it in the folder color. The highlight
+  // holds long enough to notice, then fades. A color change, not movement, so it plays even with
+  // Reduce Motion on.
   useEffect(() => {
     const el = (focusId && rows.current.get(focusId)) || null
-    el?.scrollIntoView?.({ block: 'center' }) // missing in the test environment
-    void animate(el, [{ transform: 'scale(1)' }, { transform: 'scale(1)', offset: 0.45 }, ...PULSE.slice(1)], {
-      duration: 800,
-    })
-  }, [focusId, animate])
+    if (!el || !canAnimate()) return
+    el.scrollIntoView?.({ block: 'center' }) // missing in the test environment
+    const [tint, ring, surface, shadow] = ['--pile-tint', '--pile', '--surface', '--shadow-card'].map(token)
+    const lit = { backgroundColor: tint, boxShadow: `0 0 0 2px ${ring}, ${shadow}` }
+    const highlight = el.animate(
+      [lit, { ...lit, offset: 0.6 }, { backgroundColor: surface, boxShadow: `0 0 0 0 transparent, ${shadow}` }],
+      { duration: 2200, easing: 'ease-out' },
+    )
+    return () => highlight.cancel()
+  }, [focusId])
   if (!pile) return null
 
   const items = pileItems(txns, pile.id)

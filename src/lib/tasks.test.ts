@@ -28,7 +28,7 @@ describe('allTasks', () => {
   it('lists flagged and filed purchases, with their folder, and skips approved ones', () => {
     const tasks = allTasks([st('x', EVENTS)], 0, null)
     expect(tasks.map((t) => [t.txn.id, t.group, t.pile?.name ?? null])).toEqual([
-      ['a', 'fraud', null],
+      ['a', 'todo', null],
       ['b', 'todo', 'Split'],
       ['c', 'waiting', 'Split'],
     ])
@@ -41,9 +41,9 @@ describe('allTasks', () => {
     expect(allTasks([halfway, archived], 0, null).map((t) => t.key)).toEqual(['half:a'])
   })
 
-  it('keeps a flag in Possible fraud until it is resolved, then moves it to Done', () => {
+  it('groups a flag by its status like any task, until it is resolved', () => {
     const waiting = st('x', [...EVENTS, [{ type: 'setAction', txnId: 'a', action: 'waiting' }, 0]])
-    expect(allTasks([waiting], 0, null)[0].group).toBe('fraud')
+    expect(allTasks([waiting], 0, null)[0].group).toBe('waiting')
     const resolved = st('x', [...EVENTS, [{ type: 'setAction', txnId: 'a', action: 'done' }, 0]])
     expect(allTasks([resolved], 0, null)[0].group).toBe('done')
   })
@@ -83,6 +83,14 @@ describe('groupTasks', () => {
     const groups = groupTasks(allTasks([s], 0, null))
     expect(groups.todo.map((t) => t.txn.id)).toEqual(['b'])
     expect(groups.done.map((t) => t.txn.id)).toEqual(['c', 'a'])
-    expect(groups.fraud).toEqual([])
+  })
+
+  it('puts possible fraud first, even when it is newer', () => {
+    const s = st('x', [
+      [{ type: 'createPileAndFile', pile: SPLIT }, 1 * DAY_MS],
+      [{ type: 'file', pileId: 'f' }, 2 * DAY_MS],
+      [{ type: 'flag' }, 3 * DAY_MS],
+    ])
+    expect(groupTasks(allTasks([s], 0, null)).todo.map((t) => t.txn.id)).toEqual(['c', 'a', 'b'])
   })
 })

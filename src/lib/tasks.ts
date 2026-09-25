@@ -3,13 +3,13 @@
 
 import type { Pile, Statement, Transaction } from '../types'
 
-/** Where a task stands. Unresolved flags get their own group at the top, whatever their status. */
-export type TaskGroup = 'fraud' | 'todo' | 'waiting' | 'done'
+/** Where a task stands: its status, with no status counting as To do. Flagged and filed purchases
+ *  share the groups; flagged ones lead each group (see `groupTasks`). */
+export type TaskGroup = 'todo' | 'waiting' | 'done'
 
-export const TASK_GROUPS: TaskGroup[] = ['fraud', 'todo', 'waiting', 'done']
+export const TASK_GROUPS: TaskGroup[] = ['todo', 'waiting', 'done']
 
 export const GROUP_LABELS: Record<TaskGroup, string> = {
-  fraud: 'Possible fraud',
   todo: 'To do',
   waiting: 'Waiting',
   done: 'Done',
@@ -41,9 +41,7 @@ export const REMIND_CHOICES: { days: number | null; label: string }[] = [
 ]
 
 export function taskGroup(t: Transaction): TaskGroup {
-  if (t.action === 'done') return 'done'
-  if (t.status === 'flagged') return 'fraud'
-  return t.action === 'waiting' ? 'waiting' : 'todo'
+  return t.action === 'done' || t.action === 'waiting' ? t.action : 'todo'
 }
 
 /**
@@ -68,11 +66,20 @@ export function allTasks(statements: Statement[], now: number, remindAfterDays: 
   return tasks
 }
 
-/** Tasks by group. Open groups list the longest-waiting first; Done lists the most recent first. */
+const isFlag = (t: Task) => t.txn.status === 'flagged'
+
+/**
+ * Tasks by group. In To do and Waiting, possible fraud comes first (the most urgent), then the
+ * longest-waiting. Done lists the most recently finished first.
+ */
 export function groupTasks(tasks: Task[]): Record<TaskGroup, Task[]> {
-  const groups: Record<TaskGroup, Task[]> = { fraud: [], todo: [], waiting: [], done: [] }
+  const groups: Record<TaskGroup, Task[]> = { todo: [], waiting: [], done: [] }
   for (const task of tasks) groups[task.group].push(task)
-  for (const g of TASK_GROUPS) groups[g].sort((a, b) => (g === 'done' ? b.since - a.since : a.since - b.since))
+  for (const g of TASK_GROUPS) {
+    groups[g].sort((a, b) =>
+      g === 'done' ? b.since - a.since : Number(isFlag(b)) - Number(isFlag(a)) || a.since - b.since,
+    )
+  }
   return groups
 }
 

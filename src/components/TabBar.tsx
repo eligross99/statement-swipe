@@ -9,10 +9,13 @@ interface Props {
   onGo: (tab: Tab) => void
 }
 
-/** The bottom tab bar: Statements and Tasks. Hidden while reviewing, so the cards get the screen. */
+/** The bottom tab bar: a floating, frosted capsule with Statements and Tasks. Hidden while reviewing,
+ *  so the cards get the screen. */
 export function TabBar({ tab, overdue, onGo }: Props) {
   return (
     <nav className="tabbar" aria-label="Main">
+      {/* The green pill behind the current tab. It slides across when the tab changes. */}
+      <span className={`tab-indicator${tab === 'tasks' ? ' is-right' : ''}`} aria-hidden />
       <TabButton here={tab === 'statements'} label="Statements" onClick={() => onGo('statements')}>
         <FileText size={22} aria-hidden />
       </TabButton>

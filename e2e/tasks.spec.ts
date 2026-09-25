@@ -25,23 +25,25 @@ test('tracks flagged and filed purchases from a review through to done', async (
   // Tasks shows both, even though the review isn't finished.
   await page.getByRole('button', { name: 'Back to statements' }).click()
   await page.getByRole('button', { name: /^Tasks/ }).click()
-  await expect(page.getByRole('region', { name: /Possible fraud/ }).getByText("TRADER JOE'S #512 BOSTON MA")).toBeVisible()
+  // Grouped by status, possible fraud first.
   const todo = page.getByRole('region', { name: /To do/ })
+  await expect(todo.getByRole('listitem').first()).toContainText("TRADER JOE'S #512 BOSTON MA")
+  await expect(todo.getByRole('listitem').first()).toContainText('Possible fraud')
   await expect(todo.getByText('SQ *DD BAR LLC 8004563')).toBeVisible()
 
   // Resolve the flag from the Tasks list.
   await page.getByRole('button', { name: /Change status for TRADER JOE'S/ }).click()
   await page.getByRole('dialog', { name: 'Set status' }).getByRole('button', { name: /^Done/ }).click()
   await expect(page.getByRole('region', { name: /Done/ }).getByText("TRADER JOE'S #512 BOSTON MA")).toBeVisible()
-  await expect(page.getByRole('region', { name: /Possible fraud/ })).toHaveCount(0)
+  await expect(todo.getByRole('listitem')).toHaveCount(1)
 
   // Saved, and the app reopens on Tasks.
   await reopen(page)
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tasks')
   await expect(page.getByRole('region', { name: /Done/ }).getByText("TRADER JOE'S #512 BOSTON MA")).toBeVisible()
 
-  // A filed purchase opens in its folder; Back returns to Tasks.
-  await todo.getByText('SQ *DD BAR LLC 8004563').click()
+  // A filed purchase opens in its folder, from a tap anywhere on its card; Back returns to Tasks.
+  await todo.getByRole('listitem').first().click({ position: { x: 300, y: 100 } })
   await expect(page.getByRole('heading', { level: 2, name: 'Split' })).toBeVisible()
   await page.getByRole('button', { name: 'Back to tasks' }).click()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tasks')

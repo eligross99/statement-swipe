@@ -1,4 +1,4 @@
-import { Check, ChevronLeft, Flag, ShieldAlert } from 'lucide-react'
+import { Check, ChevronLeft, Flag } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
 import { useEscape } from '../hooks/useEscape'
@@ -50,16 +50,12 @@ export function InvestigateView(props: Props) {
   return (
     <div ref={ref} className="overlay motion-fade" role="dialog" aria-modal="true" aria-labelledby="investigate-title">
       <div className="overlay-inner">
+        {/* Same round back button, in the same spot, as the header on other screens. It stays
+            pinned at the top while the page scrolls, so going back never means scrolling up. */}
         <div className="investigate-top">
-          {/* Same round back button, in the same spot, as the header on other screens. */}
           <button type="button" className="icon-btn" onClick={() => leave(onBack)} aria-label="Back" autoFocus>
             <ChevronLeft size={22} />
           </button>
-          {txn.sus && (
-            <span className="investigate-badge">
-              <ShieldAlert size={14} /> Unusual
-            </span>
-          )}
         </div>
 
         <p className="investigate-amount num">${usd(txn.amount)}</p>
@@ -74,7 +70,7 @@ export function InvestigateView(props: Props) {
           <Field label="Statement text" value={txn.desc} mono />
         </dl>
 
-        <p className="note-box investigate-note">
+        <p className="muted investigate-note">
           This is everything your statement says about this purchase. Cryptic names often belong to a
           payment service, like SQ for Square, with the shop’s name after it.
         </p>
@@ -100,13 +96,16 @@ export function InvestigateView(props: Props) {
               If it still isn’t yours, call the number on the back of your card. A status and a note help you keep
               track until it’s resolved.
             </p>
-            <TaskControls
-              txn={txn}
-              noteOpen={noteOpen}
-              onNoteOpen={setNoteOpen}
-              onStatus={() => setStatusOpen(true)}
-              onSetNote={onSetNote}
-            />
+            {/* In a white card, like a folder's purchases, so the note's grey box stands out. */}
+            <div className="panel investigate-track-card">
+              <TaskControls
+                txn={txn}
+                noteOpen={noteOpen}
+                onNoteOpen={setNoteOpen}
+                onStatus={() => setStatusOpen(true)}
+                onSetNote={onSetNote}
+              />
+            </div>
           </section>
         )}
 
@@ -139,6 +138,7 @@ export function InvestigateView(props: Props) {
               <>
                 <p className="investigate-confirm-text">
                   {txn.desc}, <span className="num">${usd(txn.amount)}</span>, moves from Flagged to Approved.
+                  {txn.action && txn.action !== 'done' && ` ${OPEN_STATUS_NOTE[txn.action]}`}
                 </p>
                 <div className="btn-row">
                   <button type="button" className="btn btn--secondary" onClick={() => close()} autoFocus>
@@ -156,6 +156,12 @@ export function InvestigateView(props: Props) {
       </div>
     </div>
   )
+}
+
+/** A gentle "are you sure?" when approving a flag that's still being looked into. */
+const OPEN_STATUS_NOTE: Record<'todo' | 'waiting', string> = {
+  todo: 'It’s marked To do, so there may still be something to check. Approve it anyway?',
+  waiting: 'It’s marked Waiting, so you may still be hearing back from your bank. Approve it anyway?',
 }
 
 function Field({ label, value, mono }: { label: string; value: string; mono?: boolean }) {

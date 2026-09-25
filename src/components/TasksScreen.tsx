@@ -1,8 +1,10 @@
 import { Check, Clock, Folder, ListChecks, ShieldAlert } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
 import { useShowMore } from '../hooks/useShowMore'
 import { usd } from '../lib/format'
+import { DURATION, EASE_OUT } from '../lib/motion'
+import { isOpenFlag } from '../lib/review'
 import { allTasks, GROUP_LABELS, groupTasks, taskGroup, TASK_GROUPS, type Task, type TaskGroup } from '../lib/tasks'
 import type { Action, Statement } from '../types'
 import { InvestigateView } from './InvestigateView'
@@ -26,12 +28,12 @@ interface Props {
 /** How many finished tasks show before "Show all". */
 const DONE_ROWS = 5
 
-/** Every purchase to follow up on, from every statement: possible fraud first, then by status. */
+/** Every purchase to follow up on, from every statement, by status. Possible fraud leads each group. */
 export function TasksScreen(props: Props) {
   const { statements, now, remindAfterDays } = props
   const [statusFor, setStatusFor] = useState<string | null>(null)
   const [inspecting, setInspecting] = useState<string | null>(null)
-  // The task that just moved to another group, so it fades in where it landed.
+  // The task that just moved to another group, so it grows into place where it landed.
   const [moved, setMoved] = useState<string | null>(null)
   const rows = useRef(new Map<string, HTMLLIElement>())
   const animate = useAnimate()
@@ -48,8 +50,8 @@ export function TasksScreen(props: Props) {
     else rows.current.delete(key)
   }
 
-  /** A new status. If that moves the task to another group, its row folds away first, then it
-   *  appears in its new place; otherwise the row pulses where it is. */
+  /** A new status. If that moves the task to another group, its row folds away first, then grows
+   *  into its new place; otherwise the row pulses where it is. */
   const setStatus = (task: Task, action: Action) => {
     const el = rows.current.get(task.key) ?? null
     if (taskGroup({ ...task.txn, action }) === task.group) {
@@ -78,6 +80,7 @@ export function TasksScreen(props: Props) {
       task={task}
       rowRef={rowRef(task.key)}
       entering={task.key === moved}
+      onEntered={() => setMoved(null)}
       onOpen={() => (task.pile ? props.onOpenFolder(task) : setInspecting(task.key))}
       onStatus={() => setStatusFor(task.key)}
     />
@@ -148,7 +151,6 @@ export function TasksScreen(props: Props) {
 function GroupTitle({ group, count }: { group: TaskGroup; count: number }) {
   return (
     <h2 id={`tasks-${group}`} className={`section-label tasks-group-title tasks-group-title--${group}`}>
-      {group === 'fraud' && <ShieldAlert size={17} aria-hidden />}
       {GROUP_LABELS[group]}
       <span className="tasks-count num">{count}</span>
     </h2>
@@ -176,37 +178,72 @@ function DoneGroup({ tasks, row }: { tasks: Task[]; row: (task: Task) => React.R
 interface RowProps {
   task: Task
   rowRef: (el: HTMLLIElement | null) => void
+  /** Just moved here from another group: grows into place. */
   entering: boolean
+  onEntered: () => void
   onOpen: () => void
   onStatus: () => void
 }
 
-/** One task: what and how much, where it lives, its status, and its note if it has one. */
-function TaskRow({ task, rowRef, entering, onOpen, onStatus }: RowProps) {
+/** How far apart rows sit (their bottom margin in TasksScreen.css), for folding and growing. */
+const ROW_GAP = '10px'
+
+/**
+ * One task: what and how much, where it lives, its status, and its note if it has one. The whole
+ * card opens the purchase (the open button stretches over it); only the status button sits above.
+ */
+function TaskRow({ task, rowRef, entering, onEntered, onOpen, onStatus }: RowProps) {
   const { txn, pile, statement, overdue } = task
+  const flag = txn.status === 'flagged'
+  const ref = useRef<HTMLLIElement | null>(null)
+  const animate = useAnimate()
+
+  // Arriving from another group: the mirror of folding away. It grows from nothing while fading in.
+  // A layout effect, so it starts before the row is first painted at full size.
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!entering || !el) return
+    void animate(
+      el,
+      [
+        { opacity: 0, height: '0px', marginBottom: '0px' },
+        { opacity: 1, height: `${el.offsetHeight}px`, marginBottom: ROW_GAP },
+      ],
+      { duration: DURATION.reveal, easing: EASE_OUT },
+      [{ opacity: 0 }, { opacity: 1 }],
+    ).then(onEntered)
+    // Only when the row first appears.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
-    <li ref={rowRef} className={`panel task-row${entering ? ' enter-fade' : ''}`}>
+    <li
+      ref={(el) => {
+        ref.current = el
+        rowRef(el)
+      }}
+      className="panel task-row"
+    >
       <button type="button" className="task-open" onClick={onOpen}>
         <span className="task-top">
           <span className="task-desc">{txn.desc}</span>
-          <span className={`task-amount num${task.group === 'fraud' ? ' tone-flag' : ''}`}>${usd(txn.amount)}</span>
+          <span className={`task-amount num${isOpenFlag(txn) ? ' tone-flag' : ''}`}>${usd(txn.amount)}</span>
         </span>
         <span className="task-meta">
           {pile && (
-            <span className="task-folder">
+            <span className="task-where">
               <Folder size={14} aria-hidden /> {pile.name}
             </span>
           )}
-          {/* Where it came from, once it's left the Possible fraud group. */}
-          {!pile && task.group !== 'fraud' && (
-            <span className="task-folder task-folder--flag">
-              <ShieldAlert size={14} aria-hidden /> Flagged
+          {flag && (
+            <span className="task-where task-where--flag">
+              <ShieldAlert size={14} aria-hidden /> Possible fraud
             </span>
           )}
           <span>{statement.name}</span>
         </span>
-        {txn.note && <span className="task-note-preview">{txn.note}</span>}
       </button>
+      {txn.note && <p className="task-note-preview">{txn.note}</p>}
       <div className="task-row-controls">
         <StatusPill txn={txn} onClick={onStatus} />
         {overdue && (

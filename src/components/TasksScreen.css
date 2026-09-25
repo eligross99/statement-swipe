@@ -1,7 +1,7 @@
 /* The Tasks screen: every purchase to follow up on, grouped by where it stands. */
 
 .tasks-screen {
-  padding-bottom: 24px; /* the tab bar below has its own bottom spacing */
+  padding-bottom: var(--tabbar-space); /* the last row scrolls clear of the floating tab bar */
 }
 
 .tasks-group {
@@ -29,10 +29,22 @@
   list-style: none;
 }
 
-/* Rows use a margin (not a gap) so a row moving to another group can fold its space away smoothly. */
+/* Rows use a margin (not a gap) so a row moving to another group can fold its space away smoothly.
+   The margin matches ROW_GAP in TasksScreen.tsx. */
 .task-row {
+  position: relative;
   margin-bottom: 10px;
   overflow: hidden;
+  transition:
+    transform 0.2s var(--ease-out),
+    filter 0.2s ease;
+}
+
+/* Pressing anywhere on the card (but the status button) presses the whole card in, like a button. */
+.task-row:has(.task-open:active) {
+  transform: scale(0.98);
+  filter: brightness(0.96);
+  transition-duration: 0s;
 }
 
 .task-open {
@@ -50,11 +62,17 @@
   cursor: pointer;
 }
 
-/* The tappable part presses in, not the whole panel. */
+/* The open button covers the whole card, so a tap anywhere on it opens the purchase. */
+.task-open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+/* The card presses in instead (above). */
 .task-open:not(:disabled):active {
   transform: none;
   filter: none;
-  background: var(--surface-sunken);
 }
 
 .task-top {
@@ -86,7 +104,7 @@
   font-size: var(--text-sm);
 }
 
-.task-folder {
+.task-where {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -94,15 +112,18 @@
   font-weight: 600;
 }
 
-.task-folder--flag {
+.task-where--flag {
   color: var(--flag);
 }
 
-/* The note, quietly, up to two lines. */
+/* The note, in the same grey box as notes in folders, up to two lines. */
 .task-note-preview {
   display: -webkit-box;
-  margin-top: 4px;
-  color: var(--text-mute);
+  margin: 10px 16px 0;
+  padding: 8px 12px;
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
+  color: var(--text);
   font-size: var(--text-sm);
   line-height: 1.4;
   overflow: hidden;
@@ -113,6 +134,10 @@
 }
 
 .task-row-controls {
+  /* Above the stretched open button, but only the status button itself catches taps. */
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -173,4 +198,8 @@
   margin: 0;
   font-size: var(--text-sm);
   line-height: 1.5;
+}
+
+.task-row-controls .status-pill {
+  pointer-events: auto;
 }

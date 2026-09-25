@@ -30,7 +30,8 @@ export interface Transaction {
    *  handled before Phase 6c; those count from the statement's last change instead. */
   actionAt?: number
   note: string
-  /** Heuristic "looks unusual" flag. */
+  /** Heuristic "looks unusual" flag. Nothing sets or shows it yet; Phase 8's "new merchant" tag
+   *  will, with its reason shown. */
   sus?: boolean
   /** Location, if known. */
   loc?: string | null
