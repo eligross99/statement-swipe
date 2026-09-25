@@ -71,9 +71,10 @@ will need a dark-theme pass.**
 
 On 2026-09-24, starting Phase 7, Eli approved **splitting Phase 7 into 7a (dark mode, Android haptics,
 Android "Share to"), 7b (onboarding tour + per-bank download guides) and 7c (remembered bank setups +
-OFX/QFX files)**, each with its own branch, PR, and phone test. Eli has **no Android phone**, so the two
-Android features are checked on an Android emulator (a simulated phone on the Mac) instead; a
-real-device check waits until someone has one.
+OFX/QFX files)**, each with its own branch, PR, and phone test. Eli has **no Android phone** and chose (2026-09-25) to
+**postpone Android testing** rather than install the Android emulator (~3 GB) now. The swipe tick and
+"Share to" ship covered by automated tests only (`src/lib/haptics.test.ts`, `e2e/share-target.spec.ts`);
+**still owed: a check on a real Android phone or the emulator**, from a Vercel preview or the live site.
 
 **Built in 7a (2026-09-24):** see "Mobile polish" and "Easier statement import" below.
 

@@ -167,7 +167,8 @@ See `docs/handoff.md` §11 for details.
 - [ ] 7. Split into three parts, each with its own branch, PR, and phone test (see `docs/ideas.md`):
   - [ ] 7a. ← **in progress.** Dark mode (System · Light · Dark in Settings, `src/lib/theme.ts`,
     `public/theme.js`), a swipe tick on Android (`src/lib/haptics.ts`), and "Share to Statement Swipe" on
-    Android (`src/lib/shareTarget.ts`, `public/share-target.js`). No Android phone: check on an emulator
+    Android (`src/lib/shareTarget.ts`, `public/share-target.js`). Android testing postponed by Eli: both
+    Android features are covered by automated tests only until someone checks them on Android
   - [ ] 7b. The onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable
     from Settings; the standalone "Try the sample statement" button goes away; per-bank download guides
   - [ ] 7c. Remembered bank setups and OFX/QFX files
