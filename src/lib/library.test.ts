@@ -107,14 +107,15 @@ describe('managing statements', () => {
       { type: 'setSettings', settings: { suggestFolders: false } },
       { type: 'eraseAll' },
     )
-    expect(s).toEqual({ ...initialLibrary, filter: 'archived', settings: { suggestFolders: false } })
+    expect(s).toEqual({ ...initialLibrary, filter: 'archived', settings: { suggestFolders: false, remindAfterDays: 14 } })
   })
 })
 
 describe('loading', () => {
   it('uses default settings for anything not saved', () => {
-    expect(run({ type: 'loaded', statements: [], ui: null, settings: null }).settings).toEqual({ suggestFolders: true })
-    expect(run({ type: 'loaded', statements: [], ui: null, settings: {} }).settings).toEqual({ suggestFolders: true })
+    const defaults = { suggestFolders: true, remindAfterDays: 14 }
+    expect(run({ type: 'loaded', statements: [], ui: null, settings: null }).settings).toEqual(defaults)
+    expect(run({ type: 'loaded', statements: [], ui: null, settings: {} }).settings).toEqual(defaults)
     const off = run({ type: 'loaded', statements: [], ui: null, settings: { suggestFolders: false } })
     expect(off.settings.suggestFolders).toBe(false)
   })
@@ -130,5 +131,26 @@ describe('loading', () => {
     expect(gone).toMatchObject({ view: 'statements', openId: null })
     const settings = run({ type: 'loaded', statements: [], ui: { openId: null, view: 'settings', filter: 'all' }, settings: null })
     expect(settings.view).toBe('statements')
+  })
+
+  it('returns to the tab the user was last on', () => {
+    const ui = { openId: null, view: 'settings' as const, filter: 'all' as const, home: 'tasks' as const }
+    expect(run({ type: 'loaded', statements: [], ui, settings: null })).toMatchObject({ view: 'tasks', home: 'tasks' })
+  })
+})
+
+describe('tabs and tasks', () => {
+  it('remembers the last tab, so Back from Settings or a review returns there', () => {
+    const s = run(add('one'), { type: 'go', view: 'tasks' }, { type: 'go', view: 'settings' })
+    expect(s).toMatchObject({ view: 'settings', home: 'tasks' })
+    expect(run({ type: 'go', view: 'tasks' }, { type: 'go', view: 'statements' }).home).toBe('statements')
+  })
+
+  it('changes a statement that isn’t open, when given its id', () => {
+    const s = run(add('one'), review({ type: 'flag' }), add('two'), { type: 'go', view: 'tasks' })
+    const after = step(s, { type: 'review', id: 'one', event: { type: 'setAction', txnId: 'a', action: 'done' }, now: 9 })
+    expect(after.statements[0].session.txns[0]).toMatchObject({ action: 'done', actionAt: 9 })
+    expect(after.statements[0].updatedAt).toBe(9)
+    expect(after.view).toBe('tasks')
   })
 })

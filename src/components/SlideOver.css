@@ -1,0 +1,19 @@
+/* The back button's bar: pinned to the top while the page scrolls, with the page's background
+   behind it (full width, clearing the notch) so text scrolls away underneath. */
+.slide-over-top {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  margin: calc(-1 * max(16px, env(safe-area-inset-top))) -16px 8px;
+  padding: max(16px, env(safe-area-inset-top)) 16px 8px;
+  background: var(--bg);
+}
+
+/* A regular screen shown inside the page (e.g. a folder): the page already scrolls and has margins. */
+.overlay-inner > .screen {
+  flex: none;
+  overflow: visible;
+  padding: 0;
+}

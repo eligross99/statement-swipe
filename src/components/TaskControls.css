@@ -1,0 +1,113 @@
+/* A task's status button and note, shared by folder items and flagged purchases. */
+
+.task-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* Status pill: colour follows the next-step status. */
+.status-pill,
+.note-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap-min);
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  color: var(--text-mute);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-tag--todo {
+  color: var(--investigate);
+}
+.status-tag--waiting {
+  color: var(--wait);
+}
+.status-tag--done {
+  color: var(--approve);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-pill--todo {
+  background: var(--investigate-tint);
+  border-color: transparent;
+  color: var(--investigate);
+}
+
+.status-pill--waiting {
+  background: var(--wait-tint);
+  border-color: transparent;
+  color: var(--wait);
+}
+
+.status-pill--done {
+  background: var(--approve-tint);
+  border-color: transparent;
+  color: var(--approve);
+}
+
+.note-pill.has-note {
+  color: var(--text);
+}
+
+/* A saved note. It's a button: tapping it opens the editor. */
+.task-note {
+  display: block;
+  width: 100%;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.note-edit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.note-textarea {
+  display: block;
+  padding: 10px 14px;
+  resize: none;
+  line-height: 1.4;
+  max-height: 40dvh; /* grows with the note, then scrolls */
+}
+
+.note-done {
+  min-height: var(--tap-min);
+}

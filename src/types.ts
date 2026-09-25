@@ -4,7 +4,8 @@
 /** Review state of a transaction on the deck. Everything but "unreviewed" is terminal. */
 export type Status = 'unreviewed' | 'approved' | 'piled' | 'flagged'
 
-/** Next-step triage state for a transaction inside a folder. */
+/** Next-step triage state for a purchase in a folder, or a flagged purchase being resolved.
+ *  A flagged purchase marked "done" is resolved (e.g. refunded) and no longer needs action. */
 export type Action = null | 'todo' | 'waiting' | 'done'
 
 /** Where the user is inside one statement's review. */
@@ -24,8 +25,13 @@ export interface Transaction {
   status: Status
   pileId: string | null
   action: Action
+  /** When this purchase last became a task or changed status: filed, flagged, or given a status
+   *  (milliseconds since 1970). Tasks marks it Overdue once it sits too long. Missing on purchases
+   *  handled before Phase 6c; those count from the statement's last change instead. */
+  actionAt?: number
   note: string
-  /** Heuristic "looks unusual" flag. */
+  /** Heuristic "looks unusual" flag. Nothing sets or shows it yet; Phase 8's "new merchant" tag
+   *  will, with its reason shown. */
   sus?: boolean
   /** Location, if known. */
   loc?: string | null

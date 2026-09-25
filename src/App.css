@@ -1,6 +1,7 @@
 /* App shell and shared building blocks used across screens. */
 
 .app {
+  position: relative; /* the floating tab bar is placed inside it */
   max-width: var(--app-max-width);
   height: 100%;
   height: 100dvh; /* dynamic viewport height: ignores the phone's collapsing browser bar */

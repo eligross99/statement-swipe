@@ -2,7 +2,7 @@
 // sorting for the Statements screen. Plain functions with no React, so they're easy to test.
 
 import type { Statement, Transaction } from '../types'
-import { pileItems, reviewedCount } from './review'
+import { isOpenFlag, pileItems, reviewedCount } from './review'
 
 const MONTHS = [
   'January',
@@ -55,10 +55,11 @@ export interface Progress {
   total: number
   /** Purchases not yet reviewed. */
   left: number
+  /** Flagged purchases not yet resolved. */
   flagged: number
-  /** Filed purchases marked To do, or with no status yet. */
+  /** Tasks (filed or flagged) marked To do, or with no status yet. Same as the Tasks screen. */
   todo: number
-  /** Filed purchases waiting on someone else. */
+  /** Tasks (filed or flagged) marked Waiting. */
   waiting: number
 }
 
@@ -66,19 +67,20 @@ export function progress(st: Statement): Progress {
   const { txns, piles } = st.session
   const reviewed = reviewedCount(txns)
   const filed = piles.flatMap((p) => pileItems(txns, p.id))
+  const tasks = [...filed, ...txns.filter((t) => t.status === 'flagged')]
   return {
     stage: reviewed === 0 ? 'new' : reviewed < txns.length ? 'progress' : 'done',
     total: txns.length,
     left: txns.length - reviewed,
-    flagged: txns.filter((t) => t.status === 'flagged').length,
-    todo: filed.filter((t) => t.action === null || t.action === 'todo').length,
-    waiting: filed.filter((t) => t.action === 'waiting').length,
+    flagged: txns.filter(isOpenFlag).length,
+    todo: tasks.filter((t) => t.action === null || t.action === 'todo').length,
+    waiting: tasks.filter((t) => t.action === 'waiting').length,
   }
 }
 
-/** True until every purchase is reviewed and nothing is flagged, to do, or waiting. */
+/** True until every purchase is reviewed and nothing is to do or waiting (flagged ones included). */
 export function needsAction(p: Progress): boolean {
-  return p.stage !== 'done' || p.flagged + p.todo + p.waiting > 0
+  return p.stage !== 'done' || p.todo + p.waiting > 0
 }
 
 export type StatementFilter = 'all' | 'action' | 'archived'

@@ -19,7 +19,7 @@ function txn(id: string, date = ''): Transaction {
 /** A statement of three purchases after `events`, with the given dates and fields. */
 function st(id: string, events: ReviewEvent[] = [], extra: Partial<Statement> = {}): Statement {
   const base = makeStatement([txn('a'), txn('b'), txn('c')], { id, name: id, period: null, now: 0 })
-  const review = events.reduce(reviewReducer, { session: base.session, history: base.history })
+  const review = events.reduce((s, e) => reviewReducer(s, e, 0), { session: base.session, history: base.history })
   return { ...base, ...review, ...extra }
 }
 
@@ -52,7 +52,7 @@ describe('progress', () => {
     expect(progress(st('x', ALL_APPROVED)).stage).toBe('done')
   })
 
-  it('counts flagged, to do (including no status yet), and waiting purchases', () => {
+  it('counts unresolved flags, and to do (including no status yet) and waiting across flagged and filed', () => {
     const pile = { id: 'f', name: 'Split' }
     const s = st('x', [
       { type: 'flag' },
@@ -60,8 +60,14 @@ describe('progress', () => {
       { type: 'file', pileId: 'f' },
       { type: 'setAction', txnId: 'c', action: 'waiting' },
     ])
-    expect(progress(s)).toMatchObject({ stage: 'done', flagged: 1, todo: 1, waiting: 1 })
+    expect(progress(s)).toMatchObject({ stage: 'done', flagged: 1, todo: 2, waiting: 1 })
     expect(needsAction(progress(s))).toBe(true)
+  })
+
+  it('a resolved flag no longer needs action', () => {
+    const s = st('x', [...ALL_APPROVED.slice(1), { type: 'flag' }, { type: 'setAction', txnId: 'c', action: 'done' }])
+    expect(progress(s).flagged).toBe(0)
+    expect(needsAction(progress(s))).toBe(false)
   })
 
   it('a finished statement with everything settled needs no action', () => {

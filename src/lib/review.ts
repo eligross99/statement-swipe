@@ -42,8 +42,9 @@ export function reviewScreen(s: Session): Screen {
   return s.index >= s.txns.length ? 'summary' : 'deck'
 }
 
-/** Marks the current card with a terminal status and advances; moves to the summary after the last card. */
-function resolveCurrent(state: ReviewState, status: Status, pileId: string | null): ReviewState {
+/** Marks the current card with a terminal status and advances; moves to the summary after the last card.
+ *  A fresh decision starts with no status, and its task clock starts now. */
+function resolveCurrent(state: ReviewState, status: Status, pileId: string | null, now: number): ReviewState {
   const s = state.session
   const current = s.txns[s.index]
   if (s.screen !== 'deck' || !current) return state
@@ -51,7 +52,7 @@ function resolveCurrent(state: ReviewState, status: Status, pileId: string | nul
   return {
     session: {
       ...s,
-      txns: s.txns.map((t, i) => (i === s.index ? { ...t, status, pileId } : t)),
+      txns: s.txns.map((t, i) => (i === s.index ? { ...t, status, pileId, action: null, actionAt: now } : t)),
       index,
       screen: index >= s.txns.length ? 'summary' : 'deck',
     },
@@ -67,30 +68,32 @@ function patchTxn(state: ReviewState, id: string, patch: Partial<Transaction>): 
   return { ...state, session: { ...s, txns: s.txns.map((t) => (t.id === id ? { ...t, ...patch } : t)) } }
 }
 
-export function reviewReducer(state: ReviewState, event: ReviewEvent): ReviewState {
+/** `now` is when the event happened (milliseconds since 1970), recorded on purchases that become
+ *  tasks or change status. Passed in so the reducer itself stays pure. */
+export function reviewReducer(state: ReviewState, event: ReviewEvent, now: number): ReviewState {
   const s = state.session
   switch (event.type) {
     case 'approve':
-      return resolveCurrent(state, 'approved', null)
+      return resolveCurrent(state, 'approved', null, now)
 
     case 'flag':
-      return resolveCurrent(state, 'flagged', null)
+      return resolveCurrent(state, 'flagged', null, now)
 
     case 'approveFlagged': {
       // After looking into a flagged purchase from the summary, the user recognizes it after all.
       const txn = s.txns.find((t) => t.id === event.txnId)
       if (!txn || txn.status !== 'flagged') return state
-      return patchTxn(state, event.txnId, { status: 'approved' })
+      return patchTxn(state, event.txnId, { status: 'approved', action: null })
     }
 
     case 'file':
       if (!s.piles.some((p) => p.id === event.pileId)) return state
-      return resolveCurrent(state, 'piled', event.pileId)
+      return resolveCurrent(state, 'piled', event.pileId, now)
 
     case 'createPileAndFile': {
       if (s.screen !== 'deck' || !s.txns[s.index]) return state
       const withPile = { ...state, session: { ...s, piles: [...s.piles, event.pile] } }
-      return resolveCurrent(withPile, 'piled', event.pile.id)
+      return resolveCurrent(withPile, 'piled', event.pile.id, now)
     }
 
     case 'deletePile': {
@@ -144,7 +147,7 @@ export function reviewReducer(state: ReviewState, event: ReviewEvent): ReviewSta
       return { ...state, session: { ...s, screen: 'summary', openPile: null } }
 
     case 'setAction':
-      return patchTxn(state, event.txnId, { action: event.action })
+      return patchTxn(state, event.txnId, { action: event.action, actionAt: now })
 
     case 'setNote':
       return patchTxn(state, event.txnId, { note: event.note })
@@ -168,6 +171,11 @@ export function sumAmounts(txns: Transaction[]): number {
 /** The purchases currently filed in a folder. */
 export function pileItems(txns: Transaction[], pileId: string): Transaction[] {
   return txns.filter((t) => t.pileId === pileId && t.status === 'piled')
+}
+
+/** A flagged purchase that hasn't been resolved yet (marked Done). */
+export function isOpenFlag(t: Transaction): boolean {
+  return t.status === 'flagged' && t.action !== 'done'
 }
 
 /** Folder total that still needs follow-up: everything not marked Done. */
@@ -200,8 +208,8 @@ export function folderGroups(txns: Transaction[], piles: Pile[]): FolderGroup[] 
   return groups.sort((a, b) => Number(a.open === 0) - Number(b.open === 0))
 }
 
-/** A piece of a breakdown bar: approved, settled in a folder, still open in a folder, flagged, or
- *  not reviewed yet. */
+/** A piece of a breakdown bar: approved, settled (a folder item marked Done, or a resolved flag),
+ *  still open in a folder, flagged and unresolved, or not reviewed yet. */
 export type LedgerKey = 'approve' | 'settled' | 'pile' | 'flag' | 'left'
 
 export interface LedgerSegment {
@@ -211,16 +219,18 @@ export interface LedgerSegment {
 
 /**
  * A statement's dollars by where they stand, for the breakdown bars (Statements list and summary).
- * Read left to right like a progress bar: what's done (approved, then settled in folders), then
- * what still needs doing (open folder items, flagged), then what's not reviewed yet. When nothing
+ * Read left to right like a progress bar: what's done (approved, then settled: folder items marked
+ * Done and resolved flags), then what still needs doing (open folder items, unresolved flags), then
+ * what's not reviewed yet. When nothing
  * is left to do at all, the whole bar is one solid "approved" green. Empty pieces are left out.
  */
 export function ledgerSegments(txns: Transaction[]): LedgerSegment[] {
   const filed = txns.filter((t) => t.status === 'piled')
   const open = stillToActOn(filed)
-  const settled = sumAmounts(filed) - open
+  const flagged = sumAmounts(txns.filter(isOpenFlag))
+  const resolved = sumAmounts(txns.filter((t) => t.status === 'flagged')) - flagged
+  const settled = sumAmounts(filed) - open + resolved
   const approved = sumAmounts(txns.filter((t) => t.status === 'approved'))
-  const flagged = sumAmounts(txns.filter((t) => t.status === 'flagged'))
   const left = sumAmounts(txns.filter((t) => t.status === 'unreviewed'))
   const segments: LedgerSegment[] =
     open + flagged + left === 0

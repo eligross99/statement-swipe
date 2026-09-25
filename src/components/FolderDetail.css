@@ -137,60 +137,6 @@
   font-weight: 650;
 }
 
-.fd-item-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-/* Status pill: colour follows the next-step status. */
-.status-pill,
-.note-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: var(--tap-min);
-  padding: 0 14px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface-sunken);
-  color: var(--text-mute);
-  font: inherit;
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.status-pill--todo {
-  background: var(--investigate-tint);
-  border-color: transparent;
-  color: var(--investigate);
-}
-
-.status-pill--waiting {
-  background: var(--wait-tint);
-  border-color: transparent;
-  color: var(--wait);
-}
-
-.status-pill--done {
-  background: var(--approve-tint);
-  border-color: transparent;
-  color: var(--approve);
-}
-
-.note-pill.has-note {
-  color: var(--text);
-}
-
 .fd-empty {
   display: flex;
   flex-direction: column;
@@ -211,43 +157,4 @@
   color: var(--text);
   font-size: var(--text-md);
   font-weight: 600;
-}
-
-/* A saved note. It's a button: tapping it opens the editor. */
-.fd-note {
-  display: block;
-  width: 100%;
-  margin: 12px 0 0;
-  padding: 10px 12px;
-  border: none;
-  border-radius: var(--radius-control);
-  background: var(--surface-sunken);
-  color: var(--text);
-  font: inherit;
-  font-size: var(--text-sm);
-  text-align: left;
-  cursor: pointer;
-  line-height: 1.45;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.fd-note-edit {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.fd-textarea {
-  display: block;
-  padding: 10px 14px;
-  resize: none;
-  line-height: 1.4;
-  max-height: 40dvh; /* grows with the note, then scrolls */
-}
-
-.fd-note-done {
-  min-height: var(--tap-min);
 }

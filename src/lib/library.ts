@@ -6,21 +6,28 @@ import type { Statement, Transaction } from '../types'
 import { newReview, reviewReducer, reviewScreen, type ReviewEvent } from './review'
 import type { StatementFilter } from './statements'
 
+/** The places in the bottom tab bar. */
+export type Tab = 'statements' | 'tasks'
+
 /** The app's top-level places. "review" is one statement's deck, summary, or folder. */
-export type View = 'statements' | 'import' | 'settings' | 'review'
+export type View = Tab | 'import' | 'settings' | 'review'
 
 /** The user's preferences, changed on the Settings screen. */
 export interface Settings {
   /** When filing, offer folder names used in past statements (folders themselves are never shared). */
   suggestFolders: boolean
+  /** Open tasks untouched for this many days are marked Overdue (null = never). */
+  remindAfterDays: number | null
 }
 
-export const defaultSettings: Settings = { suggestFolders: true }
+export const defaultSettings: Settings = { suggestFolders: true, remindAfterDays: 14 }
 
 export interface LibraryState {
   statements: Statement[]
   openId: string | null
   view: View
+  /** The tab the user was last on, where Back returns from a review, import, or Settings. */
+  home: Tab
   /** The Statements screen's filter, remembered between visits. */
   filter: StatementFilter
   settings: Settings
@@ -31,6 +38,8 @@ export interface SavedUi {
   openId: string | null
   view: View
   filter: StatementFilter
+  /** Missing in saves from before the Tasks tab. */
+  home?: Tab
 }
 
 /** Something the user (or loading) did. */
@@ -45,7 +54,8 @@ export type LibraryAction =
   | { type: 'eraseAll' }
   | { type: 'setFilter'; filter: StatementFilter }
   | { type: 'setSettings'; settings: Partial<Settings> }
-  | { type: 'review'; event: ReviewEvent }
+  /** A change to the open statement's review, or to statement `id` (e.g. a status set from Tasks). */
+  | { type: 'review'; event: ReviewEvent; id?: string }
 
 /** An action plus when it happened (added by `useLibrary`), so the reducer itself stays pure. */
 export type LibraryEvent = LibraryAction & { now: number }
@@ -54,6 +64,7 @@ export const initialLibrary: LibraryState = {
   statements: [],
   openId: null,
   view: 'statements',
+  home: 'statements',
   filter: 'all',
   settings: defaultSettings,
 }
@@ -80,10 +91,12 @@ export function libraryReducer(state: LibraryState, event: LibraryEvent): Librar
       const { statements, ui, settings } = event
       // Reopen the review the user was in, if it still exists; otherwise start on Statements.
       const open = ui?.view === 'review' ? statements.find((st) => st.id === ui.openId) : undefined
+      const home = ui?.home ?? 'statements'
       return {
         statements,
         openId: open?.id ?? null,
-        view: open ? 'review' : 'statements',
+        view: open ? 'review' : home,
+        home,
         filter: ui?.filter ?? 'all',
         settings: { ...defaultSettings, ...settings },
       }
@@ -104,8 +117,11 @@ export function libraryReducer(state: LibraryState, event: LibraryEvent): Librar
       return { ...patch(state, st.id, () => opened), openId: st.id, view: 'review' }
     }
 
-    case 'go':
-      return { ...state, view: event.view, openId: null }
+    case 'go': {
+      const { view } = event
+      const home = view === 'statements' || view === 'tasks' ? view : state.home
+      return { ...state, view, openId: null, home }
+    }
 
     case 'rename': {
       const name = event.name.trim()
@@ -127,8 +143,8 @@ export function libraryReducer(state: LibraryState, event: LibraryEvent): Librar
     }
 
     case 'eraseAll':
-      // Statements go; preferences (settings, the chosen filter) stay.
-      return { ...initialLibrary, filter: state.filter, settings: state.settings }
+      // Statements go; preferences (settings, the chosen filter, the last tab) stay.
+      return { ...initialLibrary, home: state.home, filter: state.filter, settings: state.settings }
 
     case 'setFilter':
       return { ...state, filter: event.filter }
@@ -137,9 +153,9 @@ export function libraryReducer(state: LibraryState, event: LibraryEvent): Librar
       return { ...state, settings: { ...state.settings, ...event.settings } }
 
     case 'review': {
-      const st = openStatement(state)
+      const st = event.id ? state.statements.find((s) => s.id === event.id) : openStatement(state)
       if (!st) return state
-      const next = reviewReducer({ session: st.session, history: st.history }, event.event)
+      const next = reviewReducer({ session: st.session, history: st.history }, event.event, event.now)
       if (next.session === st.session && next.history === st.history) return state
       return patch(state, st.id, () => ({ ...st, ...next, updatedAt: event.now }))
     }

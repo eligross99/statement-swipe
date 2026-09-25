@@ -39,8 +39,35 @@ left (approved dark green, settled folder items pale green), still to do on the 
 indigo, flagged red, then unreviewed as empty track), and **a statement with nothing left to do is one
 solid dark green**.
 
-**Phase 6b was phone-tested and approved by Eli on 2026-09-24. Next: Phase 6c in a fresh session. Start
-with "Starting Phase 6c" below.**
+**Phase 6b was phone-tested and approved by Eli on 2026-09-24.**
+
+On 2026-09-24, starting Phase 6c, Eli approved **6c = Tasks only** (tab bar, Tasks screen, resolving
+flagged purchases, "Remind me after"), with **remembered bank setups and OFX/QFX moved to Phase 7** next
+to the per-bank download guides (all three are about getting files in, and Eli imports PDFs, which have no
+setup to remember). Also approved: Tasks includes statements still being reviewed (not archived ones);
+Done shows the 5 most recent with Show all / Show fewer; flagged purchases reuse **To do / Waiting / Done**
+(Done = resolved, which counts as clear); the Overdue clock starts when a purchase is filed, flagged, or
+changes status. **Eli changed the "Remind me after" default to 2 weeks.** Eli has no Settings feedback yet
+and will share some once Settings grows. See "Tasks dashboard" for what was built.
+
+From Eli's 6c phone test (2026-09-24), all approved: Tasks groups **by status only** (To do, Waiting,
+Done), with possible fraud first in each group and a red "Possible fraud" label (a separate fraud section
+made a flag marked To do look like it was missing from To do); statement tags count flagged and filed
+tasks together ("2 to do", "1 waiting") plus a count-free red "Possible fraud" tag; a **floating frosted
+tab bar** with a sliding green pill; the whole task card is tappable and presses in; notes always sit in
+a grey note box; Look closer pins its back button and words the approve confirmation by status; a task
+opened from Tasks gets a fading indigo highlight in its folder. The **"Unusual" tag was removed**: only
+the sample set it, by hand. A real, explained version comes with Phase 8's new-merchant tag. Second round
+(same day): a **dark, deep-green frosted tab bar** hovering higher (a light one blended into the white
+cards), a slower pill slide and task fold/grow, a softer highlight outline, a flag with no status sorts to
+the very top, and a filed task opens its folder **sliding over Tasks like Look closer** (`SlideOver`)
+instead of switching screens. Third round: a compact centered tab bar, the import button floating over the list
+(no background band), and the Statements filters restyled to match the tab bar (white track, sliding mint
+pill).
+
+**Phase 6c was phone-tested and approved by Eli on 2026-09-24; Phase 6 is complete. Next: Phase 7 in a
+fresh session. Dark mode comes first: the new dark tab bar (`--dock` tokens) and the frosted surfaces
+will need a dark-theme pass.**
 
 ## Roadmap order
 
@@ -51,8 +78,8 @@ with "Starting Phase 6c" below.**
 | 5.5 | **Feel and motion:** smoother swipes and screen transitions, pressed states, overscroll bounce, larger and scalable text, clearer header buttons | Eli's phone-test feedback; the app works but feels abrupt |
 | 6a | **PDF statements** | The only thing many phone users can download; plugs into the existing import screen, so it ships first |
 | 6b | **Multiple statements:** storage, Statements screen, bottom navigation, Settings (light), **rename statements + smart default names** | Most new ideas depend on keeping more than one statement |
-| 6c | **Tasks dashboard**; **easier files:** remembered bank setups, OFX/QFX files | Needs 6b's statement history |
-| 7 | **Dark mode**, **haptics** and Android **"Share to"** first, then the **onboarding tour** (replaces the always-visible sample statement), with **per-bank download guides** | Needs the Phase 6 screens to exist; dark mode before the tour so the tour is designed once, in both themes |
+| 6c | **Tasks dashboard** and tab bar, resolving flagged purchases, "Remind me after" | Needs 6b's statement history |
+| 7 | **Dark mode**, **haptics** and Android **"Share to"** first, then the **onboarding tour** (replaces the always-visible sample statement), with **per-bank download guides**, **remembered bank setups**, and **OFX/QFX files** (moved from 6c) | Needs the Phase 6 screens to exist; dark mode before the tour so the tour is designed once, in both themes |
 | 8 | **On-device smarts:** familiar/new merchant tags, merchant-code decoder, web-search link, calendar reminders | Need statement history; no server needed; privacy stays intact |
 | 9 | **App Store version** (Capacitor; ask Eli first), then accounts, backend, Stripe, **opt-in bank connection** (Teller → Plaid, relay-only server) (was Phase 6, then 8) | Unlocks push notifications and, if chosen, AI merchant explanations; App Store first because Apple's subscription rules shape the payment plan |
 | 10 | Security & compliance (was Phase 7, then 9) | Unchanged |
@@ -161,6 +188,18 @@ Tasks tab.
 **Needs action** forever. Tasks needs a way to mark a flagged purchase as handled (e.g. "Disputed with
 my bank"), which then counts as clear.
 
+**Built in 6c (2026-09-24):** bottom tabs **Statements · Tasks** (hidden during a review; gear stays top
+right; Back from a review, import, or Settings returns to the last tab). Tasks groups **To do · Waiting ·
+Done** (possible fraud first in each; a separate fraud group was dropped after the phone test) across
+every non-archived statement, including ones still being reviewed. Each
+row shows its folder (or "Flagged" once resolved), the statement's name, the note, and the status
+button; tapping a filed purchase opens its folder (Back returns to Tasks), tapping a flagged one opens
+Look closer, which now has **Where it stands** (status and note). Flagged purchases use the same
+statuses with their own hints ("Waiting to hear back from your bank"); **Done = resolved**, counting as
+done in the Statements list, summary, and breakdown bars. **"Remind me after"** (1 week, 2 weeks
+(default), 1 month, 2 months, Off) in Settings: open tasks untouched that long get an amber **Overdue**
+tag, and the Tasks tab shows the count.
+
 ### Settings / preferences → Phase 6b (start light)
 **Built in 6b:** "About & privacy", "Erase everything on this device", and a "Suggest past folder names"
 switch (on by default; Eli, 2026-09-24). Folders stay per statement either way: the switch only controls
@@ -209,7 +248,7 @@ Eli's goal (2026-09-23): getting a statement into the app should be easier than 
 the bank's website, save it, upload it". **Approved plan:** make files painless first (no server
 needed), then add an opt-in bank connection once accounts and a backend exist.
 
-**Phase 6c: easier files** (goes with statement history, since it needs saved settings)
+**Phase 7 (moved from 6c on 2026-09-24): easier files** (needs saved settings)
 - **Remember each bank's setup.** After the first import, save the detected column mapping, sign
   convention, and header row, keyed by the file's header row (e.g. "Chase card CSV"). The next import
   from the same bank skips the mapping screen: one tap to start. Settings stay on-device.

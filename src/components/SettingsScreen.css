@@ -37,3 +37,27 @@
   font-size: var(--text-md);
   font-weight: 600;
 }
+
+/* A setting with a dropdown: label on the left, choice on the right. */
+.settings-row {
+  display: flex;
+  flex-wrap: wrap; /* at large text sizes the dropdown drops below its label */
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin-bottom: 10px;
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.settings-select {
+  min-height: var(--tap-min);
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-sunken);
+  color: var(--text);
+  font: inherit;
+  font-size: max(var(--text-md), 16px); /* at least 16px: stops iOS zooming in */
+  font-weight: 500;
+}

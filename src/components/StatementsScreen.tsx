@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, Check, FileText, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, Check, FileText, MoreHorizontal, Pencil, Plus, ShieldAlert, Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
 import { plural, usd } from '../lib/format'
@@ -74,6 +74,12 @@ export function StatementsScreen(props: Props) {
         ) : (
           <>
             <div className="st-filters" role="group" aria-label="Show statements">
+              {/* The mint pill behind the chosen filter, sliding between them like the tab bar's. */}
+              <span
+                className="st-filter-pill"
+                style={{ transform: `translateX(calc(${FILTERS.indexOf(filter)} * (100% + 4px)))` }}
+                aria-hidden
+              />
               {FILTERS.map((f) => (
                 <button
                   key={f}
@@ -220,7 +226,9 @@ function MiniLedger({ statement }: { statement: Statement }) {
   )
 }
 
-/** Where the statement stands: not started, how many are left, or what still needs doing. */
+/** Where the statement stands: not started, how many are left, or what still needs doing. To do and
+ *  Waiting count every task, flagged or filed, like the Tasks screen; "Possible fraud" (no count, so
+ *  nothing is counted twice) says some of them are unresolved flags. */
 function StatusLine({ p }: { p: Progress }) {
   if (p.stage === 'new') return <span className="st-status muted">Needs review</span>
   if (p.stage === 'progress')
@@ -230,11 +238,10 @@ function StatusLine({ p }: { p: Progress }) {
       </span>
     )
   const tags = [
-    { n: p.flagged, label: 'flagged', tone: 'flag' },
     { n: p.todo, label: 'to do', tone: 'todo' },
     { n: p.waiting, label: 'waiting', tone: 'wait' },
   ].filter((t) => t.n > 0)
-  if (!tags.length)
+  if (!tags.length && !p.flagged)
     return (
       <span className="st-status">
         <span className="st-tag st-tag--clear">
@@ -244,6 +251,11 @@ function StatusLine({ p }: { p: Progress }) {
     )
   return (
     <span className="st-status">
+      {p.flagged > 0 && (
+        <span className="st-tag st-tag--flag">
+          <ShieldAlert size={14} aria-hidden /> Possible fraud
+        </span>
+      )}
       {tags.map((t) => (
         <span key={t.tone} className={`st-tag st-tag--${t.tone}`}>
           {t.n} {t.label}

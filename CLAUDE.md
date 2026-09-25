@@ -57,8 +57,11 @@ Deploys, CI, security headers, and the phone test checklist: `docs/deploy.md`.
 - **Data model** lives in one types file (`src/types.ts`) and matches `docs/handoff.md` §7 (`Transaction`,
   `Pile`, `Session`, `Status`, `Action`), plus `Statement`: one imported statement wrapping its `Session`
   (name, dates, archived, undo steps). A `Session` no longer has a `label`; the name lives on the `Statement`.
-- **State:** `libraryReducer` (`src/lib/library.ts`) holds every statement and which screen is showing, and
-  hands review events to `reviewReducer` (`src/lib/review.ts`) for the open statement.
+  `Transaction.actionAt` (when it was filed, flagged, or last changed status) drives Overdue in Tasks.
+- **State:** `libraryReducer` (`src/lib/library.ts`) holds every statement, which screen is showing, and the
+  last tab (`home`, where Back returns), and hands review events to `reviewReducer` (`src/lib/review.ts`) for
+  the open statement, or for statement `id` when Tasks changes one that isn't open. The Tasks list is derived
+  from the statements by `allTasks` (`src/lib/tasks.ts`), never stored.
 - **Persistence:** `useLibrary` saves changed statements to IndexedDB (debounced, flushed when the app is
   hidden) and restores them, plus where the user was, on load.
   The prototype's `window.storage` only exists inside Claude artifacts and must not appear in this code.
@@ -70,6 +73,8 @@ Deploys, CI, security headers, and the phone test checklist: `docs/deploy.md`.
   - Deleting a folder reverts its items to `approved` with `pileId: null`. Never lose review state.
   - Folders belong to one statement and start empty (past folder names are offered when filing).
   - "Still to act on" = sum of a folder's items whose action is not `done`.
+  - A flagged purchase marked `done` is resolved: it counts as done in `progress`, `ledgerSegments`,
+    and Tasks. Flagged and filed purchases share the To do / Waiting / Done statuses.
 
 ## Privacy (non-negotiable)
 
@@ -135,7 +140,7 @@ See `docs/handoff.md` §11 for details.
   states, overscroll bounce, larger text that follows the phone's text size, clearer header buttons,
   confirm before replacing a review (see `docs/ideas.md`). Motion helpers: `src/lib/motion.ts`,
   `src/hooks/useAnimate.ts`; bottom sheets share `src/components/Sheet.tsx`
-- [ ] 6. Split into three parts, each with its own branch, PR, and phone test (see `docs/ideas.md`):
+- [x] 6. Split into three parts, each with its own branch, PR, and phone test (see `docs/ideas.md`):
   - [x] 6a. **On-device PDF statements** (`PDFSource`, `src/lib/statementPdf.ts`), tuned on Eli's
     Bank of America PDF via the masked-layout script (totals match to the cent), phone-tested on Eli's
     iPhone. Also added: Playwright WebKit e2e tests on CI, iPhone-simulator testing, `npm run preview`
@@ -144,11 +149,14 @@ See `docs/handoff.md` §11 for details.
     Statements home screen (filters, ⋯ menu to rename/archive/delete, breakdown bars via
     `ledgerSegments`), smart default names ("July 2026"), light Settings (suggest past folder names,
     About & privacy, Erase everything), phone-tested by Eli. No tab bar yet (arrives with Tasks)
-  - [ ] 6c. Tasks dashboard + Statements · Tasks tab bar; resolving flagged purchases; remembered bank
-    setups; OFX/QFX files  ← **next.** Start with "Starting Phase 6c" in `docs/ideas.md`
-- [ ] 7. Dark mode (follows the phone, override in Settings), Android haptics and Android "Share to" first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
-  Settings; the standalone "Try the sample statement" button goes away; per-bank download guides
-  (see `docs/ideas.md`)
+  - [x] 6c. **Tasks** (`TasksScreen`, `src/lib/tasks.ts`): a floating dark-green tab bar (Statements,
+    Tasks), tasks grouped by status with possible fraud first, resolving flagged purchases with the same
+    statuses as folders, and "Remind me after" (default 2 weeks) for Overdue tags plus a count on the
+    Tasks tab. Pages that slide over a screen (Look closer, a folder opened from Tasks) share `SlideOver`.
+    Phone-tested by Eli over three rounds. Remembered bank setups and OFX/QFX files moved to Phase 7
+- [ ] 7. ← **next.** Dark mode (follows the phone, override in Settings), Android haptics and Android "Share to" first; then the onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable from
+  Settings; the standalone "Try the sample statement" button goes away; per-bank download guides,
+  remembered bank setups, and OFX/QFX files (see `docs/ideas.md`)
 - [ ] 8. On-device smarts: familiar/new merchant tags, merchant-code decoder, web-search link,
   calendar reminders (see `docs/ideas.md`)
 - [ ] 9. App Store version with Capacitor (**ask Eli again before starting**), then accounts/backend + Stripe, then opt-in bank connection (Teller → Plaid) through a relay-only

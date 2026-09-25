@@ -1,8 +1,9 @@
 import { Check, ChevronRight, Folder, FolderCheck, ShieldAlert } from 'lucide-react'
 import { useState } from 'react'
 import { plural, usd } from '../lib/format'
-import { folderGroups, ledgerSegments, stillToActOn, sumAmounts, type FolderGroup } from '../lib/review'
+import { folderGroups, isOpenFlag, ledgerSegments, stillToActOn, sumAmounts, type FolderGroup } from '../lib/review'
 import type { Pile, Transaction } from '../types'
+import { StatusTag } from './TaskControls'
 import './Summary.css'
 
 interface Props {
@@ -19,6 +20,7 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
   const [confirmRestart, setConfirmRestart] = useState(false)
   const total = sumAmounts(txns)
   const flagged = txns.filter((t) => t.status === 'flagged')
+  const openFlags = flagged.filter(isOpenFlag).length
   const filed = txns.filter((t) => t.status === 'piled')
   const groups = folderGroups(txns, piles)
   const needAction = groups.filter((g) => g.open > 0)
@@ -29,13 +31,19 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
   // Same rule as the Statements list: done on the left, still to do on the right, and one solid
   // green once nothing is left to do.
   const bar = ledgerSegments(txns)
-  const clear = toActOn === 0 && flagged.length === 0
+  const clear = toActOn === 0 && openFlags === 0
 
   const rows: { tone: Tone; label: string; items: Transaction[] }[] = [
     { tone: 'approve', label: 'Approved', items: txns.filter((t) => t.status === 'approved') },
     { tone: 'pile', label: 'Filed', items: filed },
     { tone: 'flag', label: 'Flagged', items: flagged },
   ]
+
+  function dotTone(tone: Tone, items: Transaction[]): string {
+    const open = tone === 'pile' ? toActOn > 0 : tone === 'flag' ? openFlags > 0 : true
+    if (tone === 'approve' || !items.length || open) return tone
+    return clear ? 'approve' : 'settled'
+  }
 
   return (
     <div className="screen">
@@ -55,11 +63,9 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
           {rows.map(({ tone, label, items }) => (
             <div key={tone} className="ledger-row">
               <dt>
-                {/* Filed's dot matches its part of the bar: pale green once settled, solid when all clear. */}
-                <span
-                  className={`ledger-dot ledger-seg--${tone === 'pile' && items.length > 0 && toActOn === 0 ? (clear ? 'approve' : 'settled') : tone}`}
-                  aria-hidden
-                />
+                {/* Filed's and Flagged's dots match their part of the bar: pale green once settled or
+                    resolved, solid when all clear. */}
+                <span className={`ledger-dot ledger-seg--${dotTone(tone, items)}`} aria-hidden />
                 {label}
               </dt>
               <dd className="ledger-count num">{items.length}</dd>
@@ -75,13 +81,18 @@ export function Summary({ txns, piles, onInspect, onOpenPile, onRestart }: Props
             <ShieldAlert size={16} /> Flagged as possible fraud
           </h3>
           <p className="muted summary-flag-help">
-            Tap one to look into it. If it still isn’t yours, call the number on the back of your card.
+            {openFlags
+              ? 'Tap one to look into it and track it until it’s resolved.'
+              : 'All resolved. Tap one to see its details.'}
           </p>
           <div className="panel">
             {flagged.map((t) => (
               <button key={t.id} type="button" className="summary-flag-row" onClick={() => onInspect(t)}>
-                <span className="summary-flag-desc">{t.desc}</span>
-                <span className="num tone-flag">${usd(t.amount)}</span>
+                <span className="summary-flag-main">
+                  <span className="summary-flag-desc">{t.desc}</span>
+                  {t.action && <StatusTag action={t.action} />}
+                </span>
+                <span className={`num${isOpenFlag(t) ? ' tone-flag' : ''}`}>${usd(t.amount)}</span>
               </button>
             ))}
           </div>

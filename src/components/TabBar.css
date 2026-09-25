@@ -1,0 +1,106 @@
+/* The bottom tab bar: a dark frosted capsule hovering above the bottom edge. Screens scroll underneath
+   it (they leave --tabbar-space at the bottom so their last row can scroll clear of it). */
+.tabbar {
+  position: absolute;
+  /* Compact and centered: just wide enough for its two tabs (Eli: edge to edge felt too long). */
+  left: 0;
+  right: 0;
+  width: min(264px, calc(100% - 40px));
+  margin: 0 auto;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 30;
+  display: flex;
+  padding: 6px;
+  border-radius: 999px;
+  background: var(--dock);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  backdrop-filter: blur(24px) saturate(1.8);
+  box-shadow:
+    inset 0 1px 0 var(--dock-edge),
+    var(--shadow-float);
+  /* Rises into place when coming back from a review, where it's hidden. */
+  animation: tabbar-in var(--dur-enter) var(--ease-out) backwards;
+}
+
+@keyframes tabbar-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(100% + 16px));
+  }
+}
+
+/* The current tab's soft green pill: half the bar, sliding between the two tabs. */
+.tab-indicator {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 6px;
+  width: calc(50% - 6px);
+  border-radius: 999px;
+  background: var(--brand-tint);
+  /* Unhurried, with a soft landing (Eli: 380ms was a little fast). */
+  transition: transform 560ms cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+
+.tab-indicator.is-right {
+  transform: translateX(100%);
+}
+
+.tab {
+  position: relative; /* above the pill */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 52px;
+  padding: 4px 0;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--dock-text);
+  font: inherit;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.tab.is-here {
+  color: var(--brand-strong);
+}
+
+.tab-label {
+  /* Capped so very large text settings can't overflow the bar. */
+  font-size: min(var(--text-xs), 17px);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tab-icon {
+  position: relative;
+  display: grid;
+}
+
+/* The overdue count: amber, the same color as the Overdue tag on each task. */
+.tab-badge {
+  position: absolute;
+  top: -6px;
+  left: calc(100% - 8px);
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 2px solid var(--text);
+  background: var(--investigate);
+  color: var(--on-brand);
+  font-size: min(0.75rem, 13px); /* capped: the badge is a fixed size */
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-indicator {
+    transition: none;
+  }
+}
