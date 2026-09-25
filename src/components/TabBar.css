@@ -2,8 +2,11 @@
    it (they leave --tabbar-space at the bottom so their last row can scroll clear of it). */
 .tabbar {
   position: absolute;
-  left: 20px;
-  right: 20px;
+  /* Compact and centered: just wide enough for its two tabs (Eli: edge to edge felt too long). */
+  left: 0;
+  right: 0;
+  width: min(264px, calc(100% - 40px));
+  margin: 0 auto;
   bottom: max(20px, env(safe-area-inset-bottom));
   z-index: 30;
   display: flex;
