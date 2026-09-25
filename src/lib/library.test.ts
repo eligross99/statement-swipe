@@ -1,5 +1,6 @@
 import type { Transaction } from '../types'
 import {
+  defaultSettings,
   initialLibrary,
   libraryReducer,
   makeStatement,
@@ -107,13 +108,13 @@ describe('managing statements', () => {
       { type: 'setSettings', settings: { suggestFolders: false } },
       { type: 'eraseAll' },
     )
-    expect(s).toEqual({ ...initialLibrary, filter: 'archived', settings: { suggestFolders: false, remindAfterDays: 14 } })
+    expect(s).toEqual({ ...initialLibrary, filter: 'archived', settings: { ...defaultSettings, suggestFolders: false } })
   })
 })
 
 describe('loading', () => {
   it('uses default settings for anything not saved', () => {
-    const defaults = { suggestFolders: true, remindAfterDays: 14 }
+    const defaults = { suggestFolders: true, remindAfterDays: 14, theme: 'system', haptics: true }
     expect(run({ type: 'loaded', statements: [], ui: null, settings: null }).settings).toEqual(defaults)
     expect(run({ type: 'loaded', statements: [], ui: null, settings: {} }).settings).toEqual(defaults)
     const off = run({ type: 'loaded', statements: [], ui: null, settings: { suggestFolders: false } })

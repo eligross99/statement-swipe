@@ -13,6 +13,7 @@ import {
 import type { Statement } from '../types'
 import { ConfirmSheet } from './ConfirmSheet'
 import { RenameSheet } from './RenameSheet'
+import { Segmented } from './Segmented'
 import { Sheet } from './Sheet'
 import './StatementsScreen.css'
 
@@ -73,25 +74,13 @@ export function StatementsScreen(props: Props) {
           </div>
         ) : (
           <>
-            <div className="st-filters" role="group" aria-label="Show statements">
-              {/* The mint pill behind the chosen filter, sliding between them like the tab bar's. */}
-              <span
-                className="st-filter-pill"
-                style={{ transform: `translateX(calc(${FILTERS.indexOf(filter)} * (100% + 4px)))` }}
-                aria-hidden
-              />
-              {FILTERS.map((f) => (
-                <button
-                  key={f}
-                  type="button"
-                  className={`st-filter${f === filter ? ' is-on' : ''}`}
-                  aria-pressed={f === filter}
-                  onClick={() => onFilter(f)}
-                >
-                  {FILTER_LABELS[f]}
-                </button>
-              ))}
-            </div>
+            <Segmented
+              className="st-filters"
+              label="Show statements"
+              options={FILTERS.map((f) => ({ value: f, label: FILTER_LABELS[f] }))}
+              value={filter}
+              onChange={onFilter}
+            />
 
             {/* Keyed by the filter, so the list fades in fresh when the filter changes. */}
             <div key={filter} className="enter-fade">

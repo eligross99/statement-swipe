@@ -344,7 +344,7 @@ p {
   height: 26px;
   flex-shrink: 0;
   border-radius: 13px;
-  background: var(--border);
+  background: var(--toggle-off);
   transition: background 0.15s;
 }
 
@@ -359,7 +359,7 @@ p {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--surface);
+  background: var(--toggle-knob);
   box-shadow: var(--shadow-card);
   transition: left 0.15s;
 }

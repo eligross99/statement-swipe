@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from '
 import { useAnimate } from '../hooks/useAnimate'
 import { formatDate } from '../lib/dates'
 import { hasCategory, usd } from '../lib/format'
+import { tick } from '../lib/haptics'
 import { DURATION, EASE_FLY, EASE_OUT } from '../lib/motion'
 import { reviewedCount, sumAmounts } from '../lib/review'
 import type { Transaction } from '../types'
@@ -41,6 +42,8 @@ interface Props {
   onApprove: (from: Offset) => void
   onInvestigate: () => void
   onFile: () => void
+  /** Vibrate briefly when a swipe lands (Android only; see lib/haptics). */
+  haptics: boolean
 }
 
 /** How far (px) a drag must travel before release counts as a swipe. */
@@ -61,7 +64,7 @@ function offscreen(dir: Direction, from: Offset = CENTER): string {
 }
 
 export function Deck(props: Props) {
-  const { txns, index, paused, lean, leaving, returning, onLeaveDone, onApprove, onInvestigate, onFile } = props
+  const { txns, index, paused, lean, leaving, returning, onLeaveDone, onApprove, onInvestigate, onFile, haptics } = props
   const [drag, setDrag] = useState<Offset>(CENTER)
   const [dragging, setDragging] = useState(false)
   // The pointer position where the drag started; a ref because it doesn't affect rendering.
@@ -129,7 +132,9 @@ export function Deck(props: Props) {
     if (!start.current) return
     const { x, y } = drag
     snapBack()
-    if (y < -SWIPE_THRESHOLD && Math.abs(y) > Math.abs(x)) onFile()
+    const up = y < -SWIPE_THRESHOLD && Math.abs(y) > Math.abs(x)
+    if (haptics && (up || Math.abs(x) > SWIPE_THRESHOLD)) tick()
+    if (up) onFile()
     else if (x > SWIPE_THRESHOLD) onApprove({ x, y })
     else if (x < -SWIPE_THRESHOLD) onInvestigate()
   }

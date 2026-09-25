@@ -98,6 +98,8 @@ or changes a technique (a new animation, control style, layout pattern, or wordi
 its entry there in the same commit, with what it is, why, and where it lives in the code.
 
 - All colors live in `src/styles/tokens.css` as CSS custom properties. Never hard-code hex values in components.
+- **Light and dark themes** (Phase 7a): every color token needs a value in both blocks of `tokens.css`.
+  `src/styles/tokens.test.ts` checks text contrast (4.5:1) in both; add new text/background pairs to it.
 - Text sizes are the `--text-*` tokens (rem, so they follow the phone's text-size setting). Never set
   font sizes in px; cap with `min()` only inside fixed-size areas like the swipe card.
 - White cards on a near-white, faintly green background (`--bg`). One deep "money green" brand color (`--brand`).
@@ -117,7 +119,8 @@ its entry there in the same commit, with what it is, why, and where it lives in 
   Buttons say what happens; empty and error states tell the user what to do next.
 - Destructive actions (start over, delete a folder with purchases) always ask first.
 - The app's colors also appear in `vite.config.ts` (manifest `theme_color`/`background_color`),
-  `index.html` (`theme-color`), and the icon SVGs, which can't read CSS variables. Keep them in sync with `--bg`/`--brand`.
+  `index.html` (`theme-color`), `public/theme.js` and `THEME_COLOR` in `src/lib/theme.ts` (both themes'
+  `--bg`), and the icon SVGs, which can't read CSS variables. Keep them in sync with `--bg`/`--brand`.
 
 ## Workflow
 

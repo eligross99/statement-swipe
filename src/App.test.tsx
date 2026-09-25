@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import App from './App'
-import { makeStatement } from './lib/library'
+import { defaultSettings, makeStatement } from './lib/library'
 import { loadLibrary, saveLibrary } from './lib/storage'
 import type { Statement, Transaction } from './types'
 
@@ -414,7 +414,7 @@ describe('App', () => {
         [expect.objectContaining({ session: expect.objectContaining({ index: 1 }) })],
         [],
         expect.objectContaining({ view: 'review' }),
-        { suggestFolders: true, remindAfterDays: 14 },
+        defaultSettings,
       ),
     )
     const [put] = vi.mocked(saveLibrary).mock.lastCall!

@@ -13,6 +13,7 @@ import { TabBar } from './components/TabBar'
 import { TasksScreen } from './components/TasksScreen'
 import { useLibrary } from './hooks/useLibrary'
 import { useNow } from './hooks/useNow'
+import { useTheme } from './hooks/useTheme'
 import { makeId } from './lib/format'
 import { openStatement, type LibraryAction, type Tab } from './lib/library'
 import { DURATION, pause, screenEnter, type Enter, type Place } from './lib/motion'
@@ -36,6 +37,7 @@ export default function App() {
   const library = useLibrary()
   const { statements, view, home, filter, settings, ready, dispatch: send } = library
   const statement = openStatement(library)
+  useTheme(settings.theme, ready)
   const session = statement?.session ?? NO_SESSION
   const history = statement?.history ?? []
   /** Changes the open statement's review. */
@@ -220,6 +222,7 @@ export default function App() {
                 setLean(LEAN_UP)
                 setSheetOpen(true)
               }}
+              haptics={settings.haptics}
             />
           )}
 

@@ -38,6 +38,11 @@
   font-weight: 600;
 }
 
+/* A switch with no help text under it. */
+.settings-toggle--alone {
+  margin-bottom: 0;
+}
+
 /* A setting with a dropdown: label on the left, choice on the right. */
 .settings-row {
   display: flex;
