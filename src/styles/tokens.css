@@ -24,6 +24,9 @@
   --dock-pill: #e5f4ec; /* the current tab's pill: mint in both themes */
   --dock-pill-text: #066040;
   --dock-ring: #0f1f17; /* the ring around the tab's badge, cutting it out of the bar */
+  --dock-strong: #ffffff; /* headings on the dark glass (the tour card) */
+  --dock-soft: rgb(255 255 255 / 0.8); /* body text on the dark glass */
+  --dock-track: rgb(255 255 255 / 0.2); /* the tour card's steps still to come */
   --shadow-float: 0 14px 36px rgb(16 42 28 / 0.3), 0 4px 10px rgb(16 42 28 / 0.18);
   --stamp-bg: rgb(255 255 255 / 0.85);
   --toggle-off: #e1e8e4; /* a switch's track when off */
@@ -103,6 +106,9 @@
   --dock-pill: #e5f4ec;
   --dock-pill-text: #066040;
   --dock-ring: #203a2e;
+  --dock-strong: #ffffff;
+  --dock-soft: rgb(255 255 255 / 0.82);
+  --dock-track: rgb(255 255 255 / 0.2);
   --shadow-float: 0 14px 36px rgb(0 0 0 / 0.55), 0 4px 10px rgb(0 0 0 / 0.35);
   --stamp-bg: rgb(21 32 26 / 0.85);
   --toggle-off: #384a41;

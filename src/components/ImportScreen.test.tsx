@@ -22,7 +22,7 @@ const pdfFile = () => new File(['%PDF-1.4\n'], 'eStmt_2026-07-13.pdf', { type: '
 async function choosePdf() {
   const user = userEvent.setup()
   const onStart = vi.fn()
-  const { container } = render(<ImportScreen onStart={onStart} />)
+  const { container } = render(<ImportScreen onStart={onStart} onHelp={vi.fn()} />)
   await user.upload(container.querySelector<HTMLInputElement>('input[type=file]')!, pdfFile())
   return { user, onStart }
 }
@@ -89,10 +89,10 @@ describe('ImportScreen with a file shared from Android', () => {
     vi.spyOn(PDFSource, 'fromData').mockResolvedValue(new PDFSource(statement({ printed: 90.95, found: 90.95 })))
     const onTakeShared = vi.fn()
     const file = pdfFile()
-    const { rerender } = render(<ImportScreen onStart={vi.fn()} shared={file} onTakeShared={onTakeShared} />)
+    const { rerender } = render(<ImportScreen onStart={vi.fn()} shared={file} onTakeShared={onTakeShared} onHelp={vi.fn()} />)
 
     expect(await screen.findByText('2 purchases found in this statement.')).toBeInTheDocument()
-    rerender(<ImportScreen onStart={vi.fn()} shared={file} onTakeShared={onTakeShared} />)
+    rerender(<ImportScreen onStart={vi.fn()} shared={file} onTakeShared={onTakeShared} onHelp={vi.fn()} />)
     expect(onTakeShared).toHaveBeenCalledTimes(1)
     expect(PDFSource.fromData).toHaveBeenCalledTimes(1)
   })

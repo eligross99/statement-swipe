@@ -1,4 +1,5 @@
-// A synthetic sample statement so people can try the app without their own CSV.
+// Synthetic statements: the tour's short practice statement, and a longer sample that the automated
+// tests review. Both are made up; no real purchases.
 
 import type { Transaction } from '../types'
 import { makeId } from './format'
@@ -24,6 +25,7 @@ const ROWS: { desc: string; amount: number; date: string; cat: string; loc?: str
   { desc: 'CVS/PHARMACY #4021', amount: 19.87, date: '2026-03-19', cat: 'Health' },
 ]
 
+/** The 16-purchase sample the tests review (no longer offered in the app; the tour replaced it). */
 export function sampleTransactions(): Transaction[] {
   return ROWS.map((r) => ({
     id: makeId('t'),
@@ -38,3 +40,35 @@ export function sampleTransactions(): Transaction[] {
     note: '',
   }))
 }
+
+/** The tour's practice statement: one purchase for each swipe, in the order the tour teaches them. */
+export const PRACTICE_NAME = 'Practice statement'
+export const PRACTICE_ID = 'practice'
+
+const PRACTICE_ROWS: (typeof ROWS)[number][] = [
+  // Swipe right: an everyday purchase anyone recognizes.
+  { desc: "TRADER JOE'S #512 BOSTON MA", amount: 87.43, date: '2026-03-03', cat: 'Groceries' },
+  // Swipe left: a cryptic charge from abroad, worth a closer look.
+  { desc: 'APLPAY 8299 GLOBAL DIGI', amount: 419.55, date: '2026-03-05', cat: '—', loc: 'Amsterdam, NL' },
+  // Swipe up: a dinner to split with friends.
+  { desc: 'SQ *HARBOR TAVERN', amount: 164.2, date: '2026-03-07', cat: 'Dining' },
+]
+
+/** The practice purchases. Fixed ids are safe: the practice statement lives only inside the tour. */
+export function practiceTransactions(): Transaction[] {
+  return PRACTICE_ROWS.map((r, i) => ({
+    id: `practice_${i + 1}`,
+    desc: r.desc,
+    amount: r.amount,
+    date: r.date,
+    cat: r.cat,
+    loc: r.loc ?? null,
+    status: 'unreviewed',
+    pileId: null,
+    action: null,
+    note: '',
+  }))
+}
+
+/** A folder name the tour offers as a one-tap choice when filing the dinner. */
+export const PRACTICE_FOLDER = 'Split with friends'

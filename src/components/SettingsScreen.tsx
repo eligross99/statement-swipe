@@ -15,10 +15,11 @@ interface Props {
   settings: Settings
   onChange: (change: Partial<Settings>) => void
   onEraseAll: () => void
+  onReplayTour: () => void
 }
 
-/** Appearance, swiping, filing, and Tasks preferences, About & privacy, and erasing everything saved. */
-export function SettingsScreen({ statementCount, settings, onChange, onEraseAll }: Props) {
+/** Appearance, swiping, filing, and Tasks preferences, the tour, About & privacy, and erasing everything saved. */
+export function SettingsScreen({ statementCount, settings, onChange, onEraseAll, onReplayTour }: Props) {
   const [confirming, setConfirming] = useState(false)
   // Whether the browser promised to keep our data. Checked once; null until known or if it can't say.
   const [kept, setKept] = useState<boolean | null>(null)
@@ -118,6 +119,16 @@ export function SettingsScreen({ statementCount, settings, onChange, onEraseAll 
               : 'Open tasks you haven’t touched for this long are marked Overdue, and the Tasks tab shows how many.'}
           </p>
         </div>
+      </section>
+
+      <section className="settings-section">
+        <h2 className="section-label">Help</h2>
+        <button type="button" className="btn btn--secondary" onClick={onReplayTour}>
+          Replay the tour
+        </button>
+        <p className="muted settings-foot">
+          Practice swiping on a pretend statement again. Your own statements stay as they are.
+        </p>
       </section>
 
       <section className="settings-section">

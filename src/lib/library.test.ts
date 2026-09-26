@@ -155,3 +155,54 @@ describe('tabs and tasks', () => {
     expect(after.view).toBe('tasks')
   })
 })
+
+describe('the tour', () => {
+  const loaded = (statements: LibraryState['statements'], ui: Extract<Step, { type: 'loaded' }>['ui'] = null): Step => ({
+    type: 'loaded',
+    statements,
+    ui,
+    settings: null,
+  })
+
+  it('starts for a new user, on the practice statement, open on its first card', () => {
+    const s = run(loaded([]))
+    expect(s.tourSeen).toBe(false)
+    expect(s.tour?.view).toBe('review')
+    expect(openStatement(s.tour!)?.name).toBe('Practice statement')
+    expect(openStatement(s.tour!)?.session.txns).toHaveLength(3)
+  })
+
+  it('doesn’t start for someone who already has statements, or has seen it', () => {
+    expect(run(loaded([statement('one')])).tour).toBeNull()
+    expect(run(loaded([], { openId: null, view: 'statements', filter: 'all', tourSeen: true })).tour).toBeNull()
+  })
+
+  it('keeps practice in its own library, leaving real statements alone', () => {
+    const s = run(loaded([statement('one')]), { type: 'startTour' }, { type: 'tour', action: review({ type: 'approve' }) })
+    expect(s.statements.map((st) => st.id)).toEqual(['one'])
+    expect(s.tour?.statements.map((st) => st.id)).toEqual(['practice'])
+    expect(openStatement(s.tour!)?.session.txns[0].status).toBe('approved')
+    expect(s.view).toBe('statements')
+  })
+
+  it('throws the practice statement away when it ends, and remembers it was seen', () => {
+    const s = run(loaded([]), { type: 'endTour' })
+    expect(s.tour).toBeNull()
+    expect(s.tourSeen).toBe(true)
+    expect(s.statements).toEqual([])
+  })
+
+  it('starts afresh when replayed', () => {
+    const s = run(loaded([]), { type: 'tour', action: review({ type: 'approve' }) }, { type: 'startTour' })
+    expect(openStatement(s.tour!)?.session.txns[0].status).toBe('unreviewed')
+  })
+
+  it('ignores practice changes when no tour is running', () => {
+    const before = run(loaded([statement('one')]))
+    expect(step(before, { type: 'tour', action: { type: 'delete', id: 'one' } })).toBe(before)
+  })
+
+  it('is still remembered as seen after erasing everything', () => {
+    expect(run(loaded([statement('one')]), { type: 'eraseAll' }).tourSeen).toBe(true)
+  })
+})

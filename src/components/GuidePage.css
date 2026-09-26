@@ -1,0 +1,127 @@
+.guide-lede {
+  margin: 0 0 16px;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+/* The iPhone tip: a white card, since anything on the page background needs a container. */
+.guide-tip {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+}
+
+.guide-tip svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.guide-tip p {
+  flex: 1;
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+.guide-label {
+  margin-top: 24px;
+}
+
+.guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The whole row is the button, with the usual press feedback. */
+.guide-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 54px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 16px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.guide-chevron {
+  flex-shrink: 0;
+  color: var(--text-mute);
+  transition: transform 400ms var(--ease-out);
+}
+
+.guide.is-open .guide-chevron {
+  transform: rotate(180deg);
+}
+
+/* Steps grow open and fold closed at the same pace (a grid row animating from 0fr to 1fr). */
+.guide-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 400ms var(--ease-out),
+    opacity 300ms ease;
+}
+
+.guide.is-open .guide-body {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.guide-body-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.guide-body-content {
+  padding: 0 16px 14px;
+}
+
+.guide-steps-title {
+  margin: 4px 0 6px;
+  font-size: var(--text-sm);
+  font-weight: 650;
+}
+
+.guide-steps-title + .guide-steps + .guide-steps-title {
+  margin-top: 14px;
+}
+
+.guide-steps {
+  margin: 0;
+  padding-left: 22px;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+.guide-steps li + li {
+  margin-top: 4px;
+}
+
+.guide-note {
+  margin: 12px 0 0;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+/* Quiet, centered fine print at the end. */
+.guide-foot {
+  margin: 20px 0 0;
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  text-align: center;
+  text-wrap: balance;
+}

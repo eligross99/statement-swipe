@@ -82,6 +82,18 @@ OFX/QFX files)**, each with its own branch, PR, and phone test. Eli has **no And
 changes. Next: 7b (onboarding tour + per-bank download guides) in a fresh session. The Android check of
 the swipe tick and "Share to" is still owed.
 
+On 2026-09-26, starting Phase 7b, Eli approved the tour's details: a **3-purchase practice statement**
+(one per swipe), **five steps** (approve, look closer, file, set a status, see Tasks) with only the taught
+swipe working on each, a **dark green instruction card pinned to the top** that screens make room for,
+**first launch goes straight into the practice deck** (people with statements aren't sent on it; Settings,
+Replay the tour), and **bank guides written from the banks' public help pages** (Chase, American Express,
+Capital One, Citi, Bank of America, Discover, Wells Fargo, Apple Card, Another bank) with "Checked
+September 2026" and a note that buttons move. Eli also asked for **a motion hint showing which way to
+swipe**: the card leans that way with its stamp peeking, then settles. Eli will check the Bank of America
+guide against their own app during the phone test.
+
+**Built in 7b (2026-09-26):** see "Onboarding tour" below. Waiting for Eli's phone test.
+
 ## Roadmap order
 
 | Phase | What | Why here |
@@ -257,6 +269,11 @@ later. "Try the sample statement" is no longer offered outside the tour.
 - **Build it after Phase 6**, because the tour has to show the Statements/Tasks navigation that
   Phase 6 creates. Until then, keep the "Try the sample statement" button. It's how Eli (and testers)
   will try the app on the phone in Phase 5. The sample data stays in the code for automated tests.
+
+**Built (7b, 2026-09-26):** `src/lib/tour.ts` (steps and words), `TourCoach` (the card), the sandbox in
+`libraryReducer` (`startTour`, `endTour`, `tour`), `Deck`'s `only` and swipe hint, `GuidePage` with
+`src/lib/bankGuides.ts`, and "How do I get my file?" on Import. The tour ends on Import with the guides
+open. Skipping, finishing, or having statements from before the tour all count as seen (`tourSeen`).
 
 ### Easier statement import → Phases 6a–7 (files), Phase 9 (bank connection)
 Eli's goal (2026-09-23): getting a statement into the app should be easier than "download a CSV from
@@ -461,3 +478,20 @@ This reverses the old "PDF is out of scope" decision (`docs/handoff.md` §12).
   bank setups are remembered, e.g. "July 2026 Bank of America". Likely enough for most people.
 - **Later (nice-to-have):** a custom naming pattern in Settings, so users never rename by hand.
 
+
+### Search → Phase 8 (not yet discussed in detail)
+Eli's idea (2026-09-26): a search function, opened from a magnifying-glass button in the top corner.
+**Notes for when it's scheduled:** search would look through merchant names (and maybe notes and folder
+names) across every saved statement, entirely on the device, so it keeps the privacy promise. It fits
+Phase 8 next to the familiar-merchant tag, which needs the same "every purchase from this merchant"
+lookup. Open questions for Eli then: which screens get the button (Statements, Tasks, or both), since
+the top-right corner already holds Settings and header buttons must stay symmetrical; and whether results
+open the purchase in Look closer.
+
+### Opening splash screen → with the App Store version (Phase 9), or sooner as polish
+Eli's idea (2026-09-26): when the app opens, show its logo in the middle of the screen for a moment, like
+Outlook or Spotify. **Notes for when it's scheduled:** those apps show the logo only while they load. A
+splash that adds a delay on purpose makes a fast app feel slower, so ours should show the logo only
+until saved statements are ready (today a plain "Loading…"), then fade into the app. Installed iPhone
+web apps can also show a launch image (`apple-touch-startup-image`, one per screen size), and the App
+Store version gets a native launch screen from Capacitor. To discuss with Eli before building.

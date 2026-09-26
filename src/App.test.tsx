@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import App from './App'
-import { defaultSettings, makeStatement } from './lib/library'
+import { defaultSettings, makeStatement, type SavedUi } from './lib/library'
+import { SAMPLE_LABEL, sampleTransactions } from './lib/sample'
 import { loadLibrary, saveLibrary } from './lib/storage'
 import type { Statement, Transaction } from './types'
 
@@ -15,8 +16,11 @@ vi.mock('./lib/storage', async (original) => ({
   saveLibrary: vi.fn(),
 }))
 
+/** Where a returning user was: on Statements, having seen the tour. */
+const SEEN_TOUR: SavedUi = { openId: null, view: 'statements', filter: 'all', tourSeen: true }
+
 beforeEach(() => {
-  vi.mocked(loadLibrary).mockReset().mockResolvedValue({ statements: [], ui: null, settings: null })
+  vi.mocked(loadLibrary).mockReset().mockResolvedValue({ statements: [], ui: SEEN_TOUR, settings: null })
   vi.mocked(saveLibrary).mockReset().mockResolvedValue(undefined)
 })
 
@@ -54,12 +58,31 @@ function topCard() {
   return screen.getByRole('group', { name: /^Purchase:/ })
 }
 
+/** Opens the app on the 16-purchase sample statement, saved and open on its first card. */
 async function startSample() {
+  const sample = makeStatement(sampleTransactions(), { id: 'st_sample', name: SAMPLE_LABEL, period: null, now: 0 })
+  vi.mocked(loadLibrary).mockResolvedValue({
+    statements: [sample],
+    ui: { ...SEEN_TOUR, openId: sample.id, view: 'review' },
+    settings: null,
+  })
   const user = userEvent.setup()
   render(<App />)
-  await user.click(await screen.findByRole('button', { name: 'Import a statement' }))
-  await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
+  await screen.findByRole('group', { name: /^Purchase:/ })
   return user
+}
+
+/** A synthetic CSV with 2 purchases in March 2026, under a few intro lines. */
+const preambleCsv = () =>
+  new File([readFileSync(resolve(process.cwd(), 'tests/fixtures/preamble.csv'), 'utf8')], 'march.csv', {
+    type: 'text/csv',
+  })
+
+/** Imports the preamble CSV from the Statements screen and starts reviewing it. */
+async function importPreamble(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole('button', { name: 'Import a statement' }))
+  await user.upload(document.querySelector<HTMLInputElement>('input[type=file]')!, preambleCsv())
+  await user.click(await screen.findByRole('button', { name: /Review 2 purchases/ }))
 }
 
 describe('App', () => {
@@ -183,16 +206,18 @@ describe('App', () => {
 
     expect(screen.getByText('In progress, 15 of 16 left')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Import a statement' }))
-    await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
+    await importPreamble(user)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.getByText('0 of 16 reviewed')).toBeInTheDocument()
+    expect(screen.getByText('0 of 2 reviewed')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^March 2026$/)
+    await user.click(screen.getByRole('button', { name: 'Back to statements' }))
     // A second statement with the same name gets a number.
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('March 2026 sample (2)')
+    await importPreamble(user)
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('March 2026 (2)')
 
     await user.click(screen.getByRole('button', { name: 'Back to statements' }))
-    expect(screen.getAllByRole('button', { name: /^March 2026 sample/ })).toHaveLength(2)
-    expect(screen.getByText('Needs review')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^March 2026/ })).toHaveLength(3)
+    expect(screen.getAllByText('Needs review')).toHaveLength(2)
     // Tapping the one in progress opens it where it was left.
     await user.click(screen.getByRole('button', { name: /^March 2026 sample\d/ }))
     expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
@@ -269,13 +294,12 @@ describe('App', () => {
     vi.mocked(loadLibrary).mockResolvedValue({ statements: [past], ui: null, settings: null })
     const user = userEvent.setup()
     render(<App />)
-    await user.click(await screen.findByRole('button', { name: 'Import a statement' }))
-    await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
+    await importPreamble(user)
 
     await user.click(screen.getByRole('button', { name: 'File' }))
     expect(screen.getByText('Names you’ve used before')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Taxes' }))
-    expect(screen.getByText('1 of 16 reviewed')).toBeInTheDocument()
+    expect(screen.getByText('1 of 2 reviewed')).toBeInTheDocument()
     // Now it's one of this statement's folders.
     await user.click(screen.getByRole('button', { name: 'File' }))
     expect(screen.getByRole('button', { name: /^Taxes/ })).toBeInTheDocument()
@@ -300,8 +324,7 @@ describe('App', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'Back to statements' }))
-    await user.click(screen.getByRole('button', { name: 'Import a statement' }))
-    await user.click(screen.getByRole('button', { name: /Try the sample statement/ }))
+    await importPreamble(user)
     await user.click(screen.getByRole('button', { name: 'File' }))
     expect(screen.queryByText('Names you’ve used before')).not.toBeInTheDocument()
     expect(screen.getByText(/No folders yet/)).toBeInTheDocument()
@@ -552,5 +575,119 @@ describe('App', () => {
     await waitFor(() =>
       expect(saveLibrary).toHaveBeenLastCalledWith([], [], expect.anything(), expect.objectContaining({ remindAfterDays: null })),
     )
+  })
+
+  describe('Tour', () => {
+    /** The tour card's words. */
+    const coach = () => screen.getByRole('complementary', { name: 'Tour' })
+
+    /** Every statement the app asked to save, across all saves so far. */
+    const savedNames = () => vi.mocked(saveLibrary).mock.calls.flatMap(([put]) => put.map((st) => st.name))
+
+    it('starts a new user on the practice statement, teaching one swipe at a time', async () => {
+      vi.mocked(loadLibrary).mockResolvedValue({ statements: [], ui: null, settings: null })
+      const user = userEvent.setup()
+      render(<App />)
+
+      expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Practice statement')
+      expect(coach()).toHaveTextContent('Step 1 of 5')
+      expect(coach()).toHaveTextContent('Swipe right to approve')
+      // Only the swipe being taught works.
+      expect(screen.getByRole('button', { name: 'Look closer' })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'File' })).toBeDisabled()
+      await user.keyboard('{ArrowUp}')
+      expect(screen.getByText('0 of 3 reviewed')).toBeInTheDocument()
+
+      await user.keyboard('{ArrowRight}')
+      expect(coach()).toHaveTextContent('Swipe left to look closer')
+      expect(screen.getByRole('button', { name: 'Approve' })).toBeDisabled()
+      // Undo takes the tour back a step too.
+      await user.click(screen.getByRole('button', { name: 'Undo last action' }))
+      expect(coach()).toHaveTextContent('Swipe right to approve')
+    })
+
+    it('walks through the whole tour and ends on Import with the download guides open', async () => {
+      vi.mocked(loadLibrary).mockResolvedValue({ statements: [], ui: null, settings: null })
+      const user = userEvent.setup()
+      render(<App />)
+
+      await user.click(await screen.findByRole('button', { name: 'Approve' }))
+      await user.click(screen.getByRole('button', { name: 'Look closer' }))
+      expect(coach()).toHaveTextContent('Do you recognize it?')
+      await user.click(screen.getByRole('button', { name: /No, flag as possible fraud/ }))
+
+      expect(await screen.findByText('Swipe up to file')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'File' }))
+      expect(coach()).toHaveTextContent('Pick a folder')
+      // The tour offers a folder name of its own, labeled as a suggestion, not a past name.
+      expect(screen.getByText('Suggested')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Split with friends' }))
+
+      expect(await screen.findByText('Open your folder')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: /^Split with friends/ }))
+      expect(coach()).toHaveTextContent('Set a status')
+      await user.click(screen.getByRole('button', { name: /Change status for SQ \*HARBOR TAVERN/ }))
+      await user.click(within(screen.getByRole('dialog', { name: 'Set status' })).getByRole('button', { name: /^Waiting/ }))
+
+      await user.click(await screen.findByRole('button', { name: 'Show me Tasks' }))
+      expect(coach()).toHaveTextContent('Step 5 of 5')
+      expect(screen.getByText('APLPAY 8299 GLOBAL DIGI')).toBeInTheDocument()
+      expect(screen.getByText('SQ *HARBOR TAVERN')).toBeInTheDocument()
+      // No Settings while touring.
+      expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: 'Get your statement' }))
+      expect(screen.queryByRole('complementary', { name: 'Tour' })).not.toBeInTheDocument()
+      const guide = screen.getByRole('dialog', { name: 'Get your statement' })
+      const bofa = within(guide).getByRole('button', { name: 'Bank of America' })
+      await user.click(bofa)
+      expect(bofa).toHaveAttribute('aria-expanded', 'true')
+      expect(within(guide).getByText(/Under Account Management/)).toBeInTheDocument()
+      await user.click(within(guide).getByRole('button', { name: 'Back to import' }))
+      expect(await screen.findByRole('heading', { name: 'Import your statement' })).toBeInTheDocument()
+
+      // The tour is remembered as seen, and the practice statement was never saved.
+      await waitFor(() =>
+        expect(saveLibrary).toHaveBeenLastCalledWith([], [], expect.objectContaining({ tourSeen: true }), expect.anything()),
+      )
+      expect(savedNames()).not.toContain('Practice statement')
+    })
+
+    it('skips to an empty Statements screen and remembers the tour was seen', async () => {
+      vi.mocked(loadLibrary).mockResolvedValue({ statements: [], ui: null, settings: null })
+      const user = userEvent.setup()
+      render(<App />)
+      await user.click(await screen.findByRole('button', { name: 'Skip tour' }))
+      expect(screen.getByRole('heading', { name: 'No statements yet' })).toBeInTheDocument()
+      await waitFor(() =>
+        expect(saveLibrary).toHaveBeenLastCalledWith([], [], expect.objectContaining({ tourSeen: true }), expect.anything()),
+      )
+    })
+
+    it('replays from Settings without touching real statements, and skipping returns to Settings', async () => {
+      vi.mocked(loadLibrary).mockResolvedValue({ statements: [savedStatement()], ui: null, settings: null })
+      const user = userEvent.setup()
+      render(<App />)
+      // Someone who already has statements isn't sent on the tour.
+      expect(await screen.findByRole('button', { name: /^Saved March/ })).toBeInTheDocument()
+      expect(screen.queryByRole('complementary', { name: 'Tour' })).not.toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: 'Settings' }))
+      await user.click(screen.getByRole('button', { name: 'Replay the tour' }))
+      expect(coach()).toHaveTextContent('Step 1 of 5')
+      await user.click(screen.getByRole('button', { name: 'Approve' }))
+      // The practice statement's Statements tab shows only itself.
+      await user.click(screen.getByRole('button', { name: 'Back to statements' }))
+      expect(screen.getByRole('button', { name: /^Practice statement/ })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /^Saved March/ })).not.toBeInTheDocument()
+      expect(coach()).toHaveTextContent('Open the practice statement')
+
+      await user.click(screen.getByRole('button', { name: 'Skip tour' }))
+      expect(screen.getByRole('button', { name: 'Replay the tour' })).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Back to statements' }))
+      expect(screen.getByRole('button', { name: /^Saved March/ })).toBeInTheDocument()
+      expect(screen.getByText('In progress, 1 of 2 left')).toBeInTheDocument()
+      expect(savedNames()).not.toContain('Practice statement')
+    })
   })
 })

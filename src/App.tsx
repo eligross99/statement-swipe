@@ -1,8 +1,9 @@
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import './App.css'
 import { Deck, type Direction, type LeavingCard, type Offset, type ReturningCard } from './components/Deck'
 import { FolderDetail } from './components/FolderDetail'
 import { FolderSheet } from './components/FolderSheet'
+import { GuidePage } from './components/GuidePage'
 import { Header, type HeaderButton } from './components/Header'
 import { ImportScreen, type Naming } from './components/ImportScreen'
 import { InvestigateView } from './components/InvestigateView'
@@ -11,6 +12,7 @@ import { StatementsScreen } from './components/StatementsScreen'
 import { Summary } from './components/Summary'
 import { TabBar } from './components/TabBar'
 import { TasksScreen } from './components/TasksScreen'
+import { TourCoach } from './components/TourCoach'
 import { useLibrary } from './hooks/useLibrary'
 import { useNow } from './hooks/useNow'
 import { useSharedFile } from './hooks/useSharedFile'
@@ -19,9 +21,11 @@ import { makeId } from './lib/format'
 import { openStatement, type LibraryAction, type Tab } from './lib/library'
 import { DURATION, pause, screenEnter, type Enter, type Place } from './lib/motion'
 import { currentTxn, type ReviewEvent } from './lib/review'
-import { defaultName, pastFolderNames, statementPeriod, uniqueName } from './lib/statements'
+import { PRACTICE_FOLDER, PRACTICE_ID } from './lib/sample'
+import { defaultName, pastFolderNames, statementPeriod } from './lib/statements'
 import { discardSharedFile } from './lib/shareTarget'
 import { allTasks, overdueCount } from './lib/tasks'
+import { coachFor, TOUR_SWIPE, tourStep } from './lib/tour'
 import type { Screen, Session, Status, Transaction } from './types'
 
 const CENTER: Offset = { x: 0, y: 0 }
@@ -37,10 +41,23 @@ const NO_SESSION: Session = { txns: [], index: 0, piles: [], screen: 'deck', ope
 
 export default function App() {
   const library = useLibrary()
-  const { statements, view, home, filter, settings, ready, dispatch: send } = library
-  const statement = openStatement(library)
+  const { settings, ready, dispatch: sendReal } = library
+  // During the tour the app shows the practice library instead, and every change goes to it.
+  const practice = library.tour
+  const shownLibrary = practice ?? library
+  const { statements, view, home, filter } = shownLibrary
+  const send = (action: LibraryAction) => sendReal(practice ? { type: 'tour', action } : action)
+  const statement = openStatement(shownLibrary)
   useTheme(settings.theme, ready)
-  const [sharedFile, clearSharedFile] = useSharedFile(ready, send)
+  // A statement shared from Android's Share menu skips the tour (if it's running) and opens Import.
+  const openShared = useCallback(
+    (action: LibraryAction) => {
+      sendReal({ type: 'endTour' })
+      sendReal(action)
+    },
+    [sendReal],
+  )
+  const [sharedFile, clearSharedFile] = useSharedFile(ready, openShared)
   const session = statement?.session ?? NO_SESSION
   const history = statement?.history ?? []
   /** Changes the open statement's review. */
@@ -53,6 +70,8 @@ export default function App() {
   const [lean, setLean] = useState<Offset | null>(null)
   // True during the short pause after Look closer closes, before the card flies.
   const [busy, setBusy] = useState(false)
+  // "Get your statement", the per-bank download guides, sliding over the Import screen.
+  const [guideOpen, setGuideOpen] = useState(false)
   // Bumped by every jump, so a delayed step from before the jump knows to stop.
   const generation = useRef(0)
   const now = useNow()
@@ -64,11 +83,22 @@ export default function App() {
   // Keep showing the deck until the last card has flown off; then the summary rises in.
   const screen: Screen = session.screen === 'summary' && leaving ? 'deck' : session.screen
   const place: Place = statement ? screen : view === 'review' ? home : view
+  // Starting or leaving the tour swaps the whole app, so it fades rather than sliding.
+  const mode = practice ? 'tour' : 'app'
   // How the current screen entered. Worked out while rendering, from the screen shown before.
-  const [shown, setShown] = useState<{ place: Place | null; enter: Enter }>({ place: null, enter: 'fade' })
-  if (ready && shown.place !== place) {
-    setShown({ place, enter: shown.place ? screenEnter(shown.place, place) : 'fade' })
+  const [shown, setShown] = useState<{ place: Place | null; mode: string; enter: Enter }>({
+    place: null,
+    mode,
+    enter: 'fade',
+  })
+  if (ready && (shown.place !== place || shown.mode !== mode)) {
+    const enter = shown.place && shown.mode === mode ? screenEnter(shown.place, place) : 'fade'
+    setShown({ place, mode, enter })
   }
+
+  // The tour's step, worked out from the practice statement, and what its card says here.
+  const step = practice ? tourStep(practice.statements.find((st) => st.id === PRACTICE_ID)) : null
+  const coach = step && coachFor(step, { place, looking: investigating !== null, filing: sheetOpen })
 
   /** Resolves the top card and sends a copy of it flying off in `dir`. */
   const resolve = (event: ReviewEvent, dir: Direction, from: Offset = CENTER) => {
@@ -112,11 +142,25 @@ export default function App() {
     send(event)
   }
 
+  /** Leaves the tour without finishing it; the user is back where they were (Statements the first time). */
+  const skipTour = () => {
+    settle()
+    sendReal({ type: 'endTour' })
+  }
+
+  /** The tour's last step: on to the Import screen, with "Get your statement" open over it. */
+  const finishTour = () => {
+    settle()
+    sendReal({ type: 'endTour' })
+    sendReal({ type: 'go', view: 'import' })
+    setGuideOpen(true)
+  }
+
   /** Saves newly imported purchases as a statement and opens it. */
   const addStatement = (txns: Transaction[], naming: Naming) => {
     const taken = statements.map((st) => st.name)
     const period = statementPeriod(txns, 'closing' in naming ? naming.closing : null)
-    const name = 'name' in naming ? uniqueName(naming.name, taken) : defaultName(period, naming.fallback, taken)
+    const name = defaultName(period, naming.fallback, taken)
     go({ type: 'add', id: makeId('st'), txns, name, period })
   }
 
@@ -134,7 +178,10 @@ export default function App() {
     label: home === 'tasks' ? 'Back to tasks' : 'Back to statements',
     onClick: () => goTab(home),
   }
-  const settingsButton: HeaderButton = { kind: 'settings', onClick: () => go({ type: 'go', view: 'settings' }) }
+  // No Settings during the tour: it's about the real app, and the tour is a detour from it.
+  const settingsButton: HeaderButton = practice
+    ? null
+    : { kind: 'settings', onClick: () => go({ type: 'go', view: 'settings' }) }
 
   /** A change to a purchase in any statement, open or not (from Tasks). */
   const changeIn = (id: string, event: ReviewEvent) => send({ type: 'review', id, event })
@@ -170,14 +217,15 @@ export default function App() {
         <p className="app-loading">Loading…</p>
       ) : (
         // Keyed by screen, so each new screen mounts fresh and plays its entrance.
-        <div key={place} className={`view enter-${shown.enter}`}>
+        <div key={`${mode}-${place}`} className={`view enter-${shown.enter}`}>
           {place === 'statements' && (
             <StatementsScreen
               statements={statements}
               filter={filter}
               onFilter={(f) => send({ type: 'setFilter', filter: f })}
               onOpen={(id) => go({ type: 'open', id })}
-              onImport={() => go({ type: 'go', view: 'import' })}
+              // In the tour, importing a real statement is where the tour was heading anyway.
+              onImport={() => (practice ? finishTour() : go({ type: 'go', view: 'import' }))}
               onRename={(id, name) => send({ type: 'rename', id, name })}
               onArchive={(id, archived) => send({ type: 'archive', id, archived })}
               onDelete={(id) => send({ type: 'delete', id })}
@@ -196,7 +244,12 @@ export default function App() {
           )}
 
           {place === 'import' && (
-            <ImportScreen onStart={addStatement} shared={sharedFile} onTakeShared={clearSharedFile} />
+            <ImportScreen
+              onStart={addStatement}
+              shared={sharedFile}
+              onTakeShared={clearSharedFile}
+              onHelp={() => setGuideOpen(true)}
+            />
           )}
 
           {place === 'settings' && (
@@ -207,6 +260,10 @@ export default function App() {
               onEraseAll={() => {
                 send({ type: 'eraseAll' })
                 void discardSharedFile()
+              }}
+              onReplayTour={() => {
+                settle()
+                sendReal({ type: 'startTour' })
               }}
             />
           )}
@@ -231,6 +288,7 @@ export default function App() {
                 setSheetOpen(true)
               }}
               haptics={settings.haptics}
+              only={step ? TOUR_SWIPE[step] : undefined}
             />
           )}
 
@@ -283,7 +341,14 @@ export default function App() {
         <FolderSheet
           piles={session.piles}
           txns={session.txns}
-          suggestions={statement && settings.suggestFolders ? pastFolderNames(statements, statement) : []}
+          suggestions={
+            practice
+              ? [PRACTICE_FOLDER]
+              : statement && settings.suggestFolders
+                ? pastFolderNames(statements, statement)
+                : []
+          }
+          suggestionsLabel={practice ? 'Suggested' : undefined}
           onClose={() => {
             setSheetOpen(false)
             setLean(null)
@@ -297,6 +362,16 @@ export default function App() {
             resolve({ type: 'createPileAndFile', pile: { id: makeId('f'), name } }, 'up', LEAN_UP)
           }}
           onDelete={(pileId) => dispatch({ type: 'deletePile', pileId })}
+        />
+      )}
+
+      {guideOpen && <GuidePage onBack={() => setGuideOpen(false)} />}
+
+      {ready && coach && (
+        <TourCoach
+          coach={coach}
+          onSkip={skipTour}
+          onNext={(next) => (next === 'tasks' ? goTab('tasks') : finishTour())}
         />
       )}
     </div>

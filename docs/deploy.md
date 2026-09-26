@@ -5,7 +5,10 @@
 - **Vercel** hosts the app. It watches the GitHub repo: every push to `main` deploys to the
   live site, and every PR gets its own preview link (posted as a comment on the PR).
 - **CI** (`.github/workflows/ci.yml`) runs lint, build, and tests on every PR. Branch protection
-  on `main` blocks merging until it passes.
+  on `main` blocks merging until it passes. An end-to-end test that fails on CI gets one retry, which
+  records a trace; failing or flaky runs save it as the `playwright-traces` artifact on the run's page.
+  Download it and open the zip inside with `npx playwright show-trace`. A test marked flaky needs fixing,
+  not ignoring (the Tasks test was flaky once on the 7b PR and couldn't be reproduced on a Mac).
 - `vercel.json` sets the build command and the security headers below. There is no server code:
   Vercel only serves static files.
 
