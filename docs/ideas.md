@@ -78,6 +78,10 @@ OFX/QFX files)**, each with its own branch, PR, and phone test. Eli has **no And
 
 **Built in 7a (2026-09-24):** see "Mobile polish" and "Easier statement import" below.
 
+**Phase 7a was phone-tested and approved by Eli on 2026-09-26** ("the dark mode looks great"), with no
+changes. Next: 7b (onboarding tour + per-bank download guides) in a fresh session. The Android check of
+the swipe tick and "Share to" is still owed.
+
 ## Roadmap order
 
 | Phase | What | Why here |
