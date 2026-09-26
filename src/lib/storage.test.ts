@@ -125,6 +125,8 @@ describe('readSettings', () => {
     expect(readSettings({ remindAfterDays: 30 })).toEqual({ remindAfterDays: 30 })
     expect(readSettings({ remindAfterDays: null })).toEqual({ remindAfterDays: null })
     expect(readSettings({ remindAfterDays: 5 })).toEqual({})
+    expect(readSettings({ theme: 'dark', haptics: false })).toEqual({ theme: 'dark', haptics: false })
+    expect(readSettings({ theme: 'sepia', haptics: 'yes' })).toEqual({})
     expect(readSettings(undefined)).toBeNull()
   })
 })

@@ -10,6 +10,7 @@ import { reviewScreen } from './review'
 import { SAMPLE_LABEL } from './sample'
 import { defaultName, statementPeriod, type StatementFilter } from './statements'
 import { REMIND_CHOICES } from './tasks'
+import { isThemeChoice } from './theme'
 
 // ---------- shape checks, so a stale or corrupt save can't crash the app ----------
 
@@ -96,6 +97,8 @@ export function readSettings(v: unknown): Partial<Settings> | null {
   const out: Partial<Settings> = {}
   if (typeof v.suggestFolders === 'boolean') out.suggestFolders = v.suggestFolders
   if (REMIND_DAYS.has(v.remindAfterDays as number | null)) out.remindAfterDays = v.remindAfterDays as number | null
+  if (isThemeChoice(v.theme)) out.theme = v.theme
+  if (typeof v.haptics === 'boolean') out.haptics = v.haptics
   return out
 }
 

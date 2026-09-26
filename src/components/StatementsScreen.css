@@ -5,56 +5,9 @@
   padding-bottom: calc(var(--tabbar-space) + 78px);
 }
 
-/* Filters: a segmented control, three equal parts, in the tab bar's style: a white track with a
-   mint pill sliding to the chosen filter. */
+/* The filters (a Segmented control) sit above the list. */
 .st-filters {
-  position: relative;
-  display: flex;
-  gap: 4px;
   margin-bottom: 14px;
-  padding: 4px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
-}
-
-.st-filter-pill {
-  position: absolute;
-  top: 4px;
-  bottom: 4px;
-  left: 4px;
-  width: calc((100% - 16px) / 3); /* a third of the track, less its padding and gaps */
-  border-radius: 999px;
-  background: var(--brand-tint);
-  transition: transform 560ms cubic-bezier(0.3, 0.7, 0.2, 1); /* same as the tab bar's pill */
-}
-
-.st-filter {
-  position: relative; /* above the pill */
-  flex: 1;
-  min-height: 40px;
-  padding: 0 6px;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-mute);
-  font: inherit;
-  font-size: var(--text-xs);
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: color 0.3s ease;
-}
-
-.st-filter.is-on {
-  color: var(--brand-strong);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .st-filter-pill {
-    transition: none;
-  }
 }
 
 .st-list {

@@ -22,6 +22,21 @@ Read this before designing a new screen.
   (`--dock`, `backdrop-filter: blur() saturate()`, a light hairline on top via `--dock-edge`, a layered
   `--shadow-float`). A light frosted bar blended into the white cards scrolling under it: blurred
   white is still white (6c).
+- **Two themes, one set of names (7a).** Every color token has a light value (`:root`) and a dark value
+  (`:root[data-theme='dark']`) in `tokens.css`; components never know which theme is showing. Settings
+  offers System, Light, and Dark. `public/theme.js` applies the saved choice before the first paint (no
+  white flash for Dark), and `useTheme` follows the phone live while the choice is System.
+- **Dark is deep green-black, never pure black,** so the app stays calm and green. Each layer is a step
+  lighter than the one below it (page `#0b1410`, cards, then boxes inside cards), because shadows barely
+  show on dark. Hairline borders keep cards apart.
+- **Action colors get brighter in dark,** and Approve turns bright mint with dark text: white text on a
+  bright green isn't readable enough. `src/styles/tokens.test.ts` checks every text-on-background pair
+  is at least 4.5:1 in both themes, so a new color can't quietly become unreadable.
+- **The tab bar looks the same in both themes:** a dark green glass capsule with a mint pill. In dark it
+  is lifted a step lighter (`--dock`) so it still floats off the page. Its pill and badge ring have their
+  own tokens (`--dock-pill`, `--dock-ring`) so they don't change with the page.
+- **Switch knobs stay white** in both themes, like the phone's own switches (`--toggle-knob`); the off
+  track has its own token (`--toggle-off`) because the border color disappears on a dark card.
 - **Floating buttons** (the Statements import button) get `--shadow-float` and no background band
   behind them, so the list visibly scrolls underneath (6c).
 
@@ -31,6 +46,7 @@ Read this before designing a new screen.
   *slides* to the chosen option. Used by the tab bar (`TabBar.css`, `.tab-indicator`) and the Statements
   filters (`.st-filter-pill`). The pill is one absolutely positioned element moved with `translateX`,
   so it travels instead of blinking; 560ms, `cubic-bezier(0.3, 0.7, 0.2, 1)` (380ms was "too fast").
+  Filters and Settings' Appearance share one component, `Segmented`, so every choice row looks alike.
 - **Segmented controls sit on a white track** with a border and `--shadow-card` (a grey track on the
   grey page was "barely noticeable", 6c).
 - **Compact over stretched.** The tab bar is a fixed-width (264px) centered capsule; edge to edge felt
@@ -44,6 +60,9 @@ Read this before designing a new screen.
   release (`index.css`); task cards scale to 0.98, statement rows tint grey.
 - **Status pills** (To do amber, Waiting blue, Done green) are one component, `StatusPill` in
   `TaskControls.tsx`, reused by folders, Tasks, and Look closer. Same data, same look on every screen.
+- **Only offer what the device can do.** "Vibrate when a swipe lands" appears in Settings only on touch
+  phones whose browser can vibrate (Android); iPhone browsers can't, so there it would be a switch that
+  does nothing (`canVibrate` in `src/lib/haptics.ts`). The tick is 12ms, on real swipes only, not taps.
 - **Touch targets are at least 44px** (`--tap-min`); badges and other fixed-size bits cap their text with
   `min()` so large text settings can't break them.
 

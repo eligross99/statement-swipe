@@ -1,5 +1,5 @@
 import { CircleAlert, CircleCheck, FileText, LoaderCircle, Sparkles, X } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
 import { useShowMore } from '../hooks/useShowMore'
 import { parseGrid, type ColumnMap, type Grid, type Purchase } from '../lib/csv'
@@ -18,6 +18,10 @@ export type Naming = { name: string } | { fallback: string; closing: string | nu
 
 interface Props {
   onStart: (txns: Transaction[], naming: Naming) => void
+  /** A statement shared to the app from Android's Share menu, read as if the user had chosen it. */
+  shared?: File | null
+  /** Called once the shared file has been taken, so it isn't read again on a later visit. */
+  onTakeShared?: () => void
 }
 
 interface Parsed {
@@ -46,7 +50,7 @@ const labelFrom = (fileName: string) => fileName.replace(/\.[^.]+$/, '')
 /** How many of the file's first lines the header-row picker offers. */
 const HEADER_CHOICES = 15
 
-export function ImportScreen({ onStart }: Props) {
+export function ImportScreen({ onStart, shared, onTakeShared }: Props) {
   const [parsed, setParsed] = useState<Parsed | null>(null)
   const [settings, setSettings] = useState<CsvSettings | null>(null)
   const [pdf, setPdf] = useState<ParsedPdf | null>(null)
@@ -118,6 +122,16 @@ export function ImportScreen({ onStart }: Props) {
     setParsed({ fileName: file.name, grid })
     setSettings(guessSettings(grid))
   }
+
+  // A shared file arrives from outside the app (Android's Share menu), so it's read in an effect.
+  // The ref keeps React's development double-run from reading it twice.
+  const tookShared = useRef<File | null>(null)
+  useEffect(() => {
+    if (!shared || tookShared.current === shared) return
+    tookShared.current = shared
+    onTakeShared?.()
+    void readFile(shared)
+  })
 
   if (pdf) {
     const purchases = pdf.source.purchases()

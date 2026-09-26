@@ -1,10 +1,13 @@
 import { ShieldCheck } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { plural } from '../lib/format'
+import { canVibrate } from '../lib/haptics'
 import type { Settings } from '../lib/library'
 import { isStoragePersisted } from '../lib/storage'
 import { REMIND_CHOICES } from '../lib/tasks'
+import { THEME_CHOICES } from '../lib/theme'
 import { ConfirmSheet } from './ConfirmSheet'
+import { Segmented } from './Segmented'
 import './SettingsScreen.css'
 
 interface Props {
@@ -14,7 +17,7 @@ interface Props {
   onEraseAll: () => void
 }
 
-/** Filing and Tasks preferences, About & privacy, and erasing everything this app has saved. */
+/** Appearance, swiping, filing, and Tasks preferences, About & privacy, and erasing everything saved. */
 export function SettingsScreen({ statementCount, settings, onChange, onEraseAll }: Props) {
   const [confirming, setConfirming] = useState(false)
   // Whether the browser promised to keep our data. Checked once; null until known or if it can't say.
@@ -31,6 +34,40 @@ export function SettingsScreen({ statementCount, settings, onChange, onEraseAll 
 
   return (
     <div className="screen">
+      <section className="settings-section">
+        <h2 className="section-label">Appearance</h2>
+        <Segmented
+          label="Appearance"
+          options={THEME_CHOICES}
+          value={settings.theme}
+          onChange={(theme) => onChange({ theme })}
+        />
+        <p className="muted settings-foot">
+          {settings.theme === 'system' ? 'Light or dark, following your phone’s setting.' : 'Always, whatever your phone’s setting.'}
+        </p>
+      </section>
+
+      {/* Only where the browser can vibrate (Android): on iPhone the switch would do nothing. */}
+      {canVibrate() && (
+        <section className="settings-section">
+          <h2 className="section-label">Swiping</h2>
+          <div className="panel settings-panel">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={settings.haptics}
+              className="toggle-row settings-toggle settings-toggle--alone"
+              onClick={() => onChange({ haptics: !settings.haptics })}
+            >
+              <span>Vibrate when a swipe lands</span>
+              <span className={`toggle${settings.haptics ? ' is-on' : ''}`} aria-hidden>
+                <span className="toggle-knob" />
+              </span>
+            </button>
+          </div>
+        </section>
+      )}
+
       <section className="settings-section">
         <h2 className="section-label">Filing</h2>
         <div className="panel settings-panel">

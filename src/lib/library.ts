@@ -5,6 +5,7 @@
 import type { Statement, Transaction } from '../types'
 import { newReview, reviewReducer, reviewScreen, type ReviewEvent } from './review'
 import type { StatementFilter } from './statements'
+import type { ThemeChoice } from './theme'
 
 /** The places in the bottom tab bar. */
 export type Tab = 'statements' | 'tasks'
@@ -18,9 +19,13 @@ export interface Settings {
   suggestFolders: boolean
   /** Open tasks untouched for this many days are marked Overdue (null = never). */
   remindAfterDays: number | null
+  /** Light or dark colors, or follow the phone's setting. */
+  theme: ThemeChoice
+  /** A short vibration when a swipe lands (only on phones whose browser can vibrate, i.e. Android). */
+  haptics: boolean
 }
 
-export const defaultSettings: Settings = { suggestFolders: true, remindAfterDays: 14 }
+export const defaultSettings: Settings = { suggestFolders: true, remindAfterDays: 14, theme: 'system', haptics: true }
 
 export interface LibraryState {
   statements: Statement[]

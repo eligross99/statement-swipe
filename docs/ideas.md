@@ -69,6 +69,19 @@ pill).
 fresh session. Dark mode comes first: the new dark tab bar (`--dock` tokens) and the frosted surfaces
 will need a dark-theme pass.**
 
+On 2026-09-24, starting Phase 7, Eli approved **splitting Phase 7 into 7a (dark mode, Android haptics,
+Android "Share to"), 7b (onboarding tour + per-bank download guides) and 7c (remembered bank setups +
+OFX/QFX files)**, each with its own branch, PR, and phone test. Eli has **no Android phone** and chose (2026-09-25) to
+**postpone Android testing** rather than install the Android emulator (~3 GB) now. The swipe tick and
+"Share to" ship covered by automated tests only (`src/lib/haptics.test.ts`, `e2e/share-target.spec.ts`);
+**still owed: a check on a real Android phone or the emulator**, from a Vercel preview or the live site.
+
+**Built in 7a (2026-09-24):** see "Mobile polish" and "Easier statement import" below.
+
+**Phase 7a was phone-tested and approved by Eli on 2026-09-26** ("the dark mode looks great"), with no
+changes. Next: 7b (onboarding tour + per-bank download guides) in a fresh session. The Android check of
+the swipe tick and "Share to" is still owed.
+
 ## Roadmap order
 
 | Phase | What | Why here |
@@ -79,7 +92,9 @@ will need a dark-theme pass.**
 | 6a | **PDF statements** | The only thing many phone users can download; plugs into the existing import screen, so it ships first |
 | 6b | **Multiple statements:** storage, Statements screen, bottom navigation, Settings (light), **rename statements + smart default names** | Most new ideas depend on keeping more than one statement |
 | 6c | **Tasks dashboard** and tab bar, resolving flagged purchases, "Remind me after" | Needs 6b's statement history |
-| 7 | **Dark mode**, **haptics** and Android **"Share to"** first, then the **onboarding tour** (replaces the always-visible sample statement), with **per-bank download guides**, **remembered bank setups**, and **OFX/QFX files** (moved from 6c) | Needs the Phase 6 screens to exist; dark mode before the tour so the tour is designed once, in both themes |
+| 7a | **Dark mode**, Android **haptics** and Android **"Share to"** | Dark mode before the tour, so the tour is designed once, in both themes |
+| 7b | **Onboarding tour** (replaces the always-visible sample statement) with **per-bank download guides** | The tour ends at "Get your statement", where the guides live |
+| 7c | **Remembered bank setups** and **OFX/QFX files** (moved from 6c) | Both are about the import screen |
 | 8 | **On-device smarts:** familiar/new merchant tags, merchant-code decoder, web-search link, calendar reminders | Need statement history; no server needed; privacy stays intact |
 | 9 | **App Store version** (Capacitor; ask Eli first), then accounts, backend, Stripe, **opt-in bank connection** (Teller → Plaid, relay-only server) (was Phase 6, then 8) | Unlocks push notifications and, if chosen, AI merchant explanations; App Store first because Apple's subscription rules shape the payment plan |
 | 10 | Security & compliance (was Phase 7, then 9) | Unchanged |
@@ -330,6 +345,11 @@ From the Phase 5 mobile design review (the `mobile-design` skill in `.claude/ski
 - **Haptics (a small vibration when a swipe lands) → Phase 7.** Works on Android through the
   browser's vibration feature. iPhone browsers don't allow it for websites, so on iPhone it only
   comes with an App Store version (see "Web app or App Store app?" below).
+- **Built in 7a (2026-09-24):** Settings → Appearance (System · Light · Dark), a dark value for every
+  color token with contrast checked by `src/styles/tokens.test.ts`, the choice applied before the first
+  paint by `public/theme.js`, and a 12ms tick when a swipe lands, with a "Vibrate when a swipe lands"
+  switch shown only on touch phones that can vibrate. Checked in the iPhone simulator, in Safari and
+  installed to the Home Screen, in both themes. Details in `docs/design-notes.md`.
 
 ### Web app or App Store app? → start of Phase 9 (ask Eli first)
 > **Reminder: ask Eli again before starting this.** Confirm they still want it, and walk through
