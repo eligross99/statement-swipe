@@ -478,3 +478,20 @@ This reverses the old "PDF is out of scope" decision (`docs/handoff.md` §12).
   bank setups are remembered, e.g. "July 2026 Bank of America". Likely enough for most people.
 - **Later (nice-to-have):** a custom naming pattern in Settings, so users never rename by hand.
 
+
+### Search → Phase 8 (not yet discussed in detail)
+Eli's idea (2026-09-26): a search function, opened from a magnifying-glass button in the top corner.
+**Notes for when it's scheduled:** search would look through merchant names (and maybe notes and folder
+names) across every saved statement, entirely on the device, so it keeps the privacy promise. It fits
+Phase 8 next to the familiar-merchant tag, which needs the same "every purchase from this merchant"
+lookup. Open questions for Eli then: which screens get the button (Statements, Tasks, or both), since
+the top-right corner already holds Settings and header buttons must stay symmetrical; and whether results
+open the purchase in Look closer.
+
+### Opening splash screen → with the App Store version (Phase 9), or sooner as polish
+Eli's idea (2026-09-26): when the app opens, show its logo in the middle of the screen for a moment, like
+Outlook or Spotify. **Notes for when it's scheduled:** those apps show the logo only while they load. A
+splash that adds a delay on purpose makes a fast app feel slower, so ours should show the logo only
+until saved statements are ready (today a plain "Loading…"), then fade into the app. Installed iPhone
+web apps can also show a launch image (`apple-touch-startup-image`, one per screen size), and the App
+Store version gets a native launch screen from Capacitor. To discuss with Eli before building.
