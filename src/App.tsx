@@ -21,11 +21,11 @@ import { makeId } from './lib/format'
 import { openStatement, type LibraryAction, type Tab } from './lib/library'
 import { DURATION, pause, screenEnter, type Enter, type Place } from './lib/motion'
 import { currentTxn, type ReviewEvent } from './lib/review'
-import { PRACTICE_FOLDER, PRACTICE_ID } from './lib/sample'
+import { PRACTICE_FOLDER } from './lib/sample'
 import { defaultName, pastFolderNames, statementPeriod } from './lib/statements'
 import { discardSharedFile } from './lib/shareTarget'
 import { allTasks, overdueCount } from './lib/tasks'
-import { coachFor, TOUR_SWIPE, tourStep } from './lib/tour'
+import { guideFor, OUTRO, TOUR_LENGTH } from './lib/tour'
 import type { Screen, Session, Status, Transaction } from './types'
 
 const CENTER: Offset = { x: 0, y: 0 }
@@ -44,7 +44,7 @@ export default function App() {
   const { settings, ready, dispatch: sendReal } = library
   // During the tour the app shows the practice library instead, and every change goes to it.
   const practice = library.tour
-  const shownLibrary = practice ?? library
+  const shownLibrary = practice?.library ?? library
   const { statements, view, home, filter } = shownLibrary
   const send = (action: LibraryAction) => sendReal(practice ? { type: 'tour', action } : action)
   const statement = openStatement(shownLibrary)
@@ -72,6 +72,8 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   // "Get your statement", the per-bank download guides, sliding over the Import screen.
   const [guideOpen, setGuideOpen] = useState(false)
+  // True right after the tour ends on the Import screen, until Done or leaving it: the last tour card.
+  const [outro, setOutro] = useState(false)
   // Bumped by every jump, so a delayed step from before the jump knows to stop.
   const generation = useRef(0)
   const now = useNow()
@@ -96,9 +98,8 @@ export default function App() {
     setShown({ place, mode, enter })
   }
 
-  // The tour's step, worked out from the practice statement, and what its card says here.
-  const step = practice ? tourStep(practice.statements.find((st) => st.id === PRACTICE_ID)) : null
-  const coach = step && coachFor(step, { place, looking: investigating !== null, filing: sheetOpen })
+  // The tour's current instruction, from its step and what's on screen.
+  const guide = practice ? guideFor(practice.step, { place, looking: investigating !== null, filing: sheetOpen }) : null
 
   /** Resolves the top card and sends a copy of it flying off in `dir`. */
   const resolve = (event: ReviewEvent, dir: Direction, from: Offset = CENTER) => {
@@ -139,6 +140,7 @@ export default function App() {
   /** Moves between the app's places (Statements, Tasks, a review, import, settings). */
   const go = (event: LibraryAction) => {
     settle()
+    setOutro(false)
     send(event)
   }
 
@@ -148,18 +150,19 @@ export default function App() {
     sendReal({ type: 'endTour' })
   }
 
-  /** The tour's last step: on to the Import screen, with "Get your statement" open over it. */
+  /** The tour's last tap, Import a statement: the practice statement goes, and the real Import screen
+   *  opens with one last tour card. */
   const finishTour = () => {
     settle()
     sendReal({ type: 'endTour' })
     sendReal({ type: 'go', view: 'import' })
-    setGuideOpen(true)
+    setOutro(true)
   }
 
   /** Saves newly imported purchases as a statement and opens it. */
   const addStatement = (txns: Transaction[], naming: Naming) => {
     const taken = statements.map((st) => st.name)
-    const period = statementPeriod(txns, 'closing' in naming ? naming.closing : null)
+    const period = statementPeriod(txns, naming.closing)
     const name = defaultName(period, naming.fallback, taken)
     go({ type: 'add', id: makeId('st'), txns, name, period })
   }
@@ -288,7 +291,7 @@ export default function App() {
                 setSheetOpen(true)
               }}
               haptics={settings.haptics}
-              only={step ? TOUR_SWIPE[step] : undefined}
+              only={guide?.line.swipe}
             />
           )}
 
@@ -308,6 +311,8 @@ export default function App() {
               txns={session.txns}
               onSetAction={(txnId, action) => dispatch({ type: 'setAction', txnId, action })}
               onSetNote={(txnId, note) => dispatch({ type: 'setNote', txnId, note })}
+              // The tour's folder step sets Waiting.
+              onlyStatus={practice ? 'waiting' : undefined}
             />
           )}
         </div>
@@ -322,6 +327,8 @@ export default function App() {
           txn={investigating}
           // Approve/flag only make sense for the card on top of the deck, not from the summary.
           canDecide={current?.id === investigating.id}
+          // The tour's Look closer step flags the purchase.
+          onlyFlag={!!practice}
           onBack={() => {
             setInvestigatingId(null)
             setLean(null)
@@ -367,13 +374,25 @@ export default function App() {
 
       {guideOpen && <GuidePage onBack={() => setGuideOpen(false)} />}
 
-      {ready && coach && (
+      {/* One element for the tour and its last card, so the card stays put as the tour ends. */}
+      {ready && practice && guide ? (
         <TourCoach
-          coach={coach}
-          onSkip={skipTour}
-          onNext={(next) => (next === 'tasks' ? goTab('tasks') : finishTour())}
+          line={guide.line}
+          step={practice.step}
+          progress={guide.progress}
+          onBack={
+            practice.step > 1
+              ? () => {
+                  settle()
+                  sendReal({ type: 'tourBack' })
+                }
+              : undefined
+          }
+          onClose={skipTour}
         />
-      )}
+      ) : ready && outro && place === 'import' ? (
+        <TourCoach line={OUTRO} step={TOUR_LENGTH} progress={1} outro onClose={() => setOutro(false)} />
+      ) : null}
     </div>
   )
 }

@@ -82,6 +82,7 @@ export function FolderSheet(props: Props) {
                       key={s}
                       type="button"
                       className="folder-past-chip"
+                      data-tour="folder-suggestion"
                       onClick={() => close(() => onCreate(s))}
                     >
                       <FolderPlus size={15} aria-hidden /> {s}
@@ -111,11 +112,12 @@ export function FolderSheet(props: Props) {
                 }}
                 placeholder="Name a new folder…"
                 aria-label="New folder name"
+                data-tour="folder-name"
                 maxLength={40}
                 // Only pop the keyboard straight away when there's nothing to tap instead.
                 autoFocus={piles.length === 0 && suggestions.length === 0}
               />
-              <button type="submit" className="btn btn--pile btn--auto" disabled={!trimmed}>
+              <button type="submit" className="btn btn--pile btn--auto" disabled={!trimmed} data-tour="folder-create">
                 <FolderPlus size={18} /> File
               </button>
             </form>

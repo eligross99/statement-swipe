@@ -97,7 +97,7 @@ export function StatementsScreen(props: Props) {
                         else rows.current.delete(st.id)
                       }}
                     >
-                      <button type="button" className="st-open" onClick={() => onOpen(st.id)}>
+                      <button type="button" className="st-open" data-tour="open-statement" onClick={() => onOpen(st.id)}>
                         <span className="st-name">{st.name}</span>
                         <span className="st-meta">
                           {plural(st.session.txns.length, 'purchase')},{' '}
@@ -124,7 +124,7 @@ export function StatementsScreen(props: Props) {
       </div>
 
       <div className="st-footer">
-        <button type="button" className="btn btn--primary" onClick={onImport}>
+        <button type="button" className="btn btn--primary" data-tour="import" onClick={onImport}>
           <Plus size={18} /> Import a statement
         </button>
       </div>

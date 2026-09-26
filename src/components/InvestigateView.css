@@ -98,3 +98,10 @@
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
+
+/* In the tour, Approve stays green but pale, like a deck button that isn't part of the step. */
+.investigate-approve:disabled {
+  background: var(--brand);
+  color: var(--on-brand);
+  opacity: 0.4;
+}

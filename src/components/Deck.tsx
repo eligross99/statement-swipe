@@ -267,6 +267,7 @@ export function Deck(props: Props) {
               onPointerCancel={snapBack}
               role="group"
               aria-label={`Purchase: ${t.desc}, $${usd(t.amount)}`}
+              data-tour="card"
             >
               <Stamp opacity={approveOp} kind="approve" label="APPROVE" />
               <Stamp opacity={lookOp} kind="investigate" label="LOOK CLOSER" />
@@ -292,6 +293,7 @@ export function Deck(props: Props) {
         {/* While paused the buttons stay looking normal (no flicker) but do nothing. */}
         <ActionButton
           kind="investigate"
+          tour="look"
           label="Look closer"
           keys="ArrowLeft"
           onClick={() => !paused && onInvestigate()}
@@ -301,6 +303,7 @@ export function Deck(props: Props) {
         </ActionButton>
         <ActionButton
           kind="pile"
+          tour="file"
           label="File"
           keys="ArrowUp"
           onClick={() => !paused && onFile()}
@@ -311,6 +314,7 @@ export function Deck(props: Props) {
         </ActionButton>
         <ActionButton
           kind="approve"
+          tour="approve"
           label="Approve"
           keys="ArrowRight"
           onClick={() => !paused && onApprove(CENTER)}
@@ -404,6 +408,8 @@ function FlyingCard({ card, onDone }: { card: LeavingCard; onDone: () => void })
 
 function ActionButton(props: {
   kind: 'approve' | 'investigate' | 'pile'
+  /** The control's name for the tour (see lib/tour). */
+  tour: string
   label: string
   keys: string
   onClick: () => void
@@ -420,6 +426,7 @@ function ActionButton(props: {
         disabled={props.disabled}
         aria-label={props.label}
         aria-keyshortcuts={props.keys}
+        data-tour={props.tour}
       >
         {props.children}
       </button>

@@ -30,7 +30,13 @@ function Corner({ button }: { button: HeaderButton }) {
   switch (button.kind) {
     case 'back':
       return (
-        <button type="button" className="icon-btn" onClick={button.onClick} aria-label={button.label}>
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={button.onClick}
+          aria-label={button.label}
+          data-tour="back"
+        >
           <ChevronLeft size={22} />
         </button>
       )

@@ -164,12 +164,13 @@ describe('the tour', () => {
     settings: null,
   })
 
-  it('starts for a new user, on the practice statement, open on its first card', () => {
+  it('starts for a new user, with the practice statement alone on Statements', () => {
     const s = run(loaded([]))
     expect(s.tourSeen).toBe(false)
-    expect(s.tour?.view).toBe('review')
-    expect(openStatement(s.tour!)?.name).toBe('Practice statement')
-    expect(openStatement(s.tour!)?.session.txns).toHaveLength(3)
+    expect(s.tour?.step).toBe(1)
+    expect(s.tour?.library.view).toBe('statements')
+    expect(s.tour?.library.statements.map((st) => st.name)).toEqual(['Practice statement'])
+    expect(s.tour?.library.statements[0].session.txns).toHaveLength(3)
   })
 
   it('doesn’t start for someone who already has statements, or has seen it', () => {
@@ -177,12 +178,28 @@ describe('the tour', () => {
     expect(run(loaded([], { openId: null, view: 'statements', filter: 'all', tourSeen: true })).tour).toBeNull()
   })
 
-  it('keeps practice in its own library, leaving real statements alone', () => {
-    const s = run(loaded([statement('one')]), { type: 'startTour' }, { type: 'tour', action: review({ type: 'approve' }) })
+  it('keeps practice in its own library, leaving real statements alone, and moves the tour on', () => {
+    const s = run(
+      loaded([statement('one')]),
+      { type: 'startTour' },
+      { type: 'tour', action: { type: 'open', id: 'practice' } },
+      { type: 'tour', action: review({ type: 'approve' }) },
+    )
     expect(s.statements.map((st) => st.id)).toEqual(['one'])
-    expect(s.tour?.statements.map((st) => st.id)).toEqual(['practice'])
-    expect(openStatement(s.tour!)?.session.txns[0].status).toBe('approved')
+    expect(s.tour?.library.statements[0].session.txns[0].status).toBe('approved')
+    expect(s.tour?.step).toBe(2)
     expect(s.view).toBe('statements')
+  })
+
+  it('goes back a step', () => {
+    const s = run(
+      loaded([]),
+      { type: 'tour', action: { type: 'open', id: 'practice' } },
+      { type: 'tour', action: review({ type: 'approve' }) },
+      { type: 'tourBack' },
+    )
+    expect(s.tour?.step).toBe(1)
+    expect(s.tour?.library.statements[0].session.txns[0].status).toBe('unreviewed')
   })
 
   it('throws the practice statement away when it ends, and remembers it was seen', () => {
@@ -193,13 +210,14 @@ describe('the tour', () => {
   })
 
   it('starts afresh when replayed', () => {
-    const s = run(loaded([]), { type: 'tour', action: review({ type: 'approve' }) }, { type: 'startTour' })
-    expect(openStatement(s.tour!)?.session.txns[0].status).toBe('unreviewed')
+    const s = run(loaded([]), { type: 'tour', action: { type: 'open', id: 'practice' } }, { type: 'startTour' })
+    expect(s.tour?.library.view).toBe('statements')
   })
 
   it('ignores practice changes when no tour is running', () => {
     const before = run(loaded([statement('one')]))
     expect(step(before, { type: 'tour', action: { type: 'delete', id: 'one' } })).toBe(before)
+    expect(step(before, { type: 'tourBack' })).toBe(before)
   })
 
   it('is still remembered as seen after erasing everything', () => {

@@ -7,6 +7,8 @@ import './StatusSheet.css'
 
 interface Props {
   txn: Transaction
+  /** The tour: the only status that can be picked; the others look pale. */
+  only?: Action
   onPick: (action: Action) => void
   onClose: () => void
 }
@@ -31,7 +33,7 @@ const HINTS: Record<'folder' | 'fraud', Record<SetAction, string>> = {
 
 /** Bottom sheet for setting a task's status: To do, Waiting, Done, or cleared. Flagged purchases
  *  use the same statuses, explained in terms of resolving a possible fraud charge. */
-export function StatusSheet({ txn, onPick, onClose }: Props) {
+export function StatusSheet({ txn, only, onPick, onClose }: Props) {
   const hints = HINTS[txn.status === 'flagged' ? 'fraud' : 'folder']
   return (
     <Sheet id="status-sheet-title" title="Set status" onDismiss={onClose}>
@@ -51,6 +53,8 @@ export function StatusSheet({ txn, onPick, onClose }: Props) {
                   type="button"
                   className={`status-option status-option--${action}${selected ? ' is-selected' : ''}`}
                   aria-pressed={selected}
+                  disabled={only !== undefined && only !== action}
+                  data-tour={`status-${action}`}
                   onClick={() => close(() => onPick(action))}
                   // Focus lands on the current status (or the first) so keyboards can pick right away.
                   autoFocus={selected || (!txn.action && i === 0)}
@@ -66,7 +70,7 @@ export function StatusSheet({ txn, onPick, onClose }: Props) {
             })}
           </div>
 
-          {txn.action && (
+          {txn.action && only === undefined && (
             <button type="button" className="btn btn--secondary status-clear" onClick={() => close(() => onPick(null))}>
               Clear status
             </button>

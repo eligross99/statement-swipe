@@ -90,3 +90,9 @@
 .status-clear {
   margin-top: 12px;
 }
+
+/* In the tour, statuses that aren't part of the step look pale. */
+.status-option:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

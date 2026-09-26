@@ -227,7 +227,7 @@ export function ImportScreen({ onStart, shared, onTakeShared, onHelp }: Props) {
           </p>
         )}
 
-        <button type="button" className="btn btn--quiet import-help" onClick={onHelp}>
+        <button type="button" className="btn btn--quiet import-help" data-tour="get-file" onClick={onHelp}>
           How do I get my file?
         </button>
       </div>

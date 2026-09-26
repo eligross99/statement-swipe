@@ -578,73 +578,101 @@ describe('App', () => {
   })
 
   describe('Tour', () => {
-    /** The tour card's words. */
+    /** The tour card. */
     const coach = () => screen.getByRole('complementary', { name: 'Tour' })
+    /** The instruction it's showing (it also holds every other one, invisibly, to keep its height). */
+    const said = () => within(coach()).getByRole('status')
 
     /** Every statement the app asked to save, across all saves so far. */
     const savedNames = () => vi.mocked(saveLibrary).mock.calls.flatMap(([put]) => put.map((st) => st.name))
 
-    it('starts a new user on the practice statement, teaching one swipe at a time', async () => {
+    /** Opens the app as a brand-new user. */
+    async function newUser() {
       vi.mocked(loadLibrary).mockResolvedValue({ statements: [], ui: null, settings: null })
       const user = userEvent.setup()
       render(<App />)
+      await screen.findByRole('complementary', { name: 'Tour' })
+      return user
+    }
 
-      expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Practice statement')
-      expect(coach()).toHaveTextContent('Step 1 of 5')
-      expect(coach()).toHaveTextContent('Swipe right to approve')
+    it('starts a new user on Statements, and only the step’s controls respond', async () => {
+      const user = await newUser()
+      expect(coach()).toHaveTextContent('Step 1 of 6')
+      expect(said()).toHaveTextContent('Open the practice statement')
+      // Anything else does nothing.
+      await user.click(screen.getByRole('button', { name: 'Import a statement' }))
+      await user.click(screen.getByRole('button', { name: 'Tasks' }))
+      await user.click(screen.getByRole('button', { name: 'More for Practice statement' }))
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Statements')
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: /^Practice statement/ }))
+      expect(said()).toHaveTextContent('Swipe right to approve')
+      expect(said()).toHaveTextContent('Tapping the Approve button works too.')
       // Only the swipe being taught works.
       expect(screen.getByRole('button', { name: 'Look closer' })).toBeDisabled()
-      expect(screen.getByRole('button', { name: 'File' })).toBeDisabled()
       await user.keyboard('{ArrowUp}')
       expect(screen.getByText('0 of 3 reviewed')).toBeInTheDocument()
+      // Undo is paused in the tour: going back is the tour card's job.
+      await user.click(screen.getByRole('button', { name: 'Undo last action' }))
 
       await user.keyboard('{ArrowRight}')
-      expect(coach()).toHaveTextContent('Swipe left to look closer')
-      expect(screen.getByRole('button', { name: 'Approve' })).toBeDisabled()
-      // Undo takes the tour back a step too.
-      await user.click(screen.getByRole('button', { name: 'Undo last action' }))
-      expect(coach()).toHaveTextContent('Swipe right to approve')
+      expect(coach()).toHaveTextContent('Step 2 of 6')
+      expect(screen.getByText('1 of 3 reviewed')).toBeInTheDocument()
+      // Back a step returns to where step 1 started.
+      await user.click(within(coach()).getByRole('button', { name: 'Back a step' }))
+      expect(said()).toHaveTextContent('Open the practice statement')
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Statements')
     })
 
-    it('walks through the whole tour and ends on Import with the download guides open', async () => {
-      vi.mocked(loadLibrary).mockResolvedValue({ statements: [], ui: null, settings: null })
-      const user = userEvent.setup()
-      render(<App />)
+    it('walks the whole tour through the real app and ends on Import', async () => {
+      const user = await newUser()
+      await user.click(screen.getByRole('button', { name: /^Practice statement/ }))
+      await user.click(screen.getByRole('button', { name: 'Approve' }))
 
-      await user.click(await screen.findByRole('button', { name: 'Approve' }))
+      // Step 2: Look closer, where only flagging works.
       await user.click(screen.getByRole('button', { name: 'Look closer' }))
-      expect(coach()).toHaveTextContent('Do you recognize it?')
+      expect(said()).toHaveTextContent('Flag it as possible fraud')
+      expect(screen.getByRole('button', { name: /Yes, approve it/ })).toBeDisabled()
       await user.click(screen.getByRole('button', { name: /No, flag as possible fraud/ }))
 
-      expect(await screen.findByText('Swipe up to file')).toBeInTheDocument()
+      // Step 3: file, with a suggested folder name.
+      await waitFor(() => expect(said()).toHaveTextContent('Swipe up to file'))
       await user.click(screen.getByRole('button', { name: 'File' }))
-      expect(coach()).toHaveTextContent('Pick a folder')
-      // The tour offers a folder name of its own, labeled as a suggestion, not a past name.
       expect(screen.getByText('Suggested')).toBeInTheDocument()
       await user.click(screen.getByRole('button', { name: 'Split with friends' }))
 
-      expect(await screen.findByText('Open your folder')).toBeInTheDocument()
+      // Step 4: open the folder (nothing else on the summary works) and set Waiting.
+      await waitFor(() => expect(said()).toHaveTextContent('Open your folder'))
+      await user.click(screen.getByRole('button', { name: /Start over/ }))
+      expect(screen.getByRole('heading', { name: 'Review complete' })).toBeInTheDocument()
       await user.click(screen.getByRole('button', { name: /^Split with friends/ }))
-      expect(coach()).toHaveTextContent('Set a status')
       await user.click(screen.getByRole('button', { name: /Change status for SQ \*HARBOR TAVERN/ }))
-      await user.click(within(screen.getByRole('dialog', { name: 'Set status' })).getByRole('button', { name: /^Waiting/ }))
+      const menu = screen.getByRole('dialog', { name: 'Set status' })
+      expect(within(menu).getByRole('button', { name: /^Done/ })).toBeDisabled()
+      await user.click(within(menu).getByRole('button', { name: /^Waiting/ }))
 
-      await user.click(await screen.findByRole('button', { name: 'Show me Tasks' }))
-      expect(coach()).toHaveTextContent('Step 5 of 5')
+      // Step 5: to Tasks the real way.
+      expect(coach()).toHaveTextContent('Step 5 of 6')
+      await user.click(screen.getByRole('button', { name: 'Back to all folders' }))
+      await user.click(screen.getByRole('button', { name: 'Back to statements' }))
+      await user.click(screen.getByRole('button', { name: 'Tasks' }))
+      expect(coach()).toHaveTextContent('Step 6 of 6')
       expect(screen.getByText('APLPAY 8299 GLOBAL DIGI')).toBeInTheDocument()
       expect(screen.getByText('SQ *HARBOR TAVERN')).toBeInTheDocument()
       // No Settings while touring.
       expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument()
 
-      await user.click(screen.getByRole('button', { name: 'Get your statement' }))
-      expect(screen.queryByRole('complementary', { name: 'Tour' })).not.toBeInTheDocument()
-      const guide = screen.getByRole('dialog', { name: 'Get your statement' })
-      const bofa = within(guide).getByRole('button', { name: 'Bank of America' })
-      await user.click(bofa)
-      expect(bofa).toHaveAttribute('aria-expanded', 'true')
-      expect(within(guide).getByText(/Under Account Management/)).toBeInTheDocument()
-      await user.click(within(guide).getByRole('button', { name: 'Back to import' }))
+      // Step 6: back to Statements, then Import a statement ends the tour on the real Import screen.
+      await user.click(screen.getByRole('button', { name: 'Statements' }))
+      await user.click(screen.getByRole('button', { name: 'Import a statement' }))
       expect(await screen.findByRole('heading', { name: 'Import your statement' })).toBeInTheDocument()
+      expect(coach()).toHaveTextContent('Tour complete')
+      // Nothing is locked any more: the guide opens, and Done puts the card away.
+      await user.click(screen.getByRole('button', { name: 'How do I get my file?' }))
+      expect(screen.getByRole('dialog', { name: 'Get your statement' })).toBeInTheDocument()
+      await user.click(within(coach()).getByRole('button', { name: 'Done' }))
+      expect(screen.queryByRole('complementary', { name: 'Tour' })).not.toBeInTheDocument()
 
       // The tour is remembered as seen, and the practice statement was never saved.
       await waitFor(() =>
@@ -654,10 +682,8 @@ describe('App', () => {
     })
 
     it('skips to an empty Statements screen and remembers the tour was seen', async () => {
-      vi.mocked(loadLibrary).mockResolvedValue({ statements: [], ui: null, settings: null })
-      const user = userEvent.setup()
-      render(<App />)
-      await user.click(await screen.findByRole('button', { name: 'Skip tour' }))
+      const user = await newUser()
+      await user.click(screen.getByRole('button', { name: 'Skip tour' }))
       expect(screen.getByRole('heading', { name: 'No statements yet' })).toBeInTheDocument()
       await waitFor(() =>
         expect(saveLibrary).toHaveBeenLastCalledWith([], [], expect.objectContaining({ tourSeen: true }), expect.anything()),
@@ -674,13 +700,10 @@ describe('App', () => {
 
       await user.click(screen.getByRole('button', { name: 'Settings' }))
       await user.click(screen.getByRole('button', { name: 'Replay the tour' }))
-      expect(coach()).toHaveTextContent('Step 1 of 5')
-      await user.click(screen.getByRole('button', { name: 'Approve' }))
-      // The practice statement's Statements tab shows only itself.
-      await user.click(screen.getByRole('button', { name: 'Back to statements' }))
+      expect(coach()).toHaveTextContent('Step 1 of 6')
+      // The tour's Statements screen shows only the practice statement.
       expect(screen.getByRole('button', { name: /^Practice statement/ })).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: /^Saved March/ })).not.toBeInTheDocument()
-      expect(coach()).toHaveTextContent('Open the practice statement')
 
       await user.click(screen.getByRole('button', { name: 'Skip tour' }))
       expect(screen.getByRole('button', { name: 'Replay the tour' })).toBeInTheDocument()

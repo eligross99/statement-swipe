@@ -54,6 +54,7 @@ function TabButton({ here, label, extra = '', onClick, children }: TabButtonProp
       className={`tab${here ? ' is-here' : ''}`}
       aria-current={here ? 'page' : undefined}
       aria-label={label + extra}
+      data-tour={`tab-${label.toLowerCase()}`}
       onClick={onClick}
     >
       {children}

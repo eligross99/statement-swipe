@@ -162,6 +162,7 @@ function FolderList({ groups, onOpen }: { groups: FolderGroup[]; onOpen: (pileId
             key={p.id}
             type="button"
             className={`panel folder-card${settled ? ' is-settled' : ''}`}
+            data-tour="open-folder"
             onClick={() => onOpen(p.id)}
           >
             <span className="folder-card-icon">{settled ? <FolderCheck size={20} /> : <Folder size={20} />}</span>

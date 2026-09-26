@@ -171,8 +171,9 @@ See `docs/handoff.md` §11 for details.
     Statement Swipe" on Android (`src/lib/shareTarget.ts`, `public/share-target.js`). Android testing
     postponed by Eli: both Android features are covered by automated tests only until checked on Android
   - [ ] 7b. ← **built, waiting for Eli's phone test.** The onboarding tour (`src/lib/tour.ts`, `TourCoach`):
-    five hands-on steps on a 3-purchase practice statement kept in a never-saved sandbox (`state.tour`),
-    one swipe per step with a leaning swipe hint, shown on first launch and replayable from Settings; the
+    six strict, in-order steps through the real app on a 3-purchase practice statement kept in a
+    never-saved sandbox (`state.tour`), a tap guide and a leaning swipe hint, only each step's controls
+    responding (`data-tour` names), shown on first launch and replayable from Settings; the
     "Try the sample statement" button is gone (tests use `sampleTransactions` or `tests/fixtures/sample-march.csv`);
     per-bank download guides (`src/lib/bankGuides.ts`, `GuidePage`) at the tour's end and from Import
   - [ ] 7c. Remembered bank setups and OFX/QFX files
