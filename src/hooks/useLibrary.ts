@@ -9,7 +9,8 @@ const SAVE_DELAY_MS = 400
  * Every statement plus persistence: restores the saved statements on first load, then saves
  * shortly after every change, and right away if the page is hidden (e.g. the user switches apps
  * to answer a text), so nothing is lost if the phone closes the app in the background.
- * Only statements that changed are written, and deleted ones are removed.
+ * Only statements that changed are written, and deleted ones are removed. The tour's practice
+ * statement (`state.tour`) is never saved.
  */
 export function useLibrary() {
   const [state, dispatchEvent] = useReducer(libraryReducer, initialLibrary)
@@ -42,7 +43,7 @@ export function useLibrary() {
     const put = s.statements.filter((st) => saved.current.get(st.id) !== st)
     const remove = [...saved.current.keys()].filter((id) => !current.has(id))
     saved.current = current
-    void saveLibrary(put, remove, { openId: s.openId, view: s.view, filter: s.filter, home: s.home }, s.settings)
+    void saveLibrary(put, remove, { openId: s.openId, view: s.view, filter: s.filter, home: s.home, tourSeen: s.tourSeen }, s.settings)
   }
 
   // Debounced save whenever anything changes.

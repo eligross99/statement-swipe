@@ -11,6 +11,8 @@ interface Props {
   txns: Transaction[]
   /** Folder names used in past statements, offered as one-tap choices (empty when turned off in Settings). */
   suggestions: string[]
+  /** What the suggestions are called (the tour offers one it made up, not a past name). */
+  suggestionsLabel?: string
   /** Closed without filing. */
   onClose: () => void
   onFile: (pileId: string) => void
@@ -19,7 +21,9 @@ interface Props {
 }
 
 /** Bottom sheet for filing the current purchase: pick a folder, make a new one, or delete one. */
-export function FolderSheet({ piles, txns, suggestions, onClose, onFile, onCreate, onDelete }: Props) {
+export function FolderSheet(props: Props) {
+  const { piles, txns, suggestions, onClose, onFile, onCreate, onDelete } = props
+  const { suggestionsLabel = 'Names you’ve used before' } = props
   const [name, setName] = useState('')
   // The folder waiting for "are you sure?" before it's deleted.
   const [confirmId, setConfirmId] = useState<string | null>(null)
@@ -71,7 +75,7 @@ export function FolderSheet({ piles, txns, suggestions, onClose, onFile, onCreat
 
             {suggestions.length > 0 && (
               <>
-                <p className="folder-past-label">Names you’ve used before</p>
+                <p className="folder-past-label">{suggestionsLabel}</p>
                 <div className="folder-past">
                   {suggestions.map((s) => (
                     <button

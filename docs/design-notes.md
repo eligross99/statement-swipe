@@ -63,6 +63,12 @@ Read this before designing a new screen.
 - **Only offer what the device can do.** "Vibrate when a swipe lands" appears in Settings only on touch
   phones whose browser can vibrate (Android); iPhone browsers can't, so there it would be a switch that
   does nothing (`canVibrate` in `src/lib/haptics.ts`). The tick is 12ms, on real swipes only, not taps.
+- **Teach one gesture at a time (7b).** On each tour step the deck accepts only the swipe being taught
+  (`only` in `Deck.tsx`): other swipes spring back, other buttons and arrow keys are disabled. The step is
+  worked out from the practice statement itself (`tourStep` in `src/lib/tour.ts`), so undo steps back too.
+- **Expandable rows grow and fold at the same pace (7b).** The bank guides open one at a time: the row's
+  body animates `grid-template-rows` from `0fr` to `1fr` over 400ms with a fade, and the chevron turns.
+  Closed bodies stay in the page but are `inert`, so they can't be reached until opened (`GuidePage.css`).
 - **Touch targets are at least 44px** (`--tap-min`); badges and other fixed-size bits cap their text with
   `min()` so large text settings can't break them.
 
@@ -82,6 +88,15 @@ Read this before designing a new screen.
   confused Eli, 6c).
 - **Progress bars read done (left) to to-do (right),** and "nothing left to do" is one solid dark green.
   One function draws every breakdown bar (`ledgerSegments`), so the same data looks the same everywhere.
+- **Instructions sit above everything, and everything moves down for them (7b).** The tour card is pinned
+  to the top (z-index above sheets and slide-over pages) and writes its height into `--coach-space`; while
+  it shows (`[data-coach]` on the page), the app, slide-over pages and sheets make room, so it never covers
+  a button. When the card grows (a step with a button) the screen glides down over 400ms instead of
+  jumping. On short phones the swipe card may shrink further so the action buttons stay on screen
+  (`TourCoach.css`). Same dark green glass as the tab bar, with a mint pill for its one button.
+- **Practice lives in a sandbox (7b).** The tour runs the real screens on a separate, never-saved library
+  (`state.tour`), so the practice statement never appears in Statements or Tasks, and replaying the tour
+  can't touch real statements.
 - **Symmetry:** header buttons mirror each other (icon-only circles, a spacer when one side is empty),
   rows of buttons are evenly spaced, titles stay on one line.
 
@@ -97,6 +112,10 @@ consistently finds motion a little fast: start at the slow end.
 - **Things that leave smoothly come back smoothly.** A task moving groups folds away (height and fade)
   and then grows into its new place, both over 520ms (`DURATION.move`). The grow runs in a layout
   effect, so the row never flashes at full size first.
+- **Show which way to swipe by doing it (7b, Eli's request).** On a tour step the top card leans about
+  64px the way to swipe, its stamp peeking in at 75%, with a soft touch dot where a finger would push,
+  then settles back: 1.7s per lean, the first after 0.9s, then every 4s. It stops the moment the card is
+  touched and never plays with Reduce Motion, where the tour's words carry the instruction (`Deck.tsx`).
 - **Highlight with color, not movement.** A purchase opened from Tasks glows indigo (`--pile-tint` fill,
   a soft `--pile-soft` outline) for about 1.3 seconds, then fades over about a second. The earlier
   scale "pulse" read as a glitch, and a deep outline was too much contrast (6c).
@@ -118,5 +137,8 @@ consistently finds motion a little fast: start at the slow end.
   lopsided in a wide box.
 - **Quiet, not prominent,** for informational notes. Don't add shortcuts that repeat something already on
   screen (the "Pick up where you left off" banner was removed in 6b).
+- **The tour speaks as a guide, briefly.** A short instruction ("Swipe right to approve") and one line of
+  why, changing with what's on screen (Look closer open, the folder sheet open). The tour's made-up folder
+  name is labeled "Suggested", not "Names you've used before" (`coachFor` in `src/lib/tour.ts`).
 - **Don't show labels the app can't back up.** The sample's hand-set "Unusual" tag was removed (6c); a
   real, explained version comes with Phase 8's new-merchant tag.

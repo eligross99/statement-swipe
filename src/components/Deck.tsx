@@ -4,7 +4,7 @@ import { useAnimate } from '../hooks/useAnimate'
 import { formatDate } from '../lib/dates'
 import { hasCategory, usd } from '../lib/format'
 import { tick } from '../lib/haptics'
-import { DURATION, EASE_FLY, EASE_OUT } from '../lib/motion'
+import { canAnimate, DURATION, EASE_FLY, EASE_OUT, reducedMotion } from '../lib/motion'
 import { reviewedCount, sumAmounts } from '../lib/review'
 import type { Transaction } from '../types'
 import './Deck.css'
@@ -44,6 +44,8 @@ interface Props {
   onFile: () => void
   /** Vibrate briefly when a swipe lands (Android only; see lib/haptics). */
   haptics: boolean
+  /** The tour: the only swipe (and button) that works, and the way the card leans to show it. */
+  only?: Direction
 }
 
 /** How far (px) a drag must travel before release counts as a swipe. */
@@ -55,6 +57,17 @@ const CENTER: Offset = { x: 0, y: 0 }
 /** A card's transform at an offset: it tilts as it moves sideways, like a card held by its bottom. */
 const cardTransform = ({ x, y }: Offset) => `translate(${x}px, ${y}px) rotate(${x / 18}deg)`
 
+/** How far the card leans, and which stamp peeks, when the tour shows which way to swipe. */
+const HINT: Record<Direction, { to: Offset; stamp: string }> = {
+  right: { to: { x: 64, y: 0 }, stamp: '.stamp--approve' },
+  left: { to: { x: -64, y: 0 }, stamp: '.stamp--investigate' },
+  up: { to: { x: 0, y: -64 }, stamp: '.stamp--pile' },
+}
+/** One lean and settle, the wait before the first, and the rest between them (ms). */
+const HINT_MS = 1700
+const HINT_FIRST = 900
+const HINT_REST = 2300
+
 /** Where a card ends up when it flies off (or starts when it flies back in on undo). */
 function offscreen(dir: Direction, from: Offset = CENTER): string {
   const { x, y } = from
@@ -64,7 +77,10 @@ function offscreen(dir: Direction, from: Offset = CENTER): string {
 }
 
 export function Deck(props: Props) {
-  const { txns, index, paused, lean, leaving, returning, onLeaveDone, onApprove, onInvestigate, onFile, haptics } = props
+  const { txns, index, paused, lean, leaving, returning, onLeaveDone, onApprove, onInvestigate, onFile, haptics, only } =
+    props
+  /** False for the swipes the tour isn't teaching right now. */
+  const allowed = (dir: Direction) => !only || only === dir
   const [drag, setDrag] = useState<Offset>(CENTER)
   const [dragging, setDragging] = useState(false)
   // The pointer position where the drag started; a ref because it doesn't affect rendering.
@@ -95,15 +111,83 @@ export function Deck(props: Props) {
   useEffect(() => {
     if (paused || !top) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') onApprove(CENTER)
-      else if (e.key === 'ArrowLeft') onInvestigate()
-      else if (e.key === 'ArrowUp') onFile()
-      else return
+      if (e.key === 'ArrowRight') {
+        if (!only || only === 'right') onApprove(CENTER)
+      } else if (e.key === 'ArrowLeft') {
+        if (!only || only === 'left') onInvestigate()
+      } else if (e.key === 'ArrowUp') {
+        if (!only || only === 'up') onFile()
+      } else return
       e.preventDefault()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [paused, top, onApprove, onInvestigate, onFile])
+  }, [paused, top, only, onApprove, onInvestigate, onFile])
+
+  // The tour's swipe hint: every few seconds the card leans the way to swipe, its stamp peeking
+  // through and a touch dot showing where a finger would push, then settles back. It stops the
+  // moment the card is touched. Skipped with Reduce Motion (the tour's words still say it).
+  const hinting = !!only && !paused && !dragging && !leaving && !returning && !!topId
+  useEffect(() => {
+    const card = topRef.current
+    if (!hinting || !only || !card || !canAnimate() || reducedMotion()) return
+    const { to, stamp } = HINT[only]
+    const rest = cardTransform(CENTER)
+    const leanTo = cardTransform(to)
+    const running: Animation[] = []
+    const play = () => {
+      const opts = { duration: HINT_MS }
+      running.push(
+        card.animate(
+          [
+            { offset: 0, transform: rest },
+            { offset: 0.18, transform: rest, easing: 'cubic-bezier(0.45, 0, 0.25, 1)' },
+            { offset: 0.5, transform: leanTo },
+            { offset: 0.66, transform: leanTo, easing: EASE_OUT },
+            { offset: 1, transform: rest },
+          ],
+          opts,
+        ),
+      )
+      const stampEl = card.querySelector(stamp)
+      if (stampEl)
+        running.push(
+          stampEl.animate(
+            [
+              { offset: 0, opacity: 0 },
+              { offset: 0.2, opacity: 0 },
+              { offset: 0.5, opacity: 0.75 },
+              { offset: 0.66, opacity: 0.75 },
+              { offset: 0.95, opacity: 0 },
+            ],
+            opts,
+          ),
+        )
+      const dot = card.querySelector('.swipe-hint-touch')
+      if (dot)
+        running.push(
+          dot.animate(
+            [
+              { offset: 0, opacity: 0, transform: 'translate(-50%, -50%) scale(1.4)' },
+              { offset: 0.16, opacity: 1, transform: 'translate(-50%, -50%) scale(1)' },
+              { offset: 0.6, opacity: 1, transform: 'translate(-50%, -50%) scale(1)' },
+              { offset: 0.78, opacity: 0, transform: 'translate(-50%, -50%) scale(1)' },
+            ],
+            opts,
+          ),
+        )
+      // Finished animations are dropped, so the list stays short.
+      while (running.length > 3) running.shift()
+    }
+    let timer = setTimeout(function loop() {
+      play()
+      timer = setTimeout(loop, HINT_MS + HINT_REST)
+    }, HINT_FIRST)
+    return () => {
+      clearTimeout(timer)
+      running.forEach((a) => a.cancel())
+    }
+  }, [hinting, only, topId])
 
   const snapBack = () => {
     start.current = null
@@ -133,10 +217,13 @@ export function Deck(props: Props) {
     const { x, y } = drag
     snapBack()
     const up = y < -SWIPE_THRESHOLD && Math.abs(y) > Math.abs(x)
-    if (haptics && (up || Math.abs(x) > SWIPE_THRESHOLD)) tick()
-    if (up) onFile()
-    else if (x > SWIPE_THRESHOLD) onApprove({ x, y })
-    else if (x < -SWIPE_THRESHOLD) onInvestigate()
+    const dir: Direction | null = up ? 'up' : x > SWIPE_THRESHOLD ? 'right' : x < -SWIPE_THRESHOLD ? 'left' : null
+    // A swipe the tour isn't teaching yet just springs back.
+    if (!dir || !allowed(dir)) return
+    if (haptics) tick()
+    if (dir === 'up') onFile()
+    else if (dir === 'right') onApprove({ x, y })
+    else onInvestigate()
   }
 
   // Stamp opacity: fades in with drag distance in the dominant direction.
@@ -184,6 +271,7 @@ export function Deck(props: Props) {
               <Stamp opacity={approveOp} kind="approve" label="APPROVE" />
               <Stamp opacity={lookOp} kind="investigate" label="LOOK CLOSER" />
               <Stamp opacity={fileOp} kind="pile" label="FILE" />
+              {only && <span className="swipe-hint-touch" aria-hidden />}
               <CardFace txn={t} />
             </div>
           ) : (
@@ -207,11 +295,18 @@ export function Deck(props: Props) {
           label="Look closer"
           keys="ArrowLeft"
           onClick={() => !paused && onInvestigate()}
-          disabled={!top}
+          disabled={!top || !allowed('left')}
         >
           <Search size={22} />
         </ActionButton>
-        <ActionButton kind="pile" label="File" keys="ArrowUp" onClick={() => !paused && onFile()} disabled={!top} big>
+        <ActionButton
+          kind="pile"
+          label="File"
+          keys="ArrowUp"
+          onClick={() => !paused && onFile()}
+          disabled={!top || !allowed('up')}
+          big
+        >
           <Layers size={26} />
         </ActionButton>
         <ActionButton
@@ -219,7 +314,7 @@ export function Deck(props: Props) {
           label="Approve"
           keys="ArrowRight"
           onClick={() => !paused && onApprove(CENTER)}
-          disabled={!top}
+          disabled={!top || !allowed('right')}
         >
           <Check size={24} strokeWidth={2.5} />
         </ActionButton>

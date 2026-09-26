@@ -1,4 +1,4 @@
-import { CircleAlert, CircleCheck, FileText, LoaderCircle, Sparkles, X } from 'lucide-react'
+import { CircleAlert, CircleCheck, FileText, LoaderCircle, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
 import { useShowMore } from '../hooks/useShowMore'
@@ -6,15 +6,17 @@ import { parseGrid, type ColumnMap, type Grid, type Purchase } from '../lib/csv'
 import { formatDate } from '../lib/dates'
 import { plural, usd } from '../lib/format'
 import { token } from '../lib/motion'
-import { SAMPLE_LABEL, sampleTransactions } from '../lib/sample'
 import { CSVSource, guessSettings, type CsvSettings } from '../sources/csvSource'
 import { isPdf, PdfImportError, PDFSource, type PdfProblem } from '../sources/pdfSource'
 import type { Transaction } from '../types'
 import './ImportScreen.css'
 
-/** What the app needs to name a new statement: a fixed name (the sample), or hints for a smart
- *  default: the PDF's closing date and the file's name, used if the purchases have no dates. */
-export type Naming = { name: string } | { fallback: string; closing: string | null }
+/** What the app needs to name a new statement: hints for a smart default, the PDF's closing date
+ *  and the file's name (used if the purchases have no dates). */
+export interface Naming {
+  fallback: string
+  closing: string | null
+}
 
 interface Props {
   onStart: (txns: Transaction[], naming: Naming) => void
@@ -22,6 +24,8 @@ interface Props {
   shared?: File | null
   /** Called once the shared file has been taken, so it isn't read again on a later visit. */
   onTakeShared?: () => void
+  /** Opens "Get your statement", the per-bank download guides. */
+  onHelp: () => void
 }
 
 interface Parsed {
@@ -50,7 +54,7 @@ const labelFrom = (fileName: string) => fileName.replace(/\.[^.]+$/, '')
 /** How many of the file's first lines the header-row picker offers. */
 const HEADER_CHOICES = 15
 
-export function ImportScreen({ onStart, shared, onTakeShared }: Props) {
+export function ImportScreen({ onStart, shared, onTakeShared, onHelp }: Props) {
   const [parsed, setParsed] = useState<Parsed | null>(null)
   const [settings, setSettings] = useState<CsvSettings | null>(null)
   const [pdf, setPdf] = useState<ParsedPdf | null>(null)
@@ -223,12 +227,8 @@ export function ImportScreen({ onStart, shared, onTakeShared }: Props) {
           </p>
         )}
 
-        <button
-          type="button"
-          className="btn btn--secondary import-sample"
-          onClick={() => onStart(sampleTransactions(), { name: SAMPLE_LABEL })}
-        >
-          <Sparkles size={16} /> Try the sample statement
+        <button type="button" className="btn btn--quiet import-help" onClick={onHelp}>
+          How do I get my file?
         </button>
       </div>
     )
