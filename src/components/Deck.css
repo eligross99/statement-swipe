@@ -273,3 +273,20 @@
   font-weight: 500;
   color: var(--text-mute);
 }
+
+/* The tour's swipe hint: a soft touch dot where a finger would push. It rides along inside the card
+   as the card leans (see the swipe hint in Deck.tsx), and is invisible the rest of the time. */
+.swipe-hint-touch {
+  position: absolute;
+  top: 72%; /* below the purchase's name, in the card's empty space */
+  left: 50%;
+  z-index: 2;
+  width: 46px;
+  height: 46px;
+  border: 2px solid color-mix(in srgb, var(--brand) 45%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--brand) 16%, transparent);
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}

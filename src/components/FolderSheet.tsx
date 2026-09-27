@@ -11,6 +11,8 @@ interface Props {
   txns: Transaction[]
   /** Folder names used in past statements, offered as one-tap choices (empty when turned off in Settings). */
   suggestions: string[]
+  /** What the suggestions are called (the tour offers one it made up, not a past name). */
+  suggestionsLabel?: string
   /** Closed without filing. */
   onClose: () => void
   onFile: (pileId: string) => void
@@ -19,7 +21,9 @@ interface Props {
 }
 
 /** Bottom sheet for filing the current purchase: pick a folder, make a new one, or delete one. */
-export function FolderSheet({ piles, txns, suggestions, onClose, onFile, onCreate, onDelete }: Props) {
+export function FolderSheet(props: Props) {
+  const { piles, txns, suggestions, onClose, onFile, onCreate, onDelete } = props
+  const { suggestionsLabel = 'Names you’ve used before' } = props
   const [name, setName] = useState('')
   // The folder waiting for "are you sure?" before it's deleted.
   const [confirmId, setConfirmId] = useState<string | null>(null)
@@ -71,13 +75,14 @@ export function FolderSheet({ piles, txns, suggestions, onClose, onFile, onCreat
 
             {suggestions.length > 0 && (
               <>
-                <p className="folder-past-label">Names you’ve used before</p>
+                <p className="folder-past-label">{suggestionsLabel}</p>
                 <div className="folder-past">
                   {suggestions.map((s) => (
                     <button
                       key={s}
                       type="button"
                       className="folder-past-chip"
+                      data-tour="folder-suggestion"
                       onClick={() => close(() => onCreate(s))}
                     >
                       <FolderPlus size={15} aria-hidden /> {s}
@@ -107,11 +112,12 @@ export function FolderSheet({ piles, txns, suggestions, onClose, onFile, onCreat
                 }}
                 placeholder="Name a new folder…"
                 aria-label="New folder name"
+                data-tour="folder-name"
                 maxLength={40}
                 // Only pop the keyboard straight away when there's nothing to tap instead.
                 autoFocus={piles.length === 0 && suggestions.length === 0}
               />
-              <button type="submit" className="btn btn--pile btn--auto" disabled={!trimmed}>
+              <button type="submit" className="btn btn--pile btn--auto" disabled={!trimmed} data-tour="folder-create">
                 <FolderPlus size={18} /> File
               </button>
             </form>

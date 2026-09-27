@@ -13,6 +13,8 @@ interface Props {
   txn: Transaction
   /** Whether approve/flag are offered (only for the card currently on top of the deck). */
   canDecide: boolean
+  /** The tour: only flagging works here, and Approve looks pale. */
+  onlyFlag?: boolean
   onBack: () => void
   onApprove: () => void
   onFlag: () => void
@@ -26,7 +28,7 @@ interface Props {
 /** Full statement details for one purchase. "Back" leaves the card unresolved in the deck.
  *  Every way out slides the view away first, then reports back. */
 export function InvestigateView(props: Props) {
-  const { txn, canDecide, onBack, onApprove, onFlag, onRecognize, onSetAction, onSetNote } = props
+  const { txn, canDecide, onlyFlag, onBack, onApprove, onFlag, onRecognize, onSetAction, onSetNote } = props
   // Asking "are you sure?" before a flagged purchase is approved.
   const [confirming, setConfirming] = useState(false)
   const [statusOpen, setStatusOpen] = useState(false)
@@ -62,10 +64,15 @@ export function InvestigateView(props: Props) {
           {canDecide && (
             <div className="investigate-actions">
               <p className="investigate-question">Do you recognize this purchase?</p>
-              <button type="button" className="btn btn--primary" onClick={() => leave(onApprove)}>
+              <button
+                type="button"
+                className="btn btn--primary investigate-approve"
+                disabled={onlyFlag}
+                onClick={() => leave(onApprove)}
+              >
                 <Check size={18} /> Yes, approve it
               </button>
-              <button type="button" className="btn btn--flag" onClick={() => leave(onFlag)}>
+              <button type="button" className="btn btn--flag" data-tour="flag" onClick={() => leave(onFlag)}>
                 <Flag size={18} /> No, flag as possible fraud
               </button>
             </div>

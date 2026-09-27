@@ -155,3 +155,72 @@ describe('tabs and tasks', () => {
     expect(after.view).toBe('tasks')
   })
 })
+
+describe('the tour', () => {
+  const loaded = (statements: LibraryState['statements'], ui: Extract<Step, { type: 'loaded' }>['ui'] = null): Step => ({
+    type: 'loaded',
+    statements,
+    ui,
+    settings: null,
+  })
+
+  it('starts for a new user, with the practice statement alone on Statements', () => {
+    const s = run(loaded([]))
+    expect(s.tourSeen).toBe(false)
+    expect(s.tour?.step).toBe(1)
+    expect(s.tour?.library.view).toBe('statements')
+    expect(s.tour?.library.statements.map((st) => st.name)).toEqual(['Practice statement'])
+    expect(s.tour?.library.statements[0].session.txns).toHaveLength(3)
+  })
+
+  it('doesn’t start for someone who already has statements, or has seen it', () => {
+    expect(run(loaded([statement('one')])).tour).toBeNull()
+    expect(run(loaded([], { openId: null, view: 'statements', filter: 'all', tourSeen: true })).tour).toBeNull()
+  })
+
+  it('keeps practice in its own library, leaving real statements alone, and moves the tour on', () => {
+    const s = run(
+      loaded([statement('one')]),
+      { type: 'startTour' },
+      { type: 'tour', action: { type: 'open', id: 'practice' } },
+      { type: 'tour', action: review({ type: 'approve' }) },
+    )
+    expect(s.statements.map((st) => st.id)).toEqual(['one'])
+    expect(s.tour?.library.statements[0].session.txns[0].status).toBe('approved')
+    expect(s.tour?.step).toBe(2)
+    expect(s.view).toBe('statements')
+  })
+
+  it('goes back a step', () => {
+    const s = run(
+      loaded([]),
+      { type: 'tour', action: { type: 'open', id: 'practice' } },
+      { type: 'tour', action: review({ type: 'approve' }) },
+      { type: 'tourBack' },
+    )
+    expect(s.tour?.step).toBe(1)
+    expect(s.tour?.library.statements[0].session.txns[0].status).toBe('unreviewed')
+  })
+
+  it('throws the practice statement away when it ends, and remembers it was seen', () => {
+    const s = run(loaded([]), { type: 'endTour' })
+    expect(s.tour).toBeNull()
+    expect(s.tourSeen).toBe(true)
+    expect(s.statements).toEqual([])
+  })
+
+  it('starts afresh when replayed', () => {
+    const s = run(loaded([]), { type: 'tour', action: { type: 'open', id: 'practice' } }, { type: 'startTour' })
+    expect(s.tour?.library.view).toBe('statements')
+  })
+
+  it('ignores practice changes when no tour is running', () => {
+    const before = run(loaded([statement('one')]))
+    expect(step(before, { type: 'tour', action: { type: 'delete', id: 'one' } })).toBe(before)
+    expect(step(before, { type: 'tourBack' })).toBe(before)
+  })
+
+  it('is still remembered as seen after erasing everything', () => {
+    expect(run(loaded([statement('one')]), { type: 'eraseAll' }).tourSeen).toBe(true)
+  })
+})

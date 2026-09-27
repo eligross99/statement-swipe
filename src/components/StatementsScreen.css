@@ -21,6 +21,13 @@
   position: relative;
   margin-bottom: 10px;
   overflow: hidden;
+  transition: transform 0.2s var(--ease-out);
+}
+
+/* Pressing a statement presses the whole card in, like a task card (the ⋯ button presses on its own). */
+.st-row:has(.st-open:active) {
+  transform: scale(0.98);
+  transition-duration: 0s;
 }
 
 .st-open {

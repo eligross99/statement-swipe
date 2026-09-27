@@ -1,7 +1,8 @@
 // Tries each real statement in the git-ignored private/ folder in WebKit. Skipped when there are
 // none (as on CI). Reports yes/no and error text only, never amounts or merchant names.
-import { expect, test } from '@playwright/test'
 import { existsSync, readdirSync } from 'node:fs'
+import { expect, test } from '@playwright/test'
+import { openApp } from './app.ts'
 
 const files = existsSync('private') ? readdirSync('private').filter((f) => f.toLowerCase().endsWith('.pdf')) : []
 
@@ -12,7 +13,7 @@ for (const file of files) {
     const problems: string[] = []
     page.on('console', (m) => m.type() === 'error' && problems.push(m.text().slice(0, 200)))
     page.on('pageerror', (e) => problems.push(e.message.slice(0, 200)))
-    await page.goto('/')
+    await openApp(page)
     await page.getByRole('button', { name: 'Import a statement' }).click()
     await page.locator('input[type=file]').setInputFiles(`private/${file}`)
     const found = page.getByText(/purchases? found in this statement/)

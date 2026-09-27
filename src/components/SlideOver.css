@@ -1,5 +1,5 @@
-/* The back button's bar: pinned to the top while the page scrolls, with the page's background
-   behind it (full width, clearing the notch) so text scrolls away underneath. */
+/* The back button floats over the page: pinned to the top while the page scrolls, with no bar
+   behind it, so the page scrolls underneath (a bar cut text in half, 7b). Only the button takes taps. */
 .slide-over-top {
   position: sticky;
   top: 0;
@@ -8,7 +8,22 @@
   align-items: center;
   margin: calc(-1 * max(16px, env(safe-area-inset-top))) -16px 8px;
   padding: max(16px, env(safe-area-inset-top)) 16px 8px;
-  background: var(--bg);
+  pointer-events: none;
+}
+
+.slide-over-top > * {
+  position: relative; /* above the fade below */
+  pointer-events: auto;
+}
+
+/* A soft fade under the phone's status bar, so scrolled text slips away instead of running into the clock. */
+.slide-over-top::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: calc(max(16px, env(safe-area-inset-top)) + 8px);
+  background: linear-gradient(var(--bg) 40%, transparent);
+  pointer-events: none;
 }
 
 /* A regular screen shown inside the page (e.g. a folder): the page already scrolls and has margins. */

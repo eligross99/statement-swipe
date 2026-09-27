@@ -32,3 +32,12 @@ jobs:
       # End-to-end tests in WebKit, the engine behind every iPhone browser (see playwright.config.ts).
       - run: npx playwright install --with-deps webkit
       - run: npm run test:e2e
+      # When an end-to-end test fails or needs a retry, keep its trace (synthetic test data only) so
+      # it can be opened with `npx playwright show-trace`.
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14

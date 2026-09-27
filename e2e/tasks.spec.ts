@@ -1,6 +1,7 @@
 // The Tasks tab in a real browser: tasks come from a real review, statuses set there are saved,
 // and the app reopens on the tab the user was last on.
 import { expect, test, type Page } from '@playwright/test'
+import { reviewSample } from './app.ts'
 
 /** Lets the app's short save delay pass, then reloads, like closing and reopening the app. */
 async function reopen(page: Page) {
@@ -9,9 +10,7 @@ async function reopen(page: Page) {
 }
 
 test('tracks flagged and filed purchases from a review through to done', async ({ page }) => {
-  await page.goto('/')
-  await page.getByRole('button', { name: 'Import a statement' }).click()
-  await page.getByRole('button', { name: /Try the sample statement/ }).click()
+  await reviewSample(page)
 
   // Flag the first card, file the second, and leave the rest for later.
   await page.getByRole('button', { name: 'Look closer' }).click()

@@ -57,12 +57,31 @@ Read this before designing a new screen.
   `position: relative; z-index: 1`; their row gets `pointer-events: none` and only the button
   `pointer-events: auto`, so empty space still opens the card (`TasksScreen.css`, 6c).
 - **Every tap shows feedback:** buttons scale to 0.97 and dim instantly on press and ease back on
-  release (`index.css`); task cards scale to 0.98, statement rows tint grey.
+  release (`index.css`); task cards and statement rows scale to 0.98 (statement rows also tint grey).
 - **Status pills** (To do amber, Waiting blue, Done green) are one component, `StatusPill` in
   `TaskControls.tsx`, reused by folders, Tasks, and Look closer. Same data, same look on every screen.
 - **Only offer what the device can do.** "Vibrate when a swipe lands" appears in Settings only on touch
   phones whose browser can vibrate (Android); iPhone browsers can't, so there it would be a switch that
   does nothing (`canVibrate` in `src/lib/haptics.ts`). The tick is 12ms, on real swipes only, not taps.
+- **Teach one thing at a time, in order, through the real app (7b).** Eli's rule: the tour mimics how
+  the app is really used (reach Tasks with back, back, then the Tasks tab; import from Statements), with
+  no shortcuts. Each instruction lists the only controls that respond (`allow` in `src/lib/tour.ts`,
+  matched by `data-tour` attributes); every other tap is stopped before the app sees it, and the tour
+  card lights up and points again (`TourCoach.tsx`). Controls stay looking normal, except the ones that
+  compete with the step, which go pale like the deck's buttons: Approve in Look closer, the other
+  statuses. The deck accepts only the swipe being taught (`only` in `Deck.tsx`).
+- **Point at what to tap (7b).** The tap guide is a soft glow around the control (its own rounded
+  corners, or its card's) plus the swipe hint's touch dot pressing it, every 2.4s. It follows the control,
+  hides while something covers it, and scrolls it into full view if it's cut off, once per instruction
+  (doing it again yanked the page back while Eli scrolled Look closer). Drawn in the Approve color, which
+  stays bright in dark mode, with a thin page-colored outline between it and the control, so it still
+  shows on green (on the green Import button it "blended in", Eli). With Reduce Motion the glow stays
+  still and the dot is hidden.
+- **Guard taps, never touches.** The tour stops only taps (clicks) outside the step. A finger going down
+  also starts every scroll, so reacting to it treated scrolling as a wrong tap (`TourCoach.tsx`).
+- **Expandable rows grow and fold at the same pace (7b).** The bank guides open one at a time: the row's
+  body animates `grid-template-rows` from `0fr` to `1fr` over 400ms with a fade, and the chevron turns.
+  Closed bodies stay in the page but are `inert`, so they can't be reached until opened (`GuidePage.css`).
 - **Touch targets are at least 44px** (`--tap-min`); badges and other fixed-size bits cap their text with
   `min()` so large text settings can't break them.
 
@@ -71,9 +90,10 @@ Read this before designing a new screen.
 - **Pages opened from a list slide over it** rather than replacing the screen: `SlideOver` (used by Look
   closer and by a folder opened from Tasks). The screen underneath stays put, keeping its scroll
   position, and Back slides the page away to the right. Swapping screens for this felt "off" (6c).
-- **Back is always reachable.** Screens keep their back button in the fixed header; slide-over pages pin
-  theirs in a sticky bar with the page background behind it (`.slide-over-top`), bleeding to the edges
-  and clearing the notch.
+- **Back is always reachable, and floats.** Screens keep their back button in the fixed header; slide-over
+  pages pin theirs so it floats over the page as it scrolls, with no bar behind it (a page-colored bar cut
+  text in half, Eli, 7b), and a soft fade under the status bar so text slips away before the clock
+  (`.slide-over-top` in `SlideOver.css`).
 - **Floating bars reserve space.** Screens under the tab bar pad their bottom by `--tabbar-space` (plus
   the import button's height on Statements), so the last row can scroll clear.
 - **Urgent first.** Lists sort by urgency, then age: in Tasks, possible fraud with no status, then other
@@ -82,6 +102,22 @@ Read this before designing a new screen.
   confused Eli, 6c).
 - **Progress bars read done (left) to to-do (right),** and "nothing left to do" is one solid dark green.
   One function draws every breakdown bar (`ledgerSegments`), so the same data looks the same everywhere.
+- **Instructions sit above everything, and everything moves down for them (7b).** The tour card is pinned
+  to the top (z-index above sheets and slide-over pages) and writes its height into `--coach-space`; while
+  it shows (`[data-coach]` on the page), the app, slide-over pages and sheets make room, so it never covers
+  a button. **Its height never changes:** every line it can show is stacked invisibly in one grid cell,
+  so the card is as tall as its longest line and the screen below never shifts between steps (Eli, 7b).
+  On short phones the swipe card may shrink further so the action buttons stay on screen. Same dark green
+  glass as the tab bar.
+- **A card you can't move still answers your finger (7b, Eli's request).** Pulled up or down, the tour
+  card follows with rubber-band resistance (and stretches a little when pulled down) and springs back
+  with a small overshoot (460ms). Swiped right it goes back a step (there's also a ‹ button, faded on
+  step 1 like Undo with nothing to undo); swiped left it stretches, lights up, and says to finish the step
+  first. A tap presses it in like a task card and shows the tap guide again. Its step bars fill part way
+  as each step's parts are done, so progress moves even while the step number doesn't.
+- **Practice lives in a sandbox (7b).** The tour runs the real screens on a separate, never-saved library
+  (`state.tour`), so the practice statement never appears in Statements or Tasks, and replaying the tour
+  can't touch real statements. It keeps a copy from the start of each step, so going back is exact.
 - **Symmetry:** header buttons mirror each other (icon-only circles, a spacer when one side is empty),
   rows of buttons are evenly spaced, titles stay on one line.
 
@@ -97,6 +133,10 @@ consistently finds motion a little fast: start at the slow end.
 - **Things that leave smoothly come back smoothly.** A task moving groups folds away (height and fade)
   and then grows into its new place, both over 520ms (`DURATION.move`). The grow runs in a layout
   effect, so the row never flashes at full size first.
+- **Show which way to swipe by doing it (7b, Eli's request).** On a tour step the top card leans about
+  64px the way to swipe, its stamp peeking in at 75%, with a soft touch dot where a finger would push,
+  then settles back: 1.7s per lean, the first after 0.9s, then every 4s. It stops the moment the card is
+  touched and never plays with Reduce Motion, where the tour's words carry the instruction (`Deck.tsx`).
 - **Highlight with color, not movement.** A purchase opened from Tasks glows indigo (`--pile-tint` fill,
   a soft `--pile-soft` outline) for about 1.3 seconds, then fades over about a second. The earlier
   scale "pulse" read as a glitch, and a deep outline was too much contrast (6c).
@@ -118,5 +158,11 @@ consistently finds motion a little fast: start at the slow end.
   lopsided in a wide box.
 - **Quiet, not prominent,** for informational notes. Don't add shortcuts that repeat something already on
   screen (the "Pick up where you left off" banner was removed in 6b).
+- **The tour speaks as a guide, briefly.** A short instruction ("Swipe right to approve") and one line of
+  why, changing with what's on screen (Look closer open, the folder sheet open). Say what a feature is
+  for in general, then the example (folders: "a bill to split, a reimbursement, taxes"). The tour's
+  made-up folder name is labeled "Suggested", not "Names you've used before" (`guideFor` in
+  `src/lib/tour.ts`). Its text wraps normally: Safari's "pretty" wrapping broke lines well short of the
+  card's edge.
 - **Don't show labels the app can't back up.** The sample's hand-set "Unusual" tag was removed (6c); a
   real, explained version comes with Phase 8's new-merchant tag.

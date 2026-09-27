@@ -12,6 +12,7 @@ export function StatusPill({ txn, onClick }: { txn: Transaction; onClick: () => 
       type="button"
       className={`status-pill${txn.action ? ` status-pill--${txn.action}` : ''}`}
       onClick={onClick}
+      data-tour="set-status"
       aria-haspopup="dialog"
       aria-label={`Status: ${txn.action ? label : 'not set'}. Change status for ${txn.desc}`}
     >

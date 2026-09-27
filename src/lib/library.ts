@@ -3,9 +3,11 @@
 // Like the review reducer, it's a plain function with no React, so it's easy to unit test.
 
 import type { Statement, Transaction } from '../types'
+import { PRACTICE_ID, PRACTICE_NAME, practiceTransactions } from './sample'
 import { newReview, reviewReducer, reviewScreen, type ReviewEvent } from './review'
 import type { StatementFilter } from './statements'
 import type { ThemeChoice } from './theme'
+import { newTour, tourBack, withLibrary, type TourState } from './tour'
 
 /** The places in the bottom tab bar. */
 export type Tab = 'statements' | 'tasks'
@@ -36,6 +38,11 @@ export interface LibraryState {
   /** The Statements screen's filter, remembered between visits. */
   filter: StatementFilter
   settings: Settings
+  /** True once the tour has been finished or skipped (or the user had statements before it existed). */
+  tourSeen: boolean
+  /** While the tour runs: its step, and a separate, never-saved library holding only the practice
+   *  statement. The app shows that instead of the real one, so practice never mixes with real statements. */
+  tour: TourState | null
 }
 
 /** What's saved beside the statements, so the app reopens where the user left it. */
@@ -45,6 +52,8 @@ export interface SavedUi {
   filter: StatementFilter
   /** Missing in saves from before the Tasks tab. */
   home?: Tab
+  /** Missing in saves from before the tour. */
+  tourSeen?: boolean
 }
 
 /** Something the user (or loading) did. */
@@ -59,6 +68,14 @@ export type LibraryAction =
   | { type: 'eraseAll' }
   | { type: 'setFilter'; filter: StatementFilter }
   | { type: 'setSettings'; settings: Partial<Settings> }
+  /** Starts the tour (again) on a fresh practice statement. */
+  | { type: 'startTour' }
+  /** Finishes or skips the tour: the practice statement is thrown away. */
+  | { type: 'endTour' }
+  /** Something done inside the tour, applied to the practice library instead of the real one. */
+  | { type: 'tour'; action: LibraryAction }
+  /** Back to the start of the tour's previous step. */
+  | { type: 'tourBack' }
   /** A change to the open statement's review, or to statement `id` (e.g. a status set from Tasks). */
   | { type: 'review'; event: ReviewEvent; id?: string }
 
@@ -72,6 +89,8 @@ export const initialLibrary: LibraryState = {
   home: 'statements',
   filter: 'all',
   settings: defaultSettings,
+  tourSeen: false,
+  tour: null,
 }
 
 /** A statement for newly imported purchases, ready to review. */
@@ -80,6 +99,12 @@ export function makeStatement(
   { id, name, period, now }: { id: string; name: string; period: string | null; now: number },
 ): Statement {
   return { id, name, period, addedAt: now, updatedAt: now, archived: false, ...newReview(txns) }
+}
+
+/** The tour's sandbox: the practice statement alone on the Statements screen, like a first import. */
+export function practiceLibrary(settings: Settings, now: number): LibraryState {
+  const practice = makeStatement(practiceTransactions(), { id: PRACTICE_ID, name: PRACTICE_NAME, period: null, now })
+  return { ...initialLibrary, statements: [practice], settings, tourSeen: true }
 }
 
 export function openStatement(state: LibraryState): Statement | null {
@@ -97,13 +122,18 @@ export function libraryReducer(state: LibraryState, event: LibraryEvent): Librar
       // Reopen the review the user was in, if it still exists; otherwise start on Statements.
       const open = ui?.view === 'review' ? statements.find((st) => st.id === ui.openId) : undefined
       const home = ui?.home ?? 'statements'
+      const merged = { ...defaultSettings, ...settings }
+      // New users start with the tour. People who had statements before it existed have used the app.
+      const tourSeen = ui?.tourSeen ?? statements.length > 0
       return {
         statements,
         openId: open?.id ?? null,
         view: open ? 'review' : home,
         home,
         filter: ui?.filter ?? 'all',
-        settings: { ...defaultSettings, ...settings },
+        settings: merged,
+        tourSeen,
+        tour: tourSeen ? null : newTour(practiceLibrary(merged, event.now)),
       }
     }
 
@@ -148,14 +178,38 @@ export function libraryReducer(state: LibraryState, event: LibraryEvent): Librar
     }
 
     case 'eraseAll':
-      // Statements go; preferences (settings, the chosen filter, the last tab) stay.
-      return { ...initialLibrary, home: state.home, filter: state.filter, settings: state.settings }
+      // Statements go; preferences (settings, the chosen filter, the last tab, the tour) stay.
+      return {
+        ...initialLibrary,
+        home: state.home,
+        filter: state.filter,
+        settings: state.settings,
+        tourSeen: state.tourSeen,
+      }
 
     case 'setFilter':
       return { ...state, filter: event.filter }
 
-    case 'setSettings':
-      return { ...state, settings: { ...state.settings, ...event.settings } }
+    case 'setSettings': {
+      const settings = { ...state.settings, ...event.settings }
+      const tour = state.tour && { ...state.tour, library: { ...state.tour.library, settings } }
+      return { ...state, settings, tour }
+    }
+
+    case 'startTour':
+      return { ...state, tour: newTour(practiceLibrary(state.settings, event.now)) }
+
+    case 'endTour':
+      return { ...state, tour: null, tourSeen: true }
+
+    case 'tour': {
+      if (!state.tour) return state
+      const library = libraryReducer(state.tour.library, { ...event.action, now: event.now })
+      return library === state.tour.library ? state : { ...state, tour: withLibrary(state.tour, library) }
+    }
+
+    case 'tourBack':
+      return state.tour ? { ...state, tour: tourBack(state.tour) } : state
 
     case 'review': {
       const st = event.id ? state.statements.find((s) => s.id === event.id) : openStatement(state)

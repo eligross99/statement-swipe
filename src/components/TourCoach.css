@@ -1,0 +1,265 @@
+/* The tour card: dark green glass, like the tab bar, pinned to the top above everything else. */
+.coach {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60; /* above sheets and slide-over pages (40) and the tab bar (30) */
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  padding: max(10px, env(safe-area-inset-top)) 12px 0;
+  pointer-events: none; /* only the card itself takes taps, not the gutter around it */
+  animation: coach-in 460ms var(--ease-out) backwards;
+}
+
+@keyframes coach-in {
+  from {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+}
+
+.coach-card {
+  padding: 8px 16px 14px 8px;
+  border-radius: var(--radius-card);
+  background: var(--dock);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  backdrop-filter: blur(24px) saturate(1.8);
+  box-shadow:
+    inset 0 1px 0 var(--dock-edge),
+    var(--shadow-float);
+  color: var(--dock-soft);
+  pointer-events: auto;
+  touch-action: none; /* the card handles its own pulls and swipes */
+  user-select: none;
+  -webkit-user-select: none;
+  transform-origin: 50% 0; /* stretches downward, as if held at the top */
+  /* Let go, it springs back into place with a small overshoot. */
+  transition: transform 460ms cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+/* A tap presses it in, like a task card: it shows the tap guide again but goes nowhere. */
+.coach-card.is-pressed {
+  transform: scale(0.98);
+  transition-duration: 0.12s;
+}
+
+.coach-card.is-dragging {
+  transition: none;
+}
+
+.coach-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* The buttons' 44px tap areas overlap the padding, so the row itself stays slim. */
+  margin: -6px -8px 2px 0;
+}
+
+.coach-back {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: var(--tap-min);
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--dock-strong);
+  cursor: pointer;
+}
+
+.coach-back:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.coach-count {
+  margin: 0;
+  font-size: min(var(--text-xs), 18px);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* One short bar per step: finished steps full, the current one filling as its parts are done. */
+.coach-bars {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+  max-width: 132px;
+  margin-left: 4px;
+}
+
+.coach-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--dock-track);
+  overflow: hidden;
+}
+
+.coach-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--dock-pill);
+  transform-origin: 0 50%;
+  transition: transform 560ms var(--ease-out);
+}
+
+.coach-skip {
+  margin-left: auto;
+  min-height: var(--tap-min);
+  padding: 0 8px;
+  border: none;
+  background: none;
+  color: var(--dock-soft);
+  font: inherit;
+  font-size: min(var(--text-xs), 18px);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Every possible line sits in one grid cell; only the live one shows. The cell is as tall as the
+   longest, so the card keeps one height through the whole tour. */
+.coach-lines {
+  display: grid;
+  padding-left: 8px;
+}
+
+.coach-lines > * {
+  grid-area: 1 / 1;
+}
+
+.coach-body--sizer {
+  visibility: hidden;
+}
+
+.coach-title {
+  margin: 0;
+  color: var(--dock-strong);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+/* Plain wrapping, so lines use the card's full width (Safari's "pretty" wrapping broke them early). */
+.coach-text {
+  margin: 4px 0 0;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  text-wrap: wrap;
+}
+
+/* The tap guide: a glow around the control to tap, with a touch dot pressing it. Drawn in the Approve
+   color, which stays bright in dark mode (the brand green goes dim there). Both have a thin outline in
+   the page's color between them and the control, so they stand out even on green (the Import button,
+   the tab bar), where green alone blended in (Eli, 7b). */
+.tour-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 61;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 5px var(--approve);
+  animation: tour-glow 2400ms ease-in-out infinite;
+}
+
+.tour-ring:not([data-on]) {
+  visibility: hidden;
+}
+
+@keyframes tour-glow {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  40%,
+  60% {
+    opacity: 1;
+  }
+}
+
+.tour-tap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border: 2px solid var(--approve);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bg) 45%, transparent);
+  box-shadow: 0 0 0 2px var(--bg);
+  animation: tour-tap 2400ms var(--ease-out) infinite;
+}
+
+/* Appears, presses in as if tapped, lifts off, and fades. */
+@keyframes tour-tap {
+  0% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+  22% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  34% {
+    transform: scale(0.82);
+  }
+  48% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-ring {
+    animation: none !important;
+  }
+  .tour-tap {
+    display: none;
+  }
+}
+
+/* While the tour card shows, everything else moves down by its height, so it never covers a button. */
+/* When the card grows (a step with a button), the screen glides down rather than jumping. */
+[data-coach] .app {
+  padding-top: var(--coach-space);
+  transition: padding-top 400ms var(--ease-out);
+}
+
+[data-coach] .header {
+  padding-top: 10px;
+}
+
+[data-coach] .overlay {
+  top: var(--coach-space);
+  transition: top 400ms var(--ease-out);
+}
+
+[data-coach] .overlay-inner {
+  padding-top: 10px;
+}
+
+[data-coach] .slide-over-top {
+  margin-top: -10px;
+  padding-top: 10px;
+}
+
+[data-coach] .sheet {
+  max-height: calc(100dvh - var(--coach-space) - 16px);
+}
+
+/* On short phones the tour card takes room from the swipe card, which may shrink further than usual
+   so the action buttons below it stay on screen. */
+[data-coach] .deck-stack {
+  min-height: 210px;
+}

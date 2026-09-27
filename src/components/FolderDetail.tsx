@@ -17,6 +17,8 @@ interface Props {
   onSetNote: (txnId: string, note: string) => void
   /** A purchase to bring into view and highlight once (when opened from Tasks). */
   focusId?: string | null
+  /** The tour: the one status the status menu offers. */
+  onlyStatus?: Action
 }
 
 /**
@@ -36,7 +38,7 @@ const PULSE: Keyframe[] = [{ transform: 'scale(1)' }, { transform: 'scale(1.025)
 
 /** One folder's purchases, each with a status and a note. The header's back button returns
  *  to all folders. */
-export function FolderDetail({ pile, txns, onSetAction, onSetNote, focusId }: Props) {
+export function FolderDetail({ pile, txns, onSetAction, onSetNote, focusId, onlyStatus }: Props) {
   const [noteOpenId, setNoteOpenId] = useState<string | null>(null)
   const [statusForId, setStatusForId] = useState<string | null>(null)
   const rows = useRef(new Map<string, HTMLLIElement>())
@@ -142,6 +144,7 @@ export function FolderDetail({ pile, txns, onSetAction, onSetNote, focusId }: Pr
       {statusFor && (
         <StatusSheet
           txn={statusFor}
+          only={onlyStatus}
           onClose={() => setStatusForId(null)}
           onPick={(action) => {
             onSetAction(statusFor.id, action)

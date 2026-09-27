@@ -3,6 +3,7 @@
 // Saving statements in the browser's real database (IndexedDB, through Dexie), which the unit
 // tests can't reach: surviving a reload, deleting, and moving a review saved by an older version.
 import { expect, test, type Page } from '@playwright/test'
+import { reviewSample } from './app.ts'
 
 /** Lets the app's short save delay pass, then reloads, like closing and reopening the app. */
 async function reopen(page: Page) {
@@ -11,10 +12,7 @@ async function reopen(page: Page) {
 }
 
 test('keeps statements across a reload, and deletes one after asking', async ({ page }) => {
-  await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'No statements yet' })).toBeVisible()
-  await page.getByRole('button', { name: 'Import a statement' }).click()
-  await page.getByRole('button', { name: /Try the sample statement/ }).click()
+  await reviewSample(page)
   await page.getByRole('button', { name: 'Approve' }).click()
   await expect(page.getByText('1 of 16 reviewed')).toBeVisible()
 
@@ -27,7 +25,7 @@ test('keeps statements across a reload, and deletes one after asking', async ({ 
   await reopen(page)
   await expect(page.getByText('In progress, 15 of 16 left')).toBeVisible()
 
-  await page.getByRole('button', { name: 'More for March 2026 sample' }).click()
+  await page.getByRole('button', { name: 'More for March 2026' }).click()
   await page.getByRole('button', { name: 'Delete' }).click()
   await page.getByRole('button', { name: 'Delete statement' }).click()
   await expect(page.getByRole('heading', { name: 'No statements yet' })).toBeVisible()

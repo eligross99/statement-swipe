@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test'
+import { openApp } from './app.ts'
 
 test('reads a statement PDF and starts the review', async ({ page }) => {
-  await page.goto('/')
+  await openApp(page)
   await page.getByRole('button', { name: 'Import a statement' }).click()
   await page.locator('input[type=file]').setInputFiles('tests/fixtures/sample-statement.pdf')
 
@@ -15,7 +16,7 @@ test('reads a statement PDF and starts the review', async ({ page }) => {
 })
 
 test('explains that a scanned PDF can’t be read', async ({ page }) => {
-  await page.goto('/')
+  await openApp(page)
   await page.getByRole('button', { name: 'Import a statement' }).click()
   await page.locator('input[type=file]').setInputFiles('tests/fixtures/scanned-statement.pdf')
   await expect(page.getByRole('alert')).toContainText('looks like a scan')

@@ -60,8 +60,9 @@ Deploys, CI, security headers, and the phone test checklist: `docs/deploy.md`.
   (name, dates, archived, undo steps). A `Session` no longer has a `label`; the name lives on the `Statement`.
   `Transaction.actionAt` (when it was filed, flagged, or last changed status) drives Overdue in Tasks.
 - **State:** `libraryReducer` (`src/lib/library.ts`) holds every statement, which screen is showing, and the
-  last tab (`home`, where Back returns), and hands review events to `reviewReducer` (`src/lib/review.ts`) for
-  the open statement, or for statement `id` when Tasks changes one that isn't open. The Tasks list is derived
+  last tab (`home`, where Back returns), and whether the tour was seen. While the tour runs, `tour` holds a
+  separate practice library that the app shows instead (never saved). It hands review events to
+  `reviewReducer` (`src/lib/review.ts`) for the open statement, or for statement `id` when Tasks changes one that isn't open. The Tasks list is derived
   from the statements by `allTasks` (`src/lib/tasks.ts`), never stored.
 - **Persistence:** `useLibrary` saves changed statements to IndexedDB (debounced, flushed when the app is
   hidden) and restores them, plus where the user was, on load.
@@ -169,9 +170,15 @@ See `docs/handoff.md` §11 for details.
     phone-tested and approved by Eli; a swipe tick on Android (`src/lib/haptics.ts`) and "Share to
     Statement Swipe" on Android (`src/lib/shareTarget.ts`, `public/share-target.js`). Android testing
     postponed by Eli: both Android features are covered by automated tests only until checked on Android
-  - [ ] 7b. ← **next.** The onboarding tour: an interactive walkthrough on a sandboxed sample statement, replayable
-    from Settings; the standalone "Try the sample statement" button goes away; per-bank download guides
-  - [ ] 7c. Remembered bank setups and OFX/QFX files
+  - [x] 7b. The onboarding tour (`src/lib/tour.ts`, `TourCoach`):
+    six strict, in-order steps through the real app on a 3-purchase practice statement kept in a
+    never-saved sandbox (`state.tour`), a tap guide and a leaning swipe hint, only each step's controls
+    responding (`data-tour` names), shown on first launch and replayable from Settings; the
+    "Try the sample statement" button is gone (tests use `sampleTransactions` or `tests/fixtures/sample-march.csv`);
+    per-bank download guides (`src/lib/bankGuides.ts`, `GuidePage`) at the tour's end and from Import.
+    Phone-tested and approved by Eli over three rounds (strict in-order steps, a tap guide, a stretchy
+    tour card with swipe-right-to-go-back, floating back buttons on slide-over pages)
+  - [ ] 7c. ← **next.** Remembered bank setups and OFX/QFX files
 - [ ] 8. On-device smarts: familiar/new merchant tags, merchant-code decoder, web-search link,
   calendar reminders (see `docs/ideas.md`)
 - [ ] 9. App Store version with Capacitor (**ask Eli again before starting**), then accounts/backend + Stripe, then opt-in bank connection (Teller → Plaid) through a relay-only
