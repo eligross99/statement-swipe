@@ -72,8 +72,13 @@ Read this before designing a new screen.
   statuses. The deck accepts only the swipe being taught (`only` in `Deck.tsx`).
 - **Point at what to tap (7b).** The tap guide is a soft glow around the control (its own rounded
   corners, or its card's) plus the swipe hint's touch dot pressing it, every 2.4s. It follows the control,
-  hides while something covers it, and scrolls it into full view if it's cut off. Drawn in the Approve
-  color, which stays bright in dark mode. With Reduce Motion the glow stays still and the dot is hidden.
+  hides while something covers it, and scrolls it into full view if it's cut off, once per instruction
+  (doing it again yanked the page back while Eli scrolled Look closer). Drawn in the Approve color, which
+  stays bright in dark mode, with a thin page-colored outline between it and the control, so it still
+  shows on green (on the green Import button it "blended in", Eli). With Reduce Motion the glow stays
+  still and the dot is hidden.
+- **Guard taps, never touches.** The tour stops only taps (clicks) outside the step. A finger going down
+  also starts every scroll, so reacting to it treated scrolling as a wrong tap (`TourCoach.tsx`).
 - **Expandable rows grow and fold at the same pace (7b).** The bank guides open one at a time: the row's
   body animates `grid-template-rows` from `0fr` to `1fr` over 400ms with a fade, and the chevron turns.
   Closed bodies stay in the page but are `inert`, so they can't be reached until opened (`GuidePage.css`).

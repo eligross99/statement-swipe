@@ -151,15 +151,19 @@
   text-wrap: wrap;
 }
 
-/* The tap guide: a soft glow around the control to tap, with a touch dot pressing it. Drawn in the
-   Approve color, which stays bright in dark mode (the brand green goes dim there). */
+/* The tap guide: a glow around the control to tap, with a touch dot pressing it. Drawn in the Approve
+   color, which stays bright in dark mode (the brand green goes dim there). Both have a thin outline in
+   the page's color between them and the control, so they stand out even on green (the Import button,
+   the tab bar), where green alone blended in (Eli, 7b). */
 .tour-ring {
   position: fixed;
   top: 0;
   left: 0;
   z-index: 61;
   pointer-events: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--approve) 55%, transparent);
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 5px var(--approve);
   animation: tour-glow 2400ms ease-in-out infinite;
 }
 
@@ -170,7 +174,7 @@
 @keyframes tour-glow {
   0%,
   100% {
-    opacity: 0.25;
+    opacity: 0.4;
   }
   40%,
   60% {
@@ -185,9 +189,10 @@
   width: 40px;
   height: 40px;
   margin: -20px 0 0 -20px;
-  border: 2px solid color-mix(in srgb, var(--approve) 50%, transparent);
+  border: 2px solid var(--approve);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--approve) 18%, transparent);
+  background: color-mix(in srgb, var(--bg) 45%, transparent);
+  box-shadow: 0 0 0 2px var(--bg);
   animation: tour-tap 2400ms var(--ease-out) infinite;
 }
 

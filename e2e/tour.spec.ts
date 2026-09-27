@@ -43,6 +43,14 @@ test('teaches each step in order through the real app, then remembers it was see
 
   await swipe(page, -200, 0)
   await expect(page.getByRole('button', { name: /Yes, approve it/ })).toBeDisabled()
+  // Scrolling away from the Flag button and touching the page leaves the page where it was: the tap
+  // guide only brings a control into view once (it used to yank the page back mid-scroll).
+  const look = page.locator('.overlay')
+  await page.waitForTimeout(900)
+  await look.evaluate((el) => (el.scrollTop = 0))
+  await page.getByText('Transaction date').click()
+  await page.waitForTimeout(900)
+  expect(await look.evaluate((el) => el.scrollTop)).toBe(0)
   await page.getByRole('button', { name: /flag as possible fraud/ }).click()
 
   await expect(said).toContainText('Swipe up to file')

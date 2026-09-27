@@ -1,5 +1,5 @@
 import { ChevronLeft } from 'lucide-react'
-import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent, type RefObject } from 'react'
 import { canAnimate, token } from '../lib/motion'
 import { ALL_LINES, target, TOUR_LENGTH, type TourLine, type TourTarget } from '../lib/tour'
 import './TourCoach.css'
@@ -49,6 +49,9 @@ export function TourCoach({ line, step, progress, outro = false, onBack, onClose
   const [finishFirst, setFinishFirst] = useState<string | null>(null)
   const finishTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const drag = useRef<{ x: number; y: number; axis: 'x' | 'y' | null } | null>(null)
+  // The control the tap guide last scrolled into view. Kept here, not in the guide, so replaying the
+  // guide never scrolls the page again while the user is scrolling it.
+  const revealed = useRef<HTMLElement | null>(null)
 
   // Keep --coach-space equal to the card's height, including when the text size changes.
   useLayoutEffect(() => {
@@ -86,7 +89,9 @@ export function TourCoach({ line, step, progress, outro = false, onBack, onClose
   }
 
   // Only the instruction's controls respond while the tour runs. Checked before anything else sees
-  // the event (the capture phase), so a blocked tap never reaches the app.
+  // the event (the capture phase), so a blocked tap never reaches the app. Only taps (clicks) are
+  // stopped, never a finger going down: that starts every scroll, and reacting to it made scrolling
+  // Look closer jump back to the Flag button.
   const allowKey = line.allow.join()
   useEffect(() => {
     if (outro) return
@@ -97,18 +102,16 @@ export function TourCoach({ line, step, progress, outro = false, onBack, onClose
       if (ok(e.target)) return
       e.preventDefault()
       e.stopPropagation()
-      if (e.type === 'pointerdown' || e.type === 'keydown') nudge()
+      nudge()
     }
     const onKey = (e: KeyboardEvent) => {
       // Escape would close a page or sheet the step needs; Enter and Space act like taps.
       if (e.key === 'Escape' || ((e.key === 'Enter' || e.key === ' ') && !ok(e.target))) block(e)
     }
     const opts = { capture: true }
-    document.addEventListener('pointerdown', block, opts)
     document.addEventListener('click', block, opts)
     document.addEventListener('keydown', onKey, opts)
     return () => {
-      document.removeEventListener('pointerdown', block, opts)
       document.removeEventListener('click', block, opts)
       document.removeEventListener('keydown', onKey, opts)
     }
@@ -240,7 +243,7 @@ export function TourCoach({ line, step, progress, outro = false, onBack, onClose
           </div>
         </div>
       </aside>
-      <TourPointer key={replay} targets={line.point} />
+      <TourPointer key={replay} targets={line.point} revealed={revealed} />
     </>
   )
 }
@@ -281,22 +284,21 @@ function scrollToMiddle(el: HTMLElement) {
  * gently. It follows the control as things move, hides while something covers it, and scrolls a
  * hidden control into view. Remounted (by its key) to start over.
  */
-function TourPointer({ targets }: { targets: TourTarget[] }) {
+function TourPointer({ targets, revealed }: { targets: TourTarget[]; revealed: RefObject<HTMLElement | null> }) {
   const ring = useRef<HTMLDivElement>(null)
   const key = targets.join()
   useEffect(() => {
     if (!key) return
     const names = key.split(',') as TourTarget[]
     let frame = 0
-    let revealed: HTMLElement | null = null
     const tick = () => {
       frame = requestAnimationFrame(tick)
       const r = ring.current
       if (!r) return
       const found = findTarget(names)
       // Scrolls each control into full view once (not again, if it can't go any further).
-      if (found?.cutOff && revealed !== found.el) {
-        revealed = found.el
+      if (found?.cutOff && revealed.current !== found.el) {
+        revealed.current = found.el
         scrollToMiddle(found.el)
       }
       if (!found?.visible) {
@@ -312,7 +314,7 @@ function TourPointer({ targets }: { targets: TourTarget[] }) {
     }
     tick()
     return () => cancelAnimationFrame(frame)
-  }, [key])
+  }, [key, revealed])
 
   if (!key) return null
   return (
