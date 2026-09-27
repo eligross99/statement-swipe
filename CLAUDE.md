@@ -170,13 +170,15 @@ See `docs/handoff.md` §11 for details.
     phone-tested and approved by Eli; a swipe tick on Android (`src/lib/haptics.ts`) and "Share to
     Statement Swipe" on Android (`src/lib/shareTarget.ts`, `public/share-target.js`). Android testing
     postponed by Eli: both Android features are covered by automated tests only until checked on Android
-  - [ ] 7b. ← **built, waiting for Eli's phone test.** The onboarding tour (`src/lib/tour.ts`, `TourCoach`):
+  - [x] 7b. The onboarding tour (`src/lib/tour.ts`, `TourCoach`):
     six strict, in-order steps through the real app on a 3-purchase practice statement kept in a
     never-saved sandbox (`state.tour`), a tap guide and a leaning swipe hint, only each step's controls
     responding (`data-tour` names), shown on first launch and replayable from Settings; the
     "Try the sample statement" button is gone (tests use `sampleTransactions` or `tests/fixtures/sample-march.csv`);
-    per-bank download guides (`src/lib/bankGuides.ts`, `GuidePage`) at the tour's end and from Import
-  - [ ] 7c. Remembered bank setups and OFX/QFX files
+    per-bank download guides (`src/lib/bankGuides.ts`, `GuidePage`) at the tour's end and from Import.
+    Phone-tested and approved by Eli over three rounds (strict in-order steps, a tap guide, a stretchy
+    tour card with swipe-right-to-go-back, floating back buttons on slide-over pages)
+  - [ ] 7c. ← **next.** Remembered bank setups and OFX/QFX files
 - [ ] 8. On-device smarts: familiar/new merchant tags, merchant-code decoder, web-search link,
   calendar reminders (see `docs/ideas.md`)
 - [ ] 9. App Store version with Capacitor (**ask Eli again before starting**), then accounts/backend + Stripe, then opt-in bank connection (Teller → Plaid) through a relay-only

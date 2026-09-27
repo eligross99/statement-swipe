@@ -92,7 +92,9 @@ September 2026" and a note that buttons move. Eli also asked for **a motion hint
 swipe**: the card leans that way with its stamp peeking, then settles. Eli will check the Bank of America
 guide against their own app during the phone test.
 
-**Built in 7b (2026-09-26):** see "Onboarding tour" below.
+**Built in 7b (2026-09-26):** see "Onboarding tour" below. **Phase 7b was phone-tested and approved by Eli
+on 2026-09-27**, after a third round that fixed Look closer jumping while scrolling in the tour and made
+the tap guide visible on green. Next: 7c (remembered bank setups and OFX/QFX files) in a fresh session.
 
 **Eli's first 7b phone test (2026-09-26), all approved as a plan:** the tour becomes a strict, in-order
 sandbox that mimics real use, in **six steps**: open the practice statement from Statements and approve;
