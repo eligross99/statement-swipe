@@ -146,7 +146,7 @@ is live; what matters is whether a tester's **first five minutes** go well. The 
 4. **Android features never checked on a real phone** (optional: only if a tester has Android).
 
 **Decided with Eli (2026-09-29):**
-- **PDFs:** "Help fix this for your bank" shares a masked layout (the tester sees it all first). Eli
+- **PDFs:** "Help fix this for your bank" emails a masked layout (the tester sees it all first). Eli
   approved it as a second privacy exception. Statements with no printed total show "These add up to $X.
   Check that against the purchases on your statement." so a bad read can be spotted.
 - **Feedback:** Send feedback in Settings opens an email with the app version and device type. The address
@@ -165,8 +165,19 @@ is live; what matters is whether a tester's **first five minutes** go well. The 
 
 **Built (7c, 2026-09-29):** `src/lib/splash.ts` (the logo in `index.html`, faded out once statements load),
 `src/lib/webSearch.ts` (tidies "SQ *DD BAR 574123900" to "DD BAR"), `src/lib/pdfMask.ts` and `LayoutSheet`
-(shared with `scripts/pdf-layout.ts`), `src/lib/share.ts`, `src/lib/appInfo.ts` (version and device),
+(shared with `scripts/pdf-layout.ts`), `src/lib/appInfo.ts` (version and device),
 `src/lib/feedback.ts`, `src/lib/install.ts` with `useInstall` and `InstallHint`, and `docs/testers.md`.
+
+**Eli's first 7c phone test (2026-09-29):** the install card, Search the web, and Send feedback worked
+("perfect"). Changes: the launch screen became **the Home Screen icon opened out** (its green filling the
+screen, the cards logo in the middle, the status bar green too); the note under Search the web now reads
+"Searches Google for “DD BAR”." and lines up with the paragraph above (the button label stays short, since
+labels that wrap look broken); Settings' notes wrap normally (iPhone Safari's balanced wrapping squeezed
+them). **Help fix this now opens a ready-to-send email** with the masked layout in it, instead of the
+phone's share sheet, which left people unsure what to do. A link can't attach a file, so the layout is in
+the email itself (a real statement's is about 35,000 characters). **Sending it automatically**, with just
+a "Thanks, we'll fix it" confirmation, needs a server and an email service: **deferred to Phase 9** with
+the backend (Eli's alternative, 2026-09-29).
 
 ### "Set status" menu → Phase 4
 Rename "Set next step" to "Set status"; tapping opens a menu with To do / Waiting / Done (plus a way

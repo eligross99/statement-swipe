@@ -88,7 +88,8 @@ Deploys, CI, security headers, and the phone test checklist: `docs/deploy.md`.
     (`src/lib/webSearch.ts`). Never amounts, dates, notes.
   - "Help fix this for your bank" (Import, when a PDF doesn't add up or has no purchases) shares a
     statement's **masked layout** (every letter X, every digit 9, statement words kept; `src/lib/pdfMask.ts`)
-    through the phone's share sheet, after showing the user exactly what will be shared (approved by Eli 2026-09-29).
+    in an email the user's own mail app opens (`layoutMailto` in `src/lib/feedback.ts`), after showing exactly
+    what will be sent; the user taps Send (approved by Eli 2026-09-29).
 - "Send feedback" opens the user's own mail app with only the app version and device type.
 - **This GitHub repo is public.** Never commit real statements or personal financial data.
   `.gitignore` blocks `*.csv`/`*.ofx`/`*.qfx`/`*.pdf`. Test data must be synthetic and live in `tests/fixtures/`.
@@ -125,8 +126,9 @@ its entry there in the same commit, with what it is, why, and where it lives in 
   Buttons say what happens; empty and error states tell the user what to do next.
 - Destructive actions (start over, delete a folder with purchases) always ask first.
 - The app's colors also appear in `vite.config.ts` (manifest `theme_color`/`background_color`),
-  `index.html` (`theme-color`), `public/theme.js` and `THEME_COLOR` in `src/lib/theme.ts` (both themes'
-  `--bg`), and the icon SVGs (including the copy of the logo in `index.html`'s launch screen), which can't read CSS variables. Keep them in sync with `--bg`/`--brand`.
+  `index.html` (`theme-color`), `THEME_COLOR` in `src/lib/theme.ts` (both themes' `--bg`), `public/theme.js`
+  (the launch screen's green, `--launch`), and the icon SVGs (including the copy of the logo in
+  `index.html`'s launch screen), which can't read CSS variables. Keep them in sync with `--bg`/`--brand`/`--launch`.
 
 ## Workflow
 

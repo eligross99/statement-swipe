@@ -86,8 +86,13 @@ Read this before designing a new screen.
   (`<a class="btn">`, so the phone opens the browser or mail app) with the same press-in as buttons
   (`a.btn:active` in `index.css`) and no underline.
 - **Say exactly what leaves the device, right where it happens (7c).** "Search the web" has a quiet line
-  under it naming the words Google gets ("Opens Google with just “DD BAR”, nothing else."), and "Help fix
-  this for your bank" shows the full masked text in a scrolling grey box before Share (`LayoutSheet`).
+  under it naming the words Google gets ("Searches Google for “DD BAR”.", lined up with the paragraph
+  above it, not centered), and "Help fix this for your bank" shows the full masked text in a scrolling grey
+  box before "Email the layout" (`LayoutSheet`).
+- **Hand off to a ready-made email, not the share sheet (7c, Eli).** The phone's share sheet left people
+  unsure what to do next; a `mailto:` link opens their mail app with the address, subject, and content
+  filled in, so the only step left is Send (`src/lib/feedback.ts`). Keep button labels short and fixed;
+  put variable text (a merchant name) in the note beside the button, never in the label.
 - **Touch targets are at least 44px** (`--tap-min`); badges and other fixed-size bits cap their text with
   `min()` so large text settings can't break them.
 
@@ -130,8 +135,10 @@ Read this before designing a new screen.
   steps stay in Settings, so dismissing loses nothing (`InstallHint.tsx`). It only appears where it
   applies (a phone that hasn't installed the app), never during the tour.
 - **Only the logo while loading (7c, Eli: "like other professional apps").** The launch screen is the
-  app icon alone, centered on the page color, drawn by `index.html` itself so it's there before any app
-  code runs, in the right theme (`public/theme.js` has already run). It stays only as long as loading
+  Home Screen icon opened out: its green (`--launch`, the same in both themes) filling the screen with the
+  white cards logo in the middle, and the status bar green too (`public/theme.js`; `applyTheme` switches it
+  back as the logo fades). An icon on a white page was Eli's first version; the full-green one continues
+  the tap on the Home Screen icon. It's drawn by `index.html` itself, so it's there before any app code runs. It stays only as long as loading
   takes, never an added wait, then fades out over 450ms while the logo grows 8% (Reduce Motion: a quick
   fade only). Taps pass through it (`src/lib/splash.ts`, `#splash` in `index.css`).
 - **Symmetry:** header buttons mirror each other (icon-only circles, a spacer when one side is empty),
@@ -169,6 +176,9 @@ consistently finds motion a little fast: start at the slow end.
   what happens, and empty states say what to do next (`CLAUDE.md` has the full list).
 - **Careful fraud wording:** "possible fraud"; don't push people to dispute. Confirmations get gentler
   or firmer to match the situation (approving a flag marked To do or Waiting asks "Approve it anyway?").
+- **Don't balance text that fills a wide box on iPhone.** Safari's `text-wrap: balance` breaks lines far
+  short of the edge (the notes under Settings' buttons looked "smushed to the center" on the iPhone but
+  not on a computer, 7c). Those notes wrap normally, and are checked at phone width for stranded words.
 - **No stranded words:** `text-wrap: pretty` on paragraphs and `balance` on short centered text,
   `white-space: nowrap` on button labels. Center short footer text instead of leaving balanced text
   lopsided in a wide box.

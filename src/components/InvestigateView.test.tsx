@@ -33,6 +33,6 @@ describe('InvestigateView', () => {
     expect(link).toHaveAttribute('href', 'https://www.google.com/search?q=DD%20BAR')
     expect(link).toHaveAttribute('target', '_blank')
     expect(link).toHaveAttribute('rel', 'noopener noreferrer')
-    expect(link).toHaveAccessibleDescription('Opens Google with just “DD BAR”, nothing else.')
+    expect(link).toHaveAccessibleDescription('Searches Google for “DD BAR”.')
   })
 })

@@ -74,7 +74,7 @@ export function InvestigateView(props: Props) {
             <Search size={18} aria-hidden /> Search the web
           </a>
           <p id="investigate-search-help" className="muted investigate-search-help">
-            Opens Google with just “{merchantQuery(txn.desc)}”, nothing else.
+            Searches Google for “{merchantQuery(txn.desc)}”.
           </p>
 
           {canDecide && (

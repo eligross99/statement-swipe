@@ -1,10 +1,9 @@
-import { Share } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Mail } from 'lucide-react'
+import { useMemo } from 'react'
 import { APP_VERSION } from '../lib/appInfo'
-import { FEEDBACK_EMAIL } from '../lib/feedback'
+import { layoutMailto } from '../lib/feedback'
 import type { Line } from '../lib/pdfLines'
 import { maskedLayout } from '../lib/pdfMask'
-import { shareText, type ShareResult } from '../lib/share'
 import { Sheet } from './Sheet'
 import './LayoutSheet.css'
 
@@ -17,9 +16,9 @@ interface Props {
 }
 
 /**
- * "Help fix this for your bank": shows a PDF statement's masked layout (every letter X, every digit 9)
- * and lets the user share it through the phone's share sheet. The user sees exactly what's shared,
- * and nothing leaves the device unless they choose where to send it.
+ * "Help fix this for your bank": shows a PDF statement's masked layout (every letter X, every digit 9),
+ * then opens an email to the Statement Swipe team with it already in place, so the user only taps Send.
+ * The user sees exactly what's shared, and nothing leaves the device unless they send it.
  */
 export function LayoutSheet({ lines, problem, onClose }: Props) {
   const layout = useMemo(
@@ -30,42 +29,28 @@ export function LayoutSheet({ lines, problem, onClose }: Props) {
       ),
     [lines, problem],
   )
-  const [result, setResult] = useState<ShareResult | null>(null)
 
   return (
     <Sheet id="layout-title" title="Help fix this for your bank" onDismiss={onClose}>
       {(close) => (
         <>
           <p className="sheet-text layout-lede">
-            Share how this statement is laid out, so Statement Swipe can learn to read your bank’s PDFs. Every letter
-            becomes X and every number 9, so no names, purchases, amounts, or account numbers are included.
+            Send us how this statement is laid out, so Statement Swipe can learn to read your bank’s PDFs. Every
+            letter becomes X and every number 9, so no names, purchases, amounts, or account numbers are included.
           </p>
-          <h3 className="section-label">What you’ll share</h3>
+          <h3 className="section-label">What you’ll send</h3>
           <pre className="layout-preview" tabIndex={0} aria-label="The masked layout">
             {layout}
           </pre>
-          <p className="muted layout-to" role="status">
-            {result === 'copied'
-              ? `Copied. Paste it into an email to ${FEEDBACK_EMAIL}.`
-              : result === 'failed'
-                ? 'Couldn’t open sharing on this device. Try again, or send feedback from Settings instead.'
-                : `Send it to ${FEEDBACK_EMAIL}.`}
-          </p>
+          <p className="muted layout-to">This opens an email with the layout already in it. Just tap Send.</p>
           <div className="btn-row">
             <button type="button" className="btn btn--secondary" onClick={() => close()}>
-              {result === 'copied' ? 'Done' : 'Cancel'}
+              Cancel
             </button>
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={async () => {
-                const r = await shareText(layout, 'statement-layout.txt')
-                if (r === 'shared') close()
-                else setResult(r)
-              }}
-            >
-              <Share size={18} aria-hidden /> Share layout
-            </button>
+            {/* A link, so the phone opens its mail app; the sheet slides away behind it. */}
+            <a className="btn btn--primary" href={layoutMailto(layout)} onClick={() => close()}>
+              <Mail size={18} aria-hidden /> Email the layout
+            </a>
           </div>
         </>
       )}

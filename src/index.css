@@ -34,21 +34,21 @@ body {
   overscroll-behavior-y: contain;
 }
 
-/* The launch screen (index.html): the logo alone, centered on the page color, over everything until
-   saved statements are ready. Taps pass through, so it can never block the app. See src/lib/splash.ts. */
+/* The launch screen (index.html): the Home Screen icon's green filling the screen with its cards logo in
+   the middle, over everything until saved statements are ready. Taps pass through, so it can never block
+   the app. See src/lib/splash.ts. */
 #splash {
   position: fixed;
   inset: 0;
   z-index: 1000;
   display: grid;
   place-items: center;
-  background: var(--bg);
+  background: var(--launch);
   pointer-events: none;
 }
 
 #splash svg {
-  width: 96px;
-  height: 96px;
+  height: 128px;
 }
 
 /* Money figures: equal-width digits so columns of amounts line up and are easy to compare. */

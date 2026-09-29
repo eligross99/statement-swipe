@@ -13,6 +13,6 @@ describe('maskedLayout', () => {
   it('lists each page’s lines, masked, under a heading', () => {
     const line = (page: number, y: number, x: number, text: string): Line => ({ page, y, cells: [{ x, text }], text })
     const out = maskedLayout([line(1, 700, 36.4, 'Acme 4.75'), line(2, 690, 36, 'Payments')], 'About this file')
-    expect(out).toBe('About this file\n\n=== Page 1 ===\ny700  @36 Xxxx 9.99\n\n=== Page 2 ===\ny690  @36 Payments')
+    expect(out).toBe('About this file\n\n=== Page 1 ===\ny700 @36 Xxxx 9.99\n\n=== Page 2 ===\ny690 @36 Payments')
   })
 })

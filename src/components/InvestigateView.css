@@ -61,11 +61,11 @@
   margin-top: 16px;
 }
 
+/* Lined up with the paragraph above it, like the rest of the page's text. */
 .investigate-search-help {
   margin: 8px 0 0;
   font-size: var(--text-sm);
-  text-align: center;
-  text-wrap: balance;
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 

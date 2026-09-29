@@ -22,7 +22,5 @@
 .layout-to {
   margin: 12px 0 16px;
   font-size: var(--text-sm);
-  text-align: center;
-  text-wrap: balance;
-  overflow-wrap: anywhere;
+  line-height: 1.45;
 }

@@ -13,6 +13,8 @@
     choice === 'dark' ||
     (choice !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
   document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+  // The status bar starts green, matching the launch screen (--launch in tokens.css). Once the app is
+  // ready, applyTheme (src/lib/theme.ts) switches it to the page color as the launch screen fades.
   var meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.setAttribute('content', dark ? '#0b1410' : '#f4f7f5')
+  if (meta) meta.setAttribute('content', '#0a7d4f')
 })()

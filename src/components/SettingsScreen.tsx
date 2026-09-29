@@ -171,7 +171,7 @@ export function SettingsScreen({ statementCount, settings, onChange, onEraseAll,
           </p>
           <p className="muted">
             Only two things ever leave this device, and only when you tap them: a merchant’s name when you search the
-            web for it, and a statement’s masked layout if you choose to share it.
+            web, and a statement’s masked layout if you send it.
           </p>
           <p className="muted">
             {statementCount ? `${plural(statementCount, 'statement')} saved on this device.` : 'No statements saved yet.'}

@@ -60,7 +60,7 @@ const LAYOUT_PROBLEM = {
   none: 'No purchases were found.',
 } as const
 
-/** A statement's text, kept so the user can choose to share its masked layout. */
+/** A statement's text, kept so the user can choose to send its masked layout. */
 interface HelpLayout {
   lines: Line[]
   problem: keyof typeof LAYOUT_PROBLEM

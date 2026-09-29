@@ -29,7 +29,7 @@ export function mask(text: string): string {
 
 /** One line of the layout: its height on the page, then each cell's left edge and masked text. */
 export function maskLine(line: Line): string {
-  return `y${line.y}  ${line.cells.map((cell) => `@${Math.round(cell.x)} ${mask(cell.text)}`).join('  |  ')}`
+  return `y${line.y} ${line.cells.map((cell) => `@${Math.round(cell.x)} ${mask(cell.text)}`).join(' | ')}`
 }
 
 /** A whole statement's masked layout, page by page, as plain text to share. */
