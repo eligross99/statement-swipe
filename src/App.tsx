@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
 import { Deck, type Direction, type LeavingCard, type Offset, type ReturningCard } from './components/Deck'
 import { FolderDetail } from './components/FolderDetail'
@@ -6,6 +6,7 @@ import { FolderSheet } from './components/FolderSheet'
 import { GuidePage } from './components/GuidePage'
 import { Header, type HeaderButton } from './components/Header'
 import { ImportScreen, type Naming } from './components/ImportScreen'
+import { InstallHint } from './components/InstallHint'
 import { InvestigateView } from './components/InvestigateView'
 import { SettingsScreen } from './components/SettingsScreen'
 import { StatementsScreen } from './components/StatementsScreen'
@@ -24,6 +25,7 @@ import { currentTxn, type ReviewEvent } from './lib/review'
 import { PRACTICE_FOLDER } from './lib/sample'
 import { defaultName, pastFolderNames, statementPeriod } from './lib/statements'
 import { discardSharedFile } from './lib/shareTarget'
+import { hideSplash } from './lib/splash'
 import { allTasks, overdueCount } from './lib/tasks'
 import { guideFor, OUTRO, TOUR_LENGTH } from './lib/tour'
 import type { Screen, Session, Status, Transaction } from './types'
@@ -49,6 +51,10 @@ export default function App() {
   const send = (action: LibraryAction) => sendReal(practice ? { type: 'tour', action } : action)
   const statement = openStatement(shownLibrary)
   useTheme(settings.theme, ready)
+  // The launch screen's logo fades away once saved statements are ready.
+  useEffect(() => {
+    if (ready) hideSplash()
+  }, [ready])
   // A statement shared from Android's Share menu skips the tour (if it's running) and opens Import.
   const openShared = useCallback(
     (action: LibraryAction) => {
@@ -174,6 +180,13 @@ export default function App() {
     if (txn) setReturning({ txnId: txn.id, dir: flewTo(txn.status) })
   }
 
+  // "Add Swipe to your Home Screen", until the user says Not now. Never during the tour or its last
+  // card, which have their own instructions on screen. The card itself shows only where it's needed.
+  const installHint =
+    !practice && !outro && !library.installHintHidden ? (
+      <InstallHint hasStatements={statements.length > 0} onHide={() => sendReal({ type: 'hideInstallHint' })} />
+    ) : null
+
   const goTab = (tab: Tab) => go({ type: 'go', view: tab })
   /** Back to the tab the user came from. */
   const back: HeaderButton = {
@@ -216,9 +229,8 @@ export default function App() {
     <div className="app">
       <Header {...header} />
 
-      {!ready ? (
-        <p className="app-loading">Loading…</p>
-      ) : (
+      {/* Until saved statements are ready, the launch screen's logo covers the app (src/lib/splash.ts). */}
+      {!ready ? null : (
         // Keyed by screen, so each new screen mounts fresh and plays its entrance.
         <div key={`${mode}-${place}`} className={`view enter-${shown.enter}`}>
           {place === 'statements' && (
@@ -232,6 +244,7 @@ export default function App() {
               onRename={(id, name) => send({ type: 'rename', id, name })}
               onArchive={(id, archived) => send({ type: 'archive', id, archived })}
               onDelete={(id) => send({ type: 'delete', id })}
+              notice={installHint}
             />
           )}
 
@@ -252,6 +265,7 @@ export default function App() {
               shared={sharedFile}
               onTakeShared={clearSharedFile}
               onHelp={() => setGuideOpen(true)}
+              notice={installHint}
             />
           )}
 

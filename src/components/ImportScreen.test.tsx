@@ -54,11 +54,42 @@ describe('ImportScreen with a PDF', () => {
     )
   })
 
+  it('offers to share a masked layout when the purchases don’t add up, and shows exactly what’s shared', async () => {
+    const lines = [{ page: 1, y: 700, cells: [{ x: 36, text: 'Fake Coffee Co 4.75' }], text: 'Fake Coffee Co 4.75' }]
+    vi.spyOn(PDFSource, 'fromData').mockResolvedValue(new PDFSource(statement({ printed: 120, found: 90.95 }), lines))
+    const { user } = await choosePdf()
+
+    await user.click(await screen.findByRole('button', { name: 'Help fix this for your bank' }))
+    const preview = screen.getByLabelText('The masked layout')
+    expect(preview).toHaveTextContent('@36 Xxxx Xxxxxx Xx 9.99')
+    // Nothing real: no merchant, and no amounts, not even the totals.
+    expect(preview).not.toHaveTextContent(/Coffee|4\.75|90\.95|120/)
+    expect(preview).toHaveTextContent('didn’t add up to the total printed')
+  })
+
+  it('asks the user to check the total when the statement prints none', async () => {
+    vi.spyOn(PDFSource, 'fromData').mockResolvedValue(new PDFSource(statement(null)))
+    await choosePdf()
+    expect(await screen.findByText(/Check that against/)).toHaveTextContent(
+      'These add up to $90.95. Check that against the purchases on your statement.',
+    )
+    expect(screen.getByRole('button', { name: 'Help fix this for your bank' })).toBeInTheDocument()
+  })
+
+  it('offers the masked layout when no purchases were found, but not for a scan', async () => {
+    const lines = [{ page: 1, y: 700, cells: [{ x: 36, text: 'Total' }], text: 'Total' }]
+    vi.spyOn(PDFSource, 'fromData').mockRejectedValue(new PdfImportError('no-purchases', undefined, lines))
+    await choosePdf()
+    expect(await screen.findByRole('alert')).toHaveTextContent(/No purchases were found/)
+    expect(screen.getByRole('button', { name: 'Help fix this for your bank' })).toBeInTheDocument()
+  })
+
   it('explains what to do with a scanned PDF', async () => {
     vi.spyOn(PDFSource, 'fromData').mockRejectedValue(new PdfImportError('no-text'))
     await choosePdf()
     expect(await screen.findByRole('alert')).toHaveTextContent(/looks like a scan/)
     expect(screen.getByRole('heading', { name: 'Import your statement' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Help fix this for your bank' })).not.toBeInTheDocument()
   })
 
   it('explains when the PDF reader itself can’t load', async () => {

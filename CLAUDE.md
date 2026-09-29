@@ -60,7 +60,7 @@ Deploys, CI, security headers, and the phone test checklist: `docs/deploy.md`.
   (name, dates, archived, undo steps). A `Session` no longer has a `label`; the name lives on the `Statement`.
   `Transaction.actionAt` (when it was filed, flagged, or last changed status) drives Overdue in Tasks.
 - **State:** `libraryReducer` (`src/lib/library.ts`) holds every statement, which screen is showing, and the
-  last tab (`home`, where Back returns), and whether the tour was seen. While the tour runs, `tour` holds a
+  last tab (`home`, where Back returns), whether the tour was seen, and whether the Home Screen hint was dismissed. While the tour runs, `tour` holds a
   separate practice library that the app shows instead (never saved). It hands review events to
   `reviewReducer` (`src/lib/review.ts`) for the open statement, or for statement `id` when Tasks changes one that isn't open. The Tasks list is derived
   from the statements by `allTasks` (`src/lib/tasks.ts`), never stored.
@@ -83,8 +83,13 @@ Deploys, CI, security headers, and the phone test checklist: `docs/deploy.md`.
 - No transaction data (descriptions, amounts, dates, notes) is ever sent over the network: no
   logging services, no analytics payloads, no third-party APIs. Analytics, if added, are anonymous
   event names only (e.g. `review_completed`).
-- One exception: a "Search the web" link may open the user's browser with **only the merchant name**,
-  and only when the user taps it. Never amounts, dates, notes, or anything automatic.
+- Two exceptions, both only when the user taps them, never automatic:
+  - "Search the web" (Look closer) opens the browser at Google with **only the merchant name**
+    (`src/lib/webSearch.ts`). Never amounts, dates, notes.
+  - "Help fix this for your bank" (Import, when a PDF doesn't add up or has no purchases) shares a
+    statement's **masked layout** (every letter X, every digit 9, statement words kept; `src/lib/pdfMask.ts`)
+    through the phone's share sheet, after showing the user exactly what will be shared (approved by Eli 2026-09-29).
+- "Send feedback" opens the user's own mail app with only the app version and device type.
 - **This GitHub repo is public.** Never commit real statements or personal financial data.
   `.gitignore` blocks `*.csv`/`*.ofx`/`*.qfx`/`*.pdf`. Test data must be synthetic and live in `tests/fixtures/`.
 
@@ -121,7 +126,7 @@ its entry there in the same commit, with what it is, why, and where it lives in 
 - Destructive actions (start over, delete a folder with purchases) always ask first.
 - The app's colors also appear in `vite.config.ts` (manifest `theme_color`/`background_color`),
   `index.html` (`theme-color`), `public/theme.js` and `THEME_COLOR` in `src/lib/theme.ts` (both themes'
-  `--bg`), and the icon SVGs, which can't read CSS variables. Keep them in sync with `--bg`/`--brand`.
+  `--bg`), and the icon SVGs (including the copy of the logo in `index.html`'s launch screen), which can't read CSS variables. Keep them in sync with `--bg`/`--brand`.
 
 ## Workflow
 
@@ -178,8 +183,11 @@ See `docs/handoff.md` §11 for details.
     per-bank download guides (`src/lib/bankGuides.ts`, `GuidePage`) at the tour's end and from Import.
     Phone-tested and approved by Eli over three rounds (strict in-order steps, a tap guide, a stretchy
     tour card with swipe-right-to-go-back, floating back buttons on slide-over pages)
-  - [ ] 7c. ← **next. Ready for testers** (chosen by Eli 2026-09-29 over bank setups and OFX/QFX):
-    whatever a tester's first five minutes need. Details in `docs/ideas.md` ("Ready for testers")
+  - [ ] 7c. ← **in progress. Ready for testers** (chosen by Eli 2026-09-29 over bank setups and OFX/QFX):
+    a launch screen (logo only, `src/lib/splash.ts`), "Search the web" in Look closer, "Help fix this for
+    your bank" (`LayoutSheet`), Send feedback and the app version in Settings (`src/lib/feedback.ts`,
+    **placeholder address until Eli creates one**), an "Add Swipe to your Home Screen" card (`InstallHint`,
+    `src/lib/install.ts`), and the message for testers (`docs/testers.md`). Details in `docs/ideas.md`
 - Parked until testers' feedback says otherwise: remembered CSV bank setups and OFX/QFX files (was 7c)
 - [ ] 8. On-device smarts: familiar/new merchant tags, merchant-code decoder, web-search link,
   calendar reminders (see `docs/ideas.md`)
@@ -210,5 +218,7 @@ See `docs/handoff.md` §11 for details.
 - PDF import can't be tested in jsdom (the reader needs a worker). Reader tests run in Vitest's Node
   environment (`// @vitest-environment node`); screen tests stub `PDFSource.fromData`; `e2e/` runs the
   real thing in WebKit, and `e2e/private-statement.spec.ts` tries PDFs in `private/` (counts only).
+- **An installed iPhone web app has its own storage, separate from Safari.** Statements imported in
+  Safari don't appear after adding the app to the Home Screen, so testers are told to install first.
 - Out of scope for now: custom per-folder statuses. Native apps wait for the
   App Store step at the start of Phase 9 (via Capacitor, not a rewrite; ask Eli first).

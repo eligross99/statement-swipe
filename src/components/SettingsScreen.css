@@ -66,3 +66,8 @@
   font-size: max(var(--text-md), 16px); /* at least 16px: stops iOS zooming in */
   font-weight: 500;
 }
+
+/* A further button in the same section (Help): spaced from the note above it. */
+.settings-more {
+  margin-top: 20px;
+}

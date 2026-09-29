@@ -224,3 +224,21 @@ describe('the tour', () => {
     expect(run(loaded([statement('one')]), { type: 'eraseAll' }).tourSeen).toBe(true)
   })
 })
+
+describe('the Home Screen hint', () => {
+  const loaded = (statements: LibraryState['statements'], ui: Extract<Step, { type: 'loaded' }>['ui'] = null): Step => ({
+    type: 'loaded',
+    statements,
+    ui,
+    settings: null,
+  })
+
+  it('shows until the user says Not now, and stays hidden after loading and erasing everything', () => {
+    expect(run(loaded([])).installHintHidden).toBe(false)
+    const hidden = run(loaded([]), { type: 'hideInstallHint' })
+    expect(hidden.installHintHidden).toBe(true)
+    expect(step(hidden, { type: 'eraseAll' }).installHintHidden).toBe(true)
+    const ui = { openId: null, view: 'statements', filter: 'all', installHintHidden: true } as const
+    expect(run(loaded([], ui)).installHintHidden).toBe(true)
+  })
+})

@@ -57,6 +57,18 @@
   line-height: 1.45;
 }
 
+.investigate-search {
+  margin-top: 16px;
+}
+
+.investigate-search-help {
+  margin: 8px 0 0;
+  font-size: var(--text-sm);
+  text-align: center;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
 .investigate-track {
   margin-top: 24px;
 }

@@ -40,6 +40,8 @@ export interface LibraryState {
   settings: Settings
   /** True once the tour has been finished or skipped (or the user had statements before it existed). */
   tourSeen: boolean
+  /** True once the user has said "Not now" to adding the app to their Home Screen. */
+  installHintHidden: boolean
   /** While the tour runs: its step, and a separate, never-saved library holding only the practice
    *  statement. The app shows that instead of the real one, so practice never mixes with real statements. */
   tour: TourState | null
@@ -54,6 +56,8 @@ export interface SavedUi {
   home?: Tab
   /** Missing in saves from before the tour. */
   tourSeen?: boolean
+  /** Missing in saves from before the Home Screen hint. */
+  installHintHidden?: boolean
 }
 
 /** Something the user (or loading) did. */
@@ -68,6 +72,8 @@ export type LibraryAction =
   | { type: 'eraseAll' }
   | { type: 'setFilter'; filter: StatementFilter }
   | { type: 'setSettings'; settings: Partial<Settings> }
+  /** "Not now" on the Add to Home Screen card: it stops appearing (the steps stay in Settings). */
+  | { type: 'hideInstallHint' }
   /** Starts the tour (again) on a fresh practice statement. */
   | { type: 'startTour' }
   /** Finishes or skips the tour: the practice statement is thrown away. */
@@ -90,6 +96,7 @@ export const initialLibrary: LibraryState = {
   filter: 'all',
   settings: defaultSettings,
   tourSeen: false,
+  installHintHidden: false,
   tour: null,
 }
 
@@ -133,6 +140,7 @@ export function libraryReducer(state: LibraryState, event: LibraryEvent): Librar
         filter: ui?.filter ?? 'all',
         settings: merged,
         tourSeen,
+        installHintHidden: ui?.installHintHidden ?? false,
         tour: tourSeen ? null : newTour(practiceLibrary(merged, event.now)),
       }
     }
@@ -178,17 +186,21 @@ export function libraryReducer(state: LibraryState, event: LibraryEvent): Librar
     }
 
     case 'eraseAll':
-      // Statements go; preferences (settings, the chosen filter, the last tab, the tour) stay.
+      // Statements go; preferences (settings, the chosen filter, the last tab, the tour, the hint) stay.
       return {
         ...initialLibrary,
         home: state.home,
         filter: state.filter,
         settings: state.settings,
         tourSeen: state.tourSeen,
+        installHintHidden: state.installHintHidden,
       }
 
     case 'setFilter':
       return { ...state, filter: event.filter }
+
+    case 'hideInstallHint':
+      return { ...state, installHintHidden: true }
 
     case 'setSettings': {
       const settings = { ...state.settings, ...event.settings }

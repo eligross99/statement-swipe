@@ -43,7 +43,15 @@ export function useLibrary() {
     const put = s.statements.filter((st) => saved.current.get(st.id) !== st)
     const remove = [...saved.current.keys()].filter((id) => !current.has(id))
     saved.current = current
-    void saveLibrary(put, remove, { openId: s.openId, view: s.view, filter: s.filter, home: s.home, tourSeen: s.tourSeen }, s.settings)
+    const ui = {
+      openId: s.openId,
+      view: s.view,
+      filter: s.filter,
+      home: s.home,
+      tourSeen: s.tourSeen,
+      installHintHidden: s.installHintHidden,
+    }
+    void saveLibrary(put, remove, ui, s.settings)
   }
 
   // Debounced save whenever anything changes.

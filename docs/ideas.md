@@ -145,7 +145,28 @@ is live; what matters is whether a tester's **first five minutes** go well. The 
    after about a week without a visit unless it's installed to the Home Screen.
 4. **Android features never checked on a real phone** (optional: only if a tester has Android).
 
-The detailed plan for these is below once Eli approves it.
+**Decided with Eli (2026-09-29):**
+- **PDFs:** "Help fix this for your bank" shares a masked layout (the tester sees it all first). Eli
+  approved it as a second privacy exception. Statements with no printed total show "These add up to $X.
+  Check that against the purchases on your statement." so a bad read can be spotted.
+- **Feedback:** Send feedback in Settings opens an email with the app version and device type. The address
+  is a **placeholder** until Eli creates a separate feedback address (`FEEDBACK_EMAIL`).
+- **Install:** a quiet "Add Swipe to your Home Screen" card on Statements and Import (iPhone steps checked
+  in iOS 26 Safari: ⋯, Share, View More, Add to Home Screen, Add; an Install button on Android), hidden
+  for good by Not now, with the steps kept in Settings. Installed iPhone apps don't share Safari's storage,
+  so the steps and the tester message say to install before importing.
+- **Tester message** lives in `docs/testers.md`, for Eli to paste. No Android-specific asks (Eli: it makes
+  features look unfinished); Android testers just use it like everyone else.
+- **Added by Eli:** a **launch screen that shows only the logo** ("like other professional apps", no
+  "Loading" text), and **"Search the web"** (moved up from Phase 8) in Look closer, which also covers
+  flagged purchases opened from Tasks. Google, since obscure merchant codes need the best results.
+- **Held for Phase 8:** searching statements. Testers will have one to three statements, most named by
+  month, and the planned purchase search across statements would also find them (Eli agreed).
+
+**Built (7c, 2026-09-29):** `src/lib/splash.ts` (the logo in `index.html`, faded out once statements load),
+`src/lib/webSearch.ts` (tidies "SQ *DD BAR 574123900" to "DD BAR"), `src/lib/pdfMask.ts` and `LayoutSheet`
+(shared with `scripts/pdf-layout.ts`), `src/lib/share.ts`, `src/lib/appInfo.ts` (version and device),
+`src/lib/feedback.ts`, `src/lib/install.ts` with `useInstall` and `InstallHint`, and `docs/testers.md`.
 
 ### "Set status" menu → Phase 4
 Rename "Set next step" to "Set status"; tapping opens a menu with To do / Waiting / Done (plus a way
@@ -513,19 +534,21 @@ This reverses the old "PDF is out of scope" decision (`docs/handoff.md` §12).
 - **Later (nice-to-have):** a custom naming pattern in Settings, so users never rename by hand.
 
 
-### Search → Phase 8 (not yet discussed in detail)
+### Search → Phase 8 (statement search held there on 2026-09-29)
 Eli's idea (2026-09-26): a search function, opened from a magnifying-glass button in the top corner.
 **Notes for when it's scheduled:** search would look through merchant names (and maybe notes and folder
 names) across every saved statement, entirely on the device, so it keeps the privacy promise. It fits
 Phase 8 next to the familiar-merchant tag, which needs the same "every purchase from this merchant"
 lookup. Open questions for Eli then: which screens get the button (Statements, Tasks, or both), since
 the top-right corner already holds Settings and header buttons must stay symmetrical; and whether results
-open the purchase in Look closer.
+open the purchase in Look closer. **2026-09-29:** Eli asked for statement search in all three Statements
+filters before testing; held for Phase 8 (testers will have few statements; the purchase search would find
+statements too).
 
-### Opening splash screen → with the App Store version (Phase 9), or sooner as polish
+### Opening splash screen → built in Phase 7c (2026-09-29)
 Eli's idea (2026-09-26): when the app opens, show its logo in the middle of the screen for a moment, like
 Outlook or Spotify. **Notes for when it's scheduled:** those apps show the logo only while they load. A
-splash that adds a delay on purpose makes a fast app feel slower, so ours should show the logo only
-until saved statements are ready (today a plain "Loading…"), then fade into the app. Installed iPhone
-web apps can also show a launch image (`apple-touch-startup-image`, one per screen size), and the App
-Store version gets a native launch screen from Capacitor. To discuss with Eli before building.
+splash that adds a delay on purpose makes a fast app feel slower, so ours shows the logo only until saved
+statements are ready, then fades into the app. **Built in 7c** (Eli: logo only, no "Loading" text). Still
+possible later: iPhone launch images (`apple-touch-startup-image`, one per screen size) for the moment
+before the page itself appears, and a native launch screen from Capacitor in the App Store version.
