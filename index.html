@@ -17,6 +17,20 @@
     <title>Statement Swipe</title>
   </head>
   <body>
+    <!-- The launch screen: the Home Screen icon opened out to fill the screen (its green, with the
+         cards logo in the middle), shown from the very first paint (before the app's code has loaded)
+         until saved statements are ready, then faded away by src/lib/splash.ts. The logo is the icon's
+         cards, cropped from public/icon.svg: keep them in sync. -->
+    <div id="splash" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="120 92 290 336">
+        <rect x="160" y="116" width="220" height="286" rx="28" fill="#E5F4EC" transform="rotate(8 270 259)"/>
+        <rect x="132" y="112" width="220" height="286" rx="28" fill="#FFFFFF"/>
+        <rect x="164" y="152" width="96" height="16" rx="8" fill="#E1E8E4"/>
+        <rect x="164" y="206" width="150" height="36" rx="10" fill="#0F1F17"/>
+        <circle cx="302" cy="344" r="30" fill="#0A7D4F"/>
+        <path d="M288 344l10 10 20-20" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

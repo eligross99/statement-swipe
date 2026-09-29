@@ -57,6 +57,18 @@
   line-height: 1.45;
 }
 
+.investigate-search {
+  margin-top: 16px;
+}
+
+/* Lined up with the paragraph above it, like the rest of the page's text. */
+.investigate-search-help {
+  margin: 8px 0 0;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
 .investigate-track {
   margin-top: 24px;
 }

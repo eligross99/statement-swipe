@@ -10,6 +10,7 @@
   margin: 0 0 10px;
   font-size: var(--text-sm);
   line-height: 1.5;
+  text-wrap: wrap; /* iPhone Safari's "pretty" wrapping left these lines ragged and short (7c) */
 }
 
 .settings-panel p:last-child {
@@ -24,9 +25,11 @@
   font-weight: 650;
 }
 
+/* Notes under a button, centered. Plain wrapping: iPhone Safari's "balance" kept the lines far narrower
+   than the button above them (Eli, 7c phone test). Each note is checked at phone width for a word left
+   alone on its last line. */
 .settings-foot {
   margin: 8px 0 0;
-  text-wrap: balance;
   font-size: var(--text-sm);
   text-align: center;
 }
@@ -65,4 +68,9 @@
   font: inherit;
   font-size: max(var(--text-md), 16px); /* at least 16px: stops iOS zooming in */
   font-weight: 500;
+}
+
+/* A further button in the same section (Help): spaced from the note above it. */
+.settings-more {
+  margin-top: 20px;
 }

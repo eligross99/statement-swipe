@@ -204,6 +204,11 @@
   margin-top: 1px;
 }
 
+/* "Help fix this for your bank": a quiet extra under a check line or an error. */
+.import-fix {
+  margin: 4px 0 0;
+}
+
 .import-start {
   margin-top: 20px;
 }

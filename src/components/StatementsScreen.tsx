@@ -1,5 +1,5 @@
 import { Archive, ArchiveRestore, Check, FileText, MoreHorizontal, Pencil, Plus, ShieldAlert, Trash2 } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
 import { plural, usd } from '../lib/format'
 import { ledgerSegments, sumAmounts } from '../lib/review'
@@ -26,6 +26,8 @@ interface Props {
   onRename: (id: string, name: string) => void
   onArchive: (id: string, archived: boolean) => void
   onDelete: (id: string) => void
+  /** The "Add Swipe to your Home Screen" card, when it should show. */
+  notice?: ReactNode
 }
 
 /** The "⋯" menu's follow-up sheets. */
@@ -61,6 +63,7 @@ export function StatementsScreen(props: Props) {
   return (
     <>
       <div className="screen st-screen">
+        {props.notice}
         {statements.length === 0 ? (
           <div className="st-empty st-empty--first">
             <span className="st-empty-icon">

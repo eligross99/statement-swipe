@@ -1,12 +1,17 @@
-import { ShieldCheck } from 'lucide-react'
+import { Mail, ShieldCheck, SquarePlus } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useInstall } from '../hooks/useInstall'
+import { APP_VERSION } from '../lib/appInfo'
+import { feedbackMailto } from '../lib/feedback'
 import { plural } from '../lib/format'
 import { canVibrate } from '../lib/haptics'
 import type { Settings } from '../lib/library'
+import { promptInstall } from '../lib/install'
 import { isStoragePersisted } from '../lib/storage'
 import { REMIND_CHOICES } from '../lib/tasks'
 import { THEME_CHOICES } from '../lib/theme'
 import { ConfirmSheet } from './ConfirmSheet'
+import { InstallSteps } from './InstallHint'
 import { Segmented } from './Segmented'
 import './SettingsScreen.css'
 
@@ -21,6 +26,9 @@ interface Props {
 /** Appearance, swiping, filing, and Tasks preferences, the tour, About & privacy, and erasing everything saved. */
 export function SettingsScreen({ statementCount, settings, onChange, onEraseAll, onReplayTour }: Props) {
   const [confirming, setConfirming] = useState(false)
+  const [installSteps, setInstallSteps] = useState(false)
+  // How this phone can add the app to its Home Screen; null once installed (or on a computer).
+  const install = useInstall()
   // Whether the browser promised to keep our data. Checked once; null until known or if it can't say.
   const [kept, setKept] = useState<boolean | null>(null)
   useEffect(() => {
@@ -129,6 +137,25 @@ export function SettingsScreen({ statementCount, settings, onChange, onEraseAll,
         <p className="muted settings-foot">
           Practice swiping on a pretend statement again. Your own statements stay as they are.
         </p>
+        {install && (
+          <>
+            <button
+              type="button"
+              className="btn btn--secondary settings-more"
+              onClick={() => (install === 'ios' ? setInstallSteps(true) : void promptInstall())}
+            >
+              <SquarePlus size={18} aria-hidden /> Add to Home Screen
+            </button>
+            <p className="muted settings-foot">Swipe opens full screen, like an app, and keeps your statements safe.</p>
+          </>
+        )}
+        <a className="btn btn--secondary settings-more" href={feedbackMailto()}>
+          <Mail size={18} aria-hidden /> Send feedback
+        </a>
+        <p className="muted settings-foot">
+          Tell us what’s confusing, broken, or missing. Opens an email with the app version and your kind of phone,
+          never anything from your statements.
+        </p>
       </section>
 
       <section className="settings-section">
@@ -143,11 +170,16 @@ export function SettingsScreen({ statementCount, settings, onChange, onEraseAll,
             no accounts, ads, or tracking.
           </p>
           <p className="muted">
+            Only two things ever leave this device, and only when you tap them: a merchant’s name when you search the
+            web, and a statement’s masked layout if you send it.
+          </p>
+          <p className="muted">
             {statementCount ? `${plural(statementCount, 'statement')} saved on this device.` : 'No statements saved yet.'}
             {kept === true && ' Your browser has agreed to keep them.'}
             {kept === false &&
               ' Your browser may clear them if the device runs low on space. Adding this app to your Home Screen helps keep them safe.'}
           </p>
+          <p className="muted">App version {APP_VERSION}.</p>
         </div>
       </section>
 
@@ -163,6 +195,8 @@ export function SettingsScreen({ statementCount, settings, onChange, onEraseAll,
         </button>
         <p className="muted settings-foot">Removes every statement, folder, and note this app has saved.</p>
       </section>
+
+      {installSteps && <InstallSteps hasStatements={statementCount > 0} onClose={() => setInstallSteps(false)} />}
 
       {confirming && (
         <ConfirmSheet

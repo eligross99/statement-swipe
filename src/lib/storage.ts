@@ -88,6 +88,7 @@ function isSavedUi(v: unknown): v is SavedUi {
     FILTERS.has(v.filter as StatementFilter) &&
     TABS.has(v.home as Tab | undefined) &&
     (v.tourSeen === undefined || typeof v.tourSeen === 'boolean') &&
+    (v.installHintHidden === undefined || typeof v.installHintHidden === 'boolean') &&
     (v.openId === null || typeof v.openId === 'string')
   )
 }

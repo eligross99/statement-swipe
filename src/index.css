@@ -34,6 +34,23 @@ body {
   overscroll-behavior-y: contain;
 }
 
+/* The launch screen (index.html): the Home Screen icon's green filling the screen with its cards logo in
+   the middle, over everything until saved statements are ready. Taps pass through, so it can never block
+   the app. See src/lib/splash.ts. */
+#splash {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: var(--launch);
+  pointer-events: none;
+}
+
+#splash svg {
+  height: 128px;
+}
+
 /* Money figures: equal-width digits so columns of amounts line up and are easy to compare. */
 .num {
   font-variant-numeric: tabular-nums;
@@ -49,7 +66,8 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
-button:not(:disabled) {
+button:not(:disabled),
+a.btn {
   transition:
     transform 0.2s var(--ease-out),
     filter 0.2s ease,
@@ -58,7 +76,8 @@ button:not(:disabled) {
 }
 
 /* The press shows instantly; the release eases back (above), so even a quick tap is visible. */
-button:not(:disabled):active {
+button:not(:disabled):active,
+a.btn:active {
   transform: scale(0.97);
   filter: brightness(0.92);
   transition-duration: 0s;

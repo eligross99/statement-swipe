@@ -1,0 +1,59 @@
+/* "Add Swipe to your Home Screen": a quiet white card above a screen's content. */
+.install-hint {
+  margin-bottom: 14px;
+  padding: 14px 16px 16px;
+  overflow: hidden; /* so it can fold away smoothly */
+}
+
+.install-hint-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.install-hint-icon,
+.install-step-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--brand-tint);
+  color: var(--brand-strong);
+}
+
+.install-hint-title {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.install-hint-text {
+  margin: 4px 0 0;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.install-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.install-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  line-height: 1.45;
+}
+
+.install-steps-after {
+  margin-top: 18px;
+}

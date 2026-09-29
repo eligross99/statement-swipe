@@ -1,14 +1,16 @@
-import { CircleAlert, CircleCheck, FileText, LoaderCircle, X } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { CircleAlert, CircleCheck, FileText, Info, LoaderCircle, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useAnimate } from '../hooks/useAnimate'
 import { useShowMore } from '../hooks/useShowMore'
 import { parseGrid, type ColumnMap, type Grid, type Purchase } from '../lib/csv'
 import { formatDate } from '../lib/dates'
+import type { Line } from '../lib/pdfLines'
 import { plural, usd } from '../lib/format'
 import { token } from '../lib/motion'
 import { CSVSource, guessSettings, type CsvSettings } from '../sources/csvSource'
 import { isPdf, PdfImportError, PDFSource, type PdfProblem } from '../sources/pdfSource'
 import type { Transaction } from '../types'
+import { LayoutSheet } from './LayoutSheet'
 import './ImportScreen.css'
 
 /** What the app needs to name a new statement: hints for a smart default, the PDF's closing date
@@ -26,6 +28,9 @@ interface Props {
   onTakeShared?: () => void
   /** Opens "Get your statement", the per-bank download guides. */
   onHelp: () => void
+  /** The "Add Swipe to your Home Screen" card, when it should show: before importing is the best
+   *  time, because statements added in Safari don't move to the Home Screen app. */
+  notice?: ReactNode
 }
 
 interface Parsed {
@@ -48,19 +53,36 @@ const PDF_PROBLEMS: Record<PdfProblem, string> = {
   unreadable: 'Couldn’t open that PDF. Try downloading it again, or use a CSV.',
 }
 
+/** What the masked layout says went wrong: words only, never the amounts. */
+const LAYOUT_PROBLEM = {
+  mismatch: 'The purchases found didn’t add up to the total printed on the statement.',
+  unchecked: 'The statement prints no purchases total, and the user thinks the purchases found are wrong.',
+  none: 'No purchases were found.',
+} as const
+
+/** A statement's text, kept so the user can choose to send its masked layout. */
+interface HelpLayout {
+  lines: Line[]
+  problem: keyof typeof LAYOUT_PROBLEM
+}
+
 /** The file name without ".csv" or ".pdf": a statement's name when it has no readable dates. */
 const labelFrom = (fileName: string) => fileName.replace(/\.[^.]+$/, '')
 
 /** How many of the file's first lines the header-row picker offers. */
 const HEADER_CHOICES = 15
 
-export function ImportScreen({ onStart, shared, onTakeShared, onHelp }: Props) {
+export function ImportScreen({ onStart, shared, onTakeShared, onHelp, notice }: Props) {
   const [parsed, setParsed] = useState<Parsed | null>(null)
   const [settings, setSettings] = useState<CsvSettings | null>(null)
   const [pdf, setPdf] = useState<ParsedPdf | null>(null)
   // True while a PDF is being read, which can take a moment on a phone.
   const [reading, setReading] = useState(false)
   const [error, setError] = useState('')
+  // A PDF that was read but found no purchases: its text, so the user can help fix the reader.
+  const [unread, setUnread] = useState<Line[]>([])
+  // The masked layout being shown in "Help fix this for your bank".
+  const [helping, setHelping] = useState<HelpLayout | null>(null)
   const [dragOver, setDragOver] = useState(false)
   // True after removing a chosen file, so the file picker slides back in from the left.
   const [cameBack, setCameBack] = useState(false)
@@ -97,6 +119,7 @@ export function ImportScreen({ onStart, shared, onTakeShared, onHelp }: Props) {
     try {
       setPdf({ fileName: file.name, source: await PDFSource.fromData(new Uint8Array(await file.arrayBuffer())) })
     } catch (e) {
+      if (e instanceof PdfImportError && e.problem === 'no-purchases') setUnread(e.lines)
       setError(
         e instanceof PdfImportError
           ? PDF_PROBLEMS[e.problem]
@@ -111,6 +134,7 @@ export function ImportScreen({ onStart, shared, onTakeShared, onHelp }: Props) {
   // Reading happens entirely in the browser; the file is never uploaded anywhere.
   const readFile = async (file: File) => {
     setError('')
+    setUnread([])
     let grid: Grid
     try {
       if (isPdf(new Uint8Array(await file.slice(0, 1024).arrayBuffer()))) return await readPdf(file)
@@ -154,14 +178,30 @@ export function ImportScreen({ onStart, shared, onTakeShared, onHelp }: Props) {
               </span>
             </p>
           ) : (
+            <>
+              <p className="import-check">
+                <CircleAlert size={18} className="tone-investigate" aria-hidden />
+                <span>
+                  These add up to <span className="num">${usd(check.found)}</span>, but your statement lists{' '}
+                  <span className="num">${usd(check.printed)}</span> in purchases. Some may be missing or extra.
+                </span>
+              </p>
+              <HelpButton onClick={() => setHelping({ lines: pdf.source.lines, problem: 'mismatch' })} />
+            </>
+          ))}
+        {/* Some statements print no purchases total, so the app can't check itself: ask the user to. */}
+        {!check && (
+          <>
             <p className="import-check">
-              <CircleAlert size={18} className="tone-investigate" aria-hidden />
+              <Info size={18} className="tone-pile" aria-hidden />
               <span>
-                These add up to <span className="num">${usd(check.found)}</span>, but your statement lists{' '}
-                <span className="num">${usd(check.printed)}</span> in purchases. Some may be missing or extra.
+                These add up to <span className="num">${usd(total)}</span>. Check that against the purchases on your
+                statement.
               </span>
             </p>
-          ))}
+            <HelpButton onClick={() => setHelping({ lines: pdf.source.lines, problem: 'unchecked' })} />
+          </>
+        )}
 
         <h3 className="section-label import-preview-label">Preview</h3>
         <PreviewList purchases={purchases} />
@@ -172,6 +212,7 @@ export function ImportScreen({ onStart, shared, onTakeShared, onHelp }: Props) {
             onStart(await pdf.source.load(), { fallback: labelFrom(pdf.fileName), closing: pdf.source.statement.closing })
           }
         />
+        {helping && <LayoutSheet lines={helping.lines} problem={LAYOUT_PROBLEM[helping.problem]} onClose={() => setHelping(null)} />}
       </div>
     )
   }
@@ -179,6 +220,7 @@ export function ImportScreen({ onStart, shared, onTakeShared, onHelp }: Props) {
   if (!parsed) {
     return (
       <div className={`screen${cameBack ? ' enter-pop' : ''}`} key="choose">
+        {notice}
         <h2 className="screen-title">Import your statement</h2>
         <p className="muted import-lede">
           Add a statement PDF from your bank’s app, or a CSV from its website. It never leaves this device.
@@ -226,10 +268,12 @@ export function ImportScreen({ onStart, shared, onTakeShared, onHelp }: Props) {
             {error}
           </p>
         )}
+        {error && unread.length > 0 && <HelpButton onClick={() => setHelping({ lines: unread, problem: 'none' })} />}
 
         <button type="button" className="btn btn--quiet import-help" data-tour="get-file" onClick={onHelp}>
           How do I get my file?
         </button>
+        {helping && <LayoutSheet lines={helping.lines} problem={LAYOUT_PROBLEM[helping.problem]} onClose={() => setHelping(null)} />}
       </div>
     )
   }
@@ -332,6 +376,15 @@ export function ImportScreen({ onStart, shared, onTakeShared, onHelp }: Props) {
         onClick={async () => onStart(await source.load(), { fallback: labelFrom(parsed.fileName), closing: null })}
       />
     </div>
+  )
+}
+
+/** Opens "Help fix this for your bank", where the user can share the statement's masked layout. */
+function HelpButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" className="btn btn--quiet import-fix" onClick={onClick}>
+      Help fix this for your bank
+    </button>
   )
 }
 

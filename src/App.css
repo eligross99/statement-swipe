@@ -11,15 +11,6 @@
   overflow: hidden;
 }
 
-.app-loading {
-  flex: 1;
-  display: grid;
-  place-items: center;
-  margin: 0;
-  color: var(--text-mute);
-  font-size: var(--text-sm);
-}
-
 /* Holds the current screen; keyed by screen in App so each one plays its entrance. */
 .view {
   flex: 1;
@@ -105,6 +96,7 @@ p {
   font: inherit;
   font-size: var(--text-md);
   font-weight: 600;
+  text-decoration: none; /* links styled as buttons, like "Search the web" */
   cursor: pointer;
 }
 

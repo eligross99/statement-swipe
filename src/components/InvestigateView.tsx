@@ -1,7 +1,8 @@
-import { Check, Flag } from 'lucide-react'
+import { Check, Flag, Search } from 'lucide-react'
 import { useState } from 'react'
 import { formatDate } from '../lib/dates'
 import { hasCategory, usd } from '../lib/format'
+import { merchantQuery, webSearchUrl } from '../lib/webSearch'
 import type { Action, Transaction } from '../types'
 import { Sheet } from './Sheet'
 import { SlideOver } from './SlideOver'
@@ -59,6 +60,21 @@ export function InvestigateView(props: Props) {
           <p className="muted investigate-note">
             This is everything your statement says about this purchase. Cryptic names often belong to a
             payment service, like SQ for Square, with the shop’s name after it.
+          </p>
+
+          {/* Opens the browser with only the merchant's name: the one thing that ever leaves the device,
+              and only on this tap (see src/lib/webSearch.ts). */}
+          <a
+            className="btn btn--secondary investigate-search"
+            href={webSearchUrl(txn.desc)}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-describedby="investigate-search-help"
+          >
+            <Search size={18} aria-hidden /> Search the web
+          </a>
+          <p id="investigate-search-help" className="muted investigate-search-help">
+            Searches Google for “{merchantQuery(txn.desc)}”.
           </p>
 
           {canDecide && (

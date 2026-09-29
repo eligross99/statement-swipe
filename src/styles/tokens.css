@@ -39,6 +39,7 @@
 
   /* Brand */
   --brand: #0a7d4f; /* money green */
+  --launch: #0a7d4f; /* the launch screen: the Home Screen icon's green, the same in both themes */
   --brand-strong: #066040; /* pressed / emphasis */
   --brand-tint: #e5f4ec; /* soft green fills, chips */
   --on-brand: #ffffff;
@@ -121,6 +122,7 @@
 
   /* Brand */
   --brand: #3cc48a;
+  --launch: #0a7d4f; /* the launch screen: the Home Screen icon's green, the same in both themes */
   --brand-strong: #7fdcb0;
   --brand-tint: #173a2b;
   --on-brand: #04150d;

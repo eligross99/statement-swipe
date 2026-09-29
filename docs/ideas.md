@@ -96,6 +96,13 @@ guide against their own app during the phone test.
 on 2026-09-27**, after a third round that fixed Look closer jumping while scrolling in the tour and made
 the tap guide visible on green. Next: 7c (remembered bank setups and OFX/QFX files) in a fresh session.
 
+**On 2026-09-29, starting 7c, Eli re-prioritized:** the core app works, so the next goal is getting it into
+testers' hands, not enhancements. **7c became "Ready for testers"** (see that section below), and
+**remembered bank setups and OFX/QFX files are parked** until testers' feedback asks for them (they
+mostly help people who download CSVs on a computer, which isn't how Eli or most phone users import).
+Rule of thumb from Eli: **prioritize the core value (review, then act) and a tester's first five
+minutes over enhancements.**
+
 **Eli's first 7b phone test (2026-09-26), all approved as a plan:** the tour becomes a strict, in-order
 sandbox that mimics real use, in **six steps**: open the practice statement from Statements and approve;
 look closer and flag (Approve pale); file; open the folder and set Waiting ("waiting for your friends to
@@ -120,12 +127,57 @@ Eli approved the swipe-hint speed, the card's size, and the Bank of America guid
 | 6c | **Tasks dashboard** and tab bar, resolving flagged purchases, "Remind me after" | Needs 6b's statement history |
 | 7a | **Dark mode**, Android **haptics** and Android **"Share to"** | Dark mode before the tour, so the tour is designed once, in both themes |
 | 7b | **Onboarding tour** (replaces the always-visible sample statement) with **per-bank download guides** | The tour ends at "Get your statement", where the guides live |
-| 7c | **Remembered bank setups** and **OFX/QFX files** (moved from 6c) | Both are about the import screen |
+| 7c | **Ready for testers:** other banks' PDFs, a way to send feedback, an install hint, a message for testers | The core app works; testers' feedback should pick what comes next (Eli, 2026-09-29) |
+| Parked | **Remembered bank setups** and **OFX/QFX files** (moved from 6c, then 7c) | Enhancements for computer downloads; revisit if testers ask |
 | 8 | **On-device smarts:** familiar/new merchant tags, merchant-code decoder, web-search link, calendar reminders | Need statement history; no server needed; privacy stays intact |
 | 9 | **App Store version** (Capacitor; ask Eli first), then accounts, backend, Stripe, **opt-in bank connection** (Teller → Plaid, relay-only server) (was Phase 6, then 8) | Unlocks push notifications and, if chosen, AI merchant explanations; App Store first because Apple's subscription rules shape the payment plan |
 | 10 | Security & compliance (was Phase 7, then 9) | Unchanged |
 
 ## The ideas
+
+### Ready for testers → Phase 7c
+Eli's goal (2026-09-29): get the app to testers before building enhancements. The core product works and
+is live; what matters is whether a tester's **first five minutes** go well. The gaps a tester would hit:
+1. **Their bank's PDF may not read correctly.** The PDF reader is tuned only on Eli's Bank of America
+   statement, and we can't collect testers' real statements.
+2. **No way to send feedback** from the app.
+3. **Installing is hidden on iPhone** (Safari's Share menu), and Safari can erase a website's saved data
+   after about a week without a visit unless it's installed to the Home Screen.
+4. **Android features never checked on a real phone** (optional: only if a tester has Android).
+
+**Decided with Eli (2026-09-29):**
+- **PDFs:** "Help fix this for your bank" emails a masked layout (the tester sees it all first). Eli
+  approved it as a second privacy exception. Statements with no printed total show "These add up to $X.
+  Check that against the purchases on your statement." so a bad read can be spotted.
+- **Feedback:** Send feedback in Settings opens an email with the app version and device type. The address
+  is a **placeholder** until Eli creates a separate feedback address (`FEEDBACK_EMAIL`).
+- **Install:** a quiet "Add Swipe to your Home Screen" card on Statements and Import (iPhone steps checked
+  in iOS 26 Safari: ⋯, Share, View More, Add to Home Screen, Add; an Install button on Android), hidden
+  for good by Not now, with the steps kept in Settings. Installed iPhone apps don't share Safari's storage,
+  so the steps and the tester message say to install before importing.
+- **Tester message** lives in `docs/testers.md`, for Eli to paste. No Android-specific asks (Eli: it makes
+  features look unfinished); Android testers just use it like everyone else.
+- **Added by Eli:** a **launch screen that shows only the logo** ("like other professional apps", no
+  "Loading" text), and **"Search the web"** (moved up from Phase 8) in Look closer, which also covers
+  flagged purchases opened from Tasks. Google, since obscure merchant codes need the best results.
+- **Held for Phase 8:** searching statements. Testers will have one to three statements, most named by
+  month, and the planned purchase search across statements would also find them (Eli agreed).
+
+**Built (7c, 2026-09-29):** `src/lib/splash.ts` (the logo in `index.html`, faded out once statements load),
+`src/lib/webSearch.ts` (tidies "SQ *DD BAR 574123900" to "DD BAR"), `src/lib/pdfMask.ts` and `LayoutSheet`
+(shared with `scripts/pdf-layout.ts`), `src/lib/appInfo.ts` (version and device),
+`src/lib/feedback.ts`, `src/lib/install.ts` with `useInstall` and `InstallHint`, and `docs/testers.md`.
+
+**Eli's first 7c phone test (2026-09-29):** the install card, Search the web, and Send feedback worked
+("perfect"). Changes: the launch screen became **the Home Screen icon opened out** (its green filling the
+screen, the cards logo in the middle, the status bar green too); the note under Search the web now reads
+"Searches Google for “DD BAR”." and lines up with the paragraph above (the button label stays short, since
+labels that wrap look broken); Settings' notes wrap normally (iPhone Safari's balanced wrapping squeezed
+them). **Help fix this now opens a ready-to-send email** with the masked layout in it, instead of the
+phone's share sheet, which left people unsure what to do. A link can't attach a file, so the layout is in
+the email itself (a real statement's is about 35,000 characters). **Sending it automatically**, with just
+a "Thanks, we'll fix it" confirmation, needs a server and an email service: **deferred to Phase 9** with
+the backend (Eli's alternative, 2026-09-29).
 
 ### "Set status" menu → Phase 4
 Rename "Set next step" to "Set status"; tapping opens a menu with To do / Waiting / Done (plus a way
@@ -294,7 +346,7 @@ Eli's goal (2026-09-23): getting a statement into the app should be easier than 
 the bank's website, save it, upload it". **Approved plan:** make files painless first (no server
 needed), then add an opt-in bank connection once accounts and a backend exist.
 
-**Phase 7 (moved from 6c on 2026-09-24): easier files** (needs saved settings)
+**Parked on 2026-09-29 (was Phase 7): easier files.** Revisit if testers ask for CSV or Quicken files.
 - **Remember each bank's setup.** After the first import, save the detected column mapping, sign
   convention, and header row, keyed by the file's header row (e.g. "Chase card CSV"). The next import
   from the same bank skips the mapping screen: one tap to start. Settings stay on-device.
@@ -493,19 +545,21 @@ This reverses the old "PDF is out of scope" decision (`docs/handoff.md` §12).
 - **Later (nice-to-have):** a custom naming pattern in Settings, so users never rename by hand.
 
 
-### Search → Phase 8 (not yet discussed in detail)
+### Search → Phase 8 (statement search held there on 2026-09-29)
 Eli's idea (2026-09-26): a search function, opened from a magnifying-glass button in the top corner.
 **Notes for when it's scheduled:** search would look through merchant names (and maybe notes and folder
 names) across every saved statement, entirely on the device, so it keeps the privacy promise. It fits
 Phase 8 next to the familiar-merchant tag, which needs the same "every purchase from this merchant"
 lookup. Open questions for Eli then: which screens get the button (Statements, Tasks, or both), since
 the top-right corner already holds Settings and header buttons must stay symmetrical; and whether results
-open the purchase in Look closer.
+open the purchase in Look closer. **2026-09-29:** Eli asked for statement search in all three Statements
+filters before testing; held for Phase 8 (testers will have few statements; the purchase search would find
+statements too).
 
-### Opening splash screen → with the App Store version (Phase 9), or sooner as polish
+### Opening splash screen → built in Phase 7c (2026-09-29)
 Eli's idea (2026-09-26): when the app opens, show its logo in the middle of the screen for a moment, like
 Outlook or Spotify. **Notes for when it's scheduled:** those apps show the logo only while they load. A
-splash that adds a delay on purpose makes a fast app feel slower, so ours should show the logo only
-until saved statements are ready (today a plain "Loading…"), then fade into the app. Installed iPhone
-web apps can also show a launch image (`apple-touch-startup-image`, one per screen size), and the App
-Store version gets a native launch screen from Capacitor. To discuss with Eli before building.
+splash that adds a delay on purpose makes a fast app feel slower, so ours shows the logo only until saved
+statements are ready, then fades into the app. **Built in 7c** (Eli: logo only, no "Loading" text). Still
+possible later: iPhone launch images (`apple-touch-startup-image`, one per screen size) for the moment
+before the page itself appears, and a native launch screen from Capacitor in the App Store version.

@@ -16,10 +16,14 @@ export type PdfProblem = 'password' | 'no-text' | 'no-purchases' | 'unreadable'
 
 export class PdfImportError extends Error {
   readonly problem: PdfProblem
+  /** The text that was read, when there was some ("no purchases found"), so the user can choose to
+   *  share its masked layout and help the reader learn their bank (src/lib/pdfMask.ts). */
+  readonly lines: Line[]
   /** `cause` keeps the reader's own error, for debugging on this device. It's never sent anywhere. */
-  constructor(problem: PdfProblem, cause?: unknown) {
+  constructor(problem: PdfProblem, cause?: unknown, lines: Line[] = []) {
     super(problem, { cause })
     this.problem = problem
+    this.lines = lines
   }
 }
 
@@ -92,9 +96,12 @@ export async function extractLines(data: Uint8Array, pdfjs?: Pdfjs): Promise<Lin
 
 export class PDFSource implements TransactionSource {
   readonly statement: PdfStatement
+  /** Every line of text that was read, for a masked layout if the purchases found look wrong. */
+  readonly lines: Line[]
 
-  constructor(statement: PdfStatement) {
+  constructor(statement: PdfStatement, lines: Line[] = []) {
     this.statement = statement
+    this.lines = lines
   }
 
   /** Reads a statement PDF. Throws a PdfImportError when it can't find purchases in it. */
@@ -102,8 +109,8 @@ export class PDFSource implements TransactionSource {
     const lines = await extractLines(data, pdfjs)
     if (lines.reduce((n, l) => n + l.text.length, 0) < MIN_TEXT) throw new PdfImportError('no-text')
     const statement = parseStatement(lines)
-    if (!statement.purchases.length) throw new PdfImportError('no-purchases')
-    return new PDFSource(statement)
+    if (!statement.purchases.length) throw new PdfImportError('no-purchases', undefined, lines)
+    return new PDFSource(statement, lines)
   }
 
   /** Purchases only, for the import preview. */

@@ -1,0 +1,26 @@
+.layout-lede {
+  margin-bottom: 14px;
+  text-wrap: pretty;
+}
+
+/* The masked layout, exactly as it will be shared: a grey box that scrolls on its own, both ways,
+   so long lines never widen the page. */
+.layout-preview {
+  max-height: 34dvh;
+  margin: 6px 0 0;
+  padding: 12px 14px;
+  overflow: auto;
+  border-radius: var(--radius-control);
+  background: var(--surface-sunken);
+  color: var(--text-mute);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: calc(var(--text-xs) * 0.8);
+  line-height: 1.5;
+  white-space: pre;
+}
+
+.layout-to {
+  margin: 12px 0 16px;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}

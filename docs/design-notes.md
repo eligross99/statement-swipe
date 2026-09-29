@@ -82,6 +82,17 @@ Read this before designing a new screen.
 - **Expandable rows grow and fold at the same pace (7b).** The bank guides open one at a time: the row's
   body animates `grid-template-rows` from `0fr` to `1fr` over 400ms with a fade, and the chevron turns.
   Closed bodies stay in the page but are `inert`, so they can't be reached until opened (`GuidePage.css`).
+- **Links that look like buttons act like buttons (7c).** "Search the web" and "Send feedback" are links
+  (`<a class="btn">`, so the phone opens the browser or mail app) with the same press-in as buttons
+  (`a.btn:active` in `index.css`) and no underline.
+- **Say exactly what leaves the device, right where it happens (7c).** "Search the web" has a quiet line
+  under it naming the words Google gets ("Searches Google for “DD BAR”.", lined up with the paragraph
+  above it, not centered), and "Help fix this for your bank" shows the full masked text in a scrolling grey
+  box before "Email the layout" (`LayoutSheet`).
+- **Hand off to a ready-made email, not the share sheet (7c, Eli).** The phone's share sheet left people
+  unsure what to do next; a `mailto:` link opens their mail app with the address, subject, and content
+  filled in, so the only step left is Send (`src/lib/feedback.ts`). Keep button labels short and fixed;
+  put variable text (a merchant name) in the note beside the button, never in the label.
 - **Touch targets are at least 44px** (`--tap-min`); badges and other fixed-size bits cap their text with
   `min()` so large text settings can't break them.
 
@@ -118,6 +129,18 @@ Read this before designing a new screen.
 - **Practice lives in a sandbox (7b).** The tour runs the real screens on a separate, never-saved library
   (`state.tour`), so the practice statement never appears in Statements or Tasks, and replaying the tour
   can't touch real statements. It keeps a copy from the start of each step, so going back is exact.
+- **Suggestions are quiet cards that fold away for good (7c).** "Add Swipe to your Home Screen" is a white
+  card at the top of Statements and Import with a tinted icon tile, one line of why, and two equal buttons
+  (Not now, Show me how). Not now folds it away (height and fade, 320ms) and it never returns; the same
+  steps stay in Settings, so dismissing loses nothing (`InstallHint.tsx`). It only appears where it
+  applies (a phone that hasn't installed the app), never during the tour.
+- **Only the logo while loading (7c, Eli: "like other professional apps").** The launch screen is the
+  Home Screen icon opened out: its green (`--launch`, the same in both themes) filling the screen with the
+  white cards logo in the middle, and the status bar green too (`public/theme.js`; `applyTheme` switches it
+  back as the logo fades). An icon on a white page was Eli's first version; the full-green one continues
+  the tap on the Home Screen icon. It's drawn by `index.html` itself, so it's there before any app code runs. It stays only as long as loading
+  takes, never an added wait, then fades out over 450ms while the logo grows 8% (Reduce Motion: a quick
+  fade only). Taps pass through it (`src/lib/splash.ts`, `#splash` in `index.css`).
 - **Symmetry:** header buttons mirror each other (icon-only circles, a spacer when one side is empty),
   rows of buttons are evenly spaced, titles stay on one line.
 
@@ -153,6 +176,9 @@ consistently finds motion a little fast: start at the slow end.
   what happens, and empty states say what to do next (`CLAUDE.md` has the full list).
 - **Careful fraud wording:** "possible fraud"; don't push people to dispute. Confirmations get gentler
   or firmer to match the situation (approving a flag marked To do or Waiting asks "Approve it anyway?").
+- **Don't balance text that fills a wide box on iPhone.** Safari's `text-wrap: balance` breaks lines far
+  short of the edge (the notes under Settings' buttons looked "smushed to the center" on the iPhone but
+  not on a computer, 7c). Those notes wrap normally, and are checked at phone width for stranded words.
 - **No stranded words:** `text-wrap: pretty` on paragraphs and `balance` on short centered text,
   `white-space: nowrap` on button labels. Center short footer text instead of leaving balanced text
   lopsided in a wide box.
@@ -164,5 +190,9 @@ consistently finds motion a little fast: start at the slow end.
   made-up folder name is labeled "Suggested", not "Names you've used before" (`guideFor` in
   `src/lib/tour.ts`). Its text wraps normally: Safari's "pretty" wrapping broke lines well short of the
   card's edge.
+- **Steps name what's on the phone's screen, in bold, one action per line (7c).** The Home Screen steps
+  were checked in the iOS 26 simulator and name its buttons exactly (Share, View More, Add to Home
+  Screen, Open as Web App, Add), with an icon per step matching what that step says. Wording that fits
+  more than one iOS version beats a per-version footnote (a long first step left "screen." alone on a line).
 - **Don't show labels the app can't back up.** The sample's hand-set "Unusual" tag was removed (6c); a
   real, explained version comes with Phase 8's new-merchant tag.
