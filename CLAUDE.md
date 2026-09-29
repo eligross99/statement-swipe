@@ -178,7 +178,9 @@ See `docs/handoff.md` §11 for details.
     per-bank download guides (`src/lib/bankGuides.ts`, `GuidePage`) at the tour's end and from Import.
     Phone-tested and approved by Eli over three rounds (strict in-order steps, a tap guide, a stretchy
     tour card with swipe-right-to-go-back, floating back buttons on slide-over pages)
-  - [ ] 7c. ← **next.** Remembered bank setups and OFX/QFX files
+  - [ ] 7c. ← **next. Ready for testers** (chosen by Eli 2026-09-29 over bank setups and OFX/QFX):
+    whatever a tester's first five minutes need. Details in `docs/ideas.md` ("Ready for testers")
+- Parked until testers' feedback says otherwise: remembered CSV bank setups and OFX/QFX files (was 7c)
 - [ ] 8. On-device smarts: familiar/new merchant tags, merchant-code decoder, web-search link,
   calendar reminders (see `docs/ideas.md`)
 - [ ] 9. App Store version with Capacitor (**ask Eli again before starting**), then accounts/backend + Stripe, then opt-in bank connection (Teller → Plaid) through a relay-only

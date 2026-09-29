@@ -96,6 +96,13 @@ guide against their own app during the phone test.
 on 2026-09-27**, after a third round that fixed Look closer jumping while scrolling in the tour and made
 the tap guide visible on green. Next: 7c (remembered bank setups and OFX/QFX files) in a fresh session.
 
+**On 2026-09-29, starting 7c, Eli re-prioritized:** the core app works, so the next goal is getting it into
+testers' hands, not enhancements. **7c became "Ready for testers"** (see that section below), and
+**remembered bank setups and OFX/QFX files are parked** until testers' feedback asks for them (they
+mostly help people who download CSVs on a computer, which isn't how Eli or most phone users import).
+Rule of thumb from Eli: **prioritize the core value (review, then act) and a tester's first five
+minutes over enhancements.**
+
 **Eli's first 7b phone test (2026-09-26), all approved as a plan:** the tour becomes a strict, in-order
 sandbox that mimics real use, in **six steps**: open the practice statement from Statements and approve;
 look closer and flag (Approve pale); file; open the folder and set Waiting ("waiting for your friends to
@@ -120,12 +127,25 @@ Eli approved the swipe-hint speed, the card's size, and the Bank of America guid
 | 6c | **Tasks dashboard** and tab bar, resolving flagged purchases, "Remind me after" | Needs 6b's statement history |
 | 7a | **Dark mode**, Android **haptics** and Android **"Share to"** | Dark mode before the tour, so the tour is designed once, in both themes |
 | 7b | **Onboarding tour** (replaces the always-visible sample statement) with **per-bank download guides** | The tour ends at "Get your statement", where the guides live |
-| 7c | **Remembered bank setups** and **OFX/QFX files** (moved from 6c) | Both are about the import screen |
+| 7c | **Ready for testers:** other banks' PDFs, a way to send feedback, an install hint, a message for testers | The core app works; testers' feedback should pick what comes next (Eli, 2026-09-29) |
+| Parked | **Remembered bank setups** and **OFX/QFX files** (moved from 6c, then 7c) | Enhancements for computer downloads; revisit if testers ask |
 | 8 | **On-device smarts:** familiar/new merchant tags, merchant-code decoder, web-search link, calendar reminders | Need statement history; no server needed; privacy stays intact |
 | 9 | **App Store version** (Capacitor; ask Eli first), then accounts, backend, Stripe, **opt-in bank connection** (Teller → Plaid, relay-only server) (was Phase 6, then 8) | Unlocks push notifications and, if chosen, AI merchant explanations; App Store first because Apple's subscription rules shape the payment plan |
 | 10 | Security & compliance (was Phase 7, then 9) | Unchanged |
 
 ## The ideas
+
+### Ready for testers → Phase 7c
+Eli's goal (2026-09-29): get the app to testers before building enhancements. The core product works and
+is live; what matters is whether a tester's **first five minutes** go well. The gaps a tester would hit:
+1. **Their bank's PDF may not read correctly.** The PDF reader is tuned only on Eli's Bank of America
+   statement, and we can't collect testers' real statements.
+2. **No way to send feedback** from the app.
+3. **Installing is hidden on iPhone** (Safari's Share menu), and Safari can erase a website's saved data
+   after about a week without a visit unless it's installed to the Home Screen.
+4. **Android features never checked on a real phone** (optional: only if a tester has Android).
+
+The detailed plan for these is below once Eli approves it.
 
 ### "Set status" menu → Phase 4
 Rename "Set next step" to "Set status"; tapping opens a menu with To do / Waiting / Done (plus a way
@@ -294,7 +314,7 @@ Eli's goal (2026-09-23): getting a statement into the app should be easier than 
 the bank's website, save it, upload it". **Approved plan:** make files painless first (no server
 needed), then add an opt-in bank connection once accounts and a backend exist.
 
-**Phase 7 (moved from 6c on 2026-09-24): easier files** (needs saved settings)
+**Parked on 2026-09-29 (was Phase 7): easier files.** Revisit if testers ask for CSV or Quicken files.
 - **Remember each bank's setup.** After the first import, save the detected column mapping, sign
   convention, and header row, keyed by the file's header row (e.g. "Chase card CSV"). The next import
   from the same bank skips the mapping screen: one tap to start. Settings stay on-device.
